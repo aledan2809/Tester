@@ -1,0 +1,49 @@
+{
+  "name": "@aledan/tester",
+  "version": "0.1.0",
+  "description": "AI-powered autonomous web testing engine — discover, test, and report on any website",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "tester": "dist/cli/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "testing",
+    "automation",
+    "puppeteer",
+    "ai",
+    "web-testing",
+    "accessibility",
+    "visual-regression"
+  ],
+  "author": "Alex Danciulescu <alex@techbiz.ae>",
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.2",
+    "@axe-core/puppeteer": "^4.10.0",
+    "commander": "^13.0.0",
+    "otpauth": "^9.0.0",
+    "pixelmatch": "^7.1.0",
+    "pngjs": "^7.0.0",
+    "puppeteer": "^24.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.0.0"
+  }
+}
