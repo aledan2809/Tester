@@ -7,6 +7,7 @@ import { Command } from 'commander'
 import { discoverCommand } from './commands/discover'
 import { runCommand } from './commands/run'
 import { loginCommand } from './commands/login'
+import { reportCommand } from './commands/report'
 
 const program = new Command()
 
@@ -58,5 +59,14 @@ program
   .option('--mfa', 'Enable MFA prompt', false)
   .option('--mfa-secret <secret>', 'TOTP secret for auto MFA')
   .action(loginCommand)
+
+// ─── report ──────────────────────────────────────────────
+program
+  .command('report <json-path>')
+  .description('Regenerate HTML report from existing JSON results')
+  .option('-o, --output <path>', 'Output HTML path (default: same dir as JSON)')
+  .option('--title <title>', 'Report title')
+  .option('--no-screenshots', 'Exclude screenshots from report')
+  .action(reportCommand)
 
 program.parse()

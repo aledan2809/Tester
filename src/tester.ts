@@ -19,6 +19,7 @@ import { detectMfa, handleMfa } from './auth/mfa'
 import { loadSession, saveSession } from './auth/session'
 import { generateScenarios as aiGenerateScenarios } from './scenarios/generator'
 import { executeScenarios } from './executor'
+import { generateReports } from './reporter/index'
 
 export class AITester {
   private browser: BrowserCore
@@ -119,6 +120,16 @@ export class AITester {
   }
 
   /**
+   * Generate reports from a test run.
+   * Returns list of output file paths.
+   */
+  report(testRun: TestRun): string[] {
+    const outputDir = this.config.outputDir || './reports'
+    const formats = this.config.reportFormats || ['html', 'json']
+    return generateReports(testRun, { outputDir, formats })
+  }
+
+  /**
    * Full autonomous test run: discover → login → generate → execute → report.
    */
   async run(url: string): Promise<TestRun> {
@@ -130,6 +141,12 @@ export class AITester {
       const siteMap = await this.discover(url)
       const scenarios = await this.generateScenarios(siteMap)
       const results = await this.execute(scenarios)
+
+      // Auto-generate reports if output dir is configured
+      if (this.config.outputDir) {
+        this.report(results)
+      }
+
       return results
     } finally {
       await this.close()

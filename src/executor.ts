@@ -104,7 +104,17 @@ async function executeScenario(
         break
       }
 
-      const result = await browser.executeStep(scenario.steps[i], i)
+      let result = await browser.executeStep(scenario.steps[i], i)
+
+      // Self-healing: retry once on failure (element might need more time to appear)
+      if (!result.success && !scenario.steps[i].optional) {
+        await sleep(1000)
+        result = await browser.executeStep(scenario.steps[i], i)
+        if (result.success) {
+          result = { ...result, description: `[retried] ${result.description}` }
+        }
+      }
+
       stepResults.push(result)
 
       // Capture screenshot on failure
@@ -232,4 +242,8 @@ function buildSummary(
     brokenLinks,
     overallScore: score,
   }
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms))
 }

@@ -5,9 +5,8 @@
 
 import { AITester } from '../../tester'
 import { formatSiteMapSummary } from '../../discovery/sitemap'
+import { generateReports } from '../../reporter/index'
 import { log, logSuccess, logWarn, logError, formatDuration, startSpinner, stopSpinner } from '../utils'
-import { writeFileSync, mkdirSync } from 'fs'
-import { resolve } from 'path'
 
 interface RunOptions {
   maxPages: number
@@ -101,14 +100,17 @@ export async function runCommand(url: string, options: RunOptions): Promise<void
         logWarn(`  A11Y: ${results.summary.a11yViolations.critical} critical, ${results.summary.a11yViolations.serious} serious`)
       }
 
-      // Save results
+      // Generate reports
       if (options.output) {
-        const outputDir = resolve(options.output)
-        mkdirSync(outputDir, { recursive: true })
-        writeFileSync(resolve(outputDir, 'results.json'), JSON.stringify(results, null, 2))
-        writeFileSync(resolve(outputDir, 'sitemap.json'), JSON.stringify(siteMap, null, 2))
-        writeFileSync(resolve(outputDir, 'scenarios.json'), JSON.stringify(scenarios, null, 2))
-        logSuccess(`Results saved to ${options.output}/`)
+        startSpinner('Generating reports...')
+        const paths = generateReports(results, {
+          outputDir: options.output,
+          formats: ['html', 'json'],
+        })
+        stopSpinner(`Reports generated`)
+        for (const p of paths) {
+          logSuccess(`  ${p}`)
+        }
       }
 
       process.exit(results.summary.failed > 0 || results.summary.errors > 0 ? 1 : 0)
