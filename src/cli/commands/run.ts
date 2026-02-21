@@ -88,36 +88,32 @@ export async function runCommand(url: string, options: RunOptions): Promise<void
 
     // Phase 4: Execute
     if (scenarios.length > 0) {
-      startSpinner('Executing test scenarios...')
-      try {
-        const results = await tester.execute(scenarios)
-        stopSpinner(`Execution complete: ${results.summary.passed}/${results.summary.totalScenarios} passed`)
+      startSpinner(`Executing ${scenarios.length} test scenarios...`)
+      const results = await tester.execute(scenarios)
+      stopSpinner(`Execution complete: ${results.summary.passed}/${results.summary.totalScenarios} passed (score: ${results.summary.overallScore}/100)`)
 
-        if (options.output) {
-          const outputDir = resolve(options.output)
-          mkdirSync(outputDir, { recursive: true })
-          writeFileSync(resolve(outputDir, 'results.json'), JSON.stringify(results, null, 2))
-          logSuccess(`Results saved to ${options.output}/results.json`)
-        }
-
-        process.exit(results.summary.failed > 0 ? 1 : 0)
-      } catch (err) {
-        stopSpinner()
-        if (err instanceof Error && err.message.includes('Not implemented')) {
-          logWarn('Test execution engine not yet implemented — saving scenarios only')
-        } else {
-          throw err
-        }
+      // Display summary
+      log(`  Passed: ${results.summary.passed} | Failed: ${results.summary.failed} | Errors: ${results.summary.errors} | Skipped: ${results.summary.skipped}`)
+      if (results.summary.brokenLinks.length > 0) {
+        logWarn(`  Broken links: ${results.summary.brokenLinks.length}`)
       }
-    }
+      if (results.summary.a11yViolations.critical > 0 || results.summary.a11yViolations.serious > 0) {
+        logWarn(`  A11Y: ${results.summary.a11yViolations.critical} critical, ${results.summary.a11yViolations.serious} serious`)
+      }
 
-    // Save discovery + scenarios
-    if (options.output) {
-      const outputDir = resolve(options.output)
-      mkdirSync(outputDir, { recursive: true })
-      writeFileSync(resolve(outputDir, 'sitemap.json'), JSON.stringify(siteMap, null, 2))
-      writeFileSync(resolve(outputDir, 'scenarios.json'), JSON.stringify(scenarios, null, 2))
-      logSuccess(`Results saved to ${options.output}/`)
+      // Save results
+      if (options.output) {
+        const outputDir = resolve(options.output)
+        mkdirSync(outputDir, { recursive: true })
+        writeFileSync(resolve(outputDir, 'results.json'), JSON.stringify(results, null, 2))
+        writeFileSync(resolve(outputDir, 'sitemap.json'), JSON.stringify(siteMap, null, 2))
+        writeFileSync(resolve(outputDir, 'scenarios.json'), JSON.stringify(scenarios, null, 2))
+        logSuccess(`Results saved to ${options.output}/`)
+      }
+
+      process.exit(results.summary.failed > 0 || results.summary.errors > 0 ? 1 : 0)
+    } else {
+      logWarn('No test scenarios generated — nothing to execute')
     }
   } catch (err) {
     stopSpinner()

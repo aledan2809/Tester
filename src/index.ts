@@ -27,6 +27,17 @@ export { saveSession, loadSession, isSessionValid } from './auth/session'
 export { generateScenarios } from './scenarios/generator'
 export { generateTemplateScenarios } from './scenarios/templates'
 
+// Assertions
+export { runAssertion } from './assertions/index'
+export { runDomAssertion } from './assertions/dom'
+export { runNetworkAssertion } from './assertions/network'
+export { runVisualAssertion } from './assertions/visual'
+export { runA11yAssertion, runA11yScan } from './assertions/a11y'
+export { runPerformanceAssertion, capturePerformanceMetrics } from './assertions/performance'
+
+// Executor
+export { executeScenarios } from './executor'
+
 // Types — re-export everything
 export type {
   TesterConfig,

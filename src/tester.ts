@@ -18,10 +18,12 @@ import { autoLogin } from './auth/login'
 import { detectMfa, handleMfa } from './auth/mfa'
 import { loadSession, saveSession } from './auth/session'
 import { generateScenarios as aiGenerateScenarios } from './scenarios/generator'
+import { executeScenarios } from './executor'
 
 export class AITester {
   private browser: BrowserCore
   private config: TesterConfig
+  private lastSiteMap: SiteMap | null = null
 
   constructor(config: TesterConfig = {}) {
     this.config = config
@@ -57,7 +59,9 @@ export class AITester {
       excludePatterns: this.config.excludePatterns,
     })
 
-    return buildSiteMap(url, result.pages, result.durationMs)
+    const siteMap = buildSiteMap(url, result.pages, result.durationMs)
+    this.lastSiteMap = siteMap
+    return siteMap
   }
 
   /**
@@ -105,10 +109,13 @@ export class AITester {
 
   /**
    * Execute test scenarios and return results.
-   * (Sprint 3 — placeholder)
    */
-  async execute(_scenarios: TestScenario[]): Promise<TestRun> {
-    throw new Error('Not implemented — Sprint 3')
+  async execute(scenarios: TestScenario[], siteMap?: SiteMap): Promise<TestRun> {
+    const map = siteMap || this.lastSiteMap
+    if (!map) {
+      throw new Error('No site map available — call discover() first or pass siteMap')
+    }
+    return executeScenarios(this.browser, scenarios, map, this.config)
   }
 
   /**
