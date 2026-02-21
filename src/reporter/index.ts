@@ -9,7 +9,7 @@ import { resolve } from 'path'
 
 export { generateJsonReport, formatCiSummary } from './json'
 export type { JsonReportOptions } from './json'
-export { generateHtmlReport } from './html'
+export { generateHtmlReport, generateHtmlString } from './html'
 export type { HtmlReportOptions } from './html'
 
 export interface ReportOptions {

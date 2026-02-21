@@ -20,4 +20,12 @@ export default defineConfig([
     banner: { js: '#!/usr/bin/env node' },
     external: ['puppeteer'],
   },
+  // Server build
+  {
+    entry: ['src/server/index.ts'],
+    format: ['cjs'],
+    outDir: 'dist/server',
+    sourcemap: true,
+    external: ['puppeteer', 'express'],
+  },
 ])

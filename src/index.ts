@@ -39,7 +39,7 @@ export { runPerformanceAssertion, capturePerformanceMetrics } from './assertions
 export { executeScenarios } from './executor'
 
 // Reporter
-export { generateReports, generateJsonReport, generateHtmlReport, formatCiSummary } from './reporter/index'
+export { generateReports, generateJsonReport, generateHtmlReport, generateHtmlString, formatCiSummary } from './reporter/index'
 export type { ReportOptions, JsonReportOptions, HtmlReportOptions } from './reporter/index'
 
 // Types — re-export everything

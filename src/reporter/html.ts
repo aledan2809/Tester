@@ -31,6 +31,13 @@ export function generateHtmlReport(testRun: TestRun, options: HtmlReportOptions)
   return outputPath
 }
 
+/**
+ * Generate HTML report as a string (no file I/O).
+ */
+export function generateHtmlString(testRun: TestRun, title = 'AI Tester Report', includeScreenshots = false): string {
+  return buildHtml(testRun, title, includeScreenshots)
+}
+
 function buildHtml(run: TestRun, title: string, includeScreenshots: boolean): string {
   const s = run.summary
   const passRate = s.totalScenarios > 0 ? Math.round((s.passed / s.totalScenarios) * 100) : 100
