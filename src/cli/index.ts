@@ -6,6 +6,7 @@
 import { Command } from 'commander'
 import { discoverCommand } from './commands/discover'
 import { runCommand } from './commands/run'
+import { loginCommand } from './commands/login'
 
 const program = new Command()
 
@@ -39,6 +40,23 @@ program
   .option('-p, --password <pass>', 'Login password')
   .option('--login-url <url>', 'Login page URL')
   .option('--api-key <key>', 'Anthropic API key')
+  .option('--mfa', 'Enable MFA prompt', false)
+  .option('--mfa-secret <secret>', 'TOTP secret for auto MFA')
+  .option('--session <path>', 'Load session from file')
+  .option('--skip <types>', 'Skip test types (e.g., visual,performance)')
+  .option('--only <types>', 'Only run these test types (e.g., functional,a11y)')
   .action(runCommand)
+
+// ─── login ───────────────────────────────────────────────
+program
+  .command('login <url>')
+  .description('Login to a website and optionally save the session')
+  .option('-u, --username <user>', 'Username', '')
+  .option('-p, --password <pass>', 'Password', '')
+  .option('--no-headless', 'Show browser window')
+  .option('--save-session <path>', 'Save session cookies to file')
+  .option('--mfa', 'Enable MFA prompt', false)
+  .option('--mfa-secret <secret>', 'TOTP secret for auto MFA')
+  .action(loginCommand)
 
 program.parse()

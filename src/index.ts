@@ -18,6 +18,15 @@ export { crawlSite } from './discovery/crawler'
 export { analyzePage } from './discovery/analyzer'
 export { buildSiteMap, formatSiteMapSummary } from './discovery/sitemap'
 
+// Auth
+export { autoLogin } from './auth/login'
+export { detectMfa, handleMfa, createCliMfaHandler } from './auth/mfa'
+export { saveSession, loadSession, isSessionValid } from './auth/session'
+
+// Scenarios
+export { generateScenarios } from './scenarios/generator'
+export { generateTemplateScenarios } from './scenarios/templates'
+
 // Types — re-export everything
 export type {
   TesterConfig,
