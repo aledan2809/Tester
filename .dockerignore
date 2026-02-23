@@ -1,0 +1,47 @@
+# Node
+node_modules
+npm-debug.log
+yarn-error.log
+
+# Development
+*.log
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test
+coverage
+.nyc_output
+test-results
+*.test.ts
+*.spec.ts
+__tests__
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Documentation
+README.md
+CHANGELOG.md
+LICENSE
+docs
+
+# CI/CD
+.github
+.gitlab-ci.yml
+
+# Build artifacts (will be rebuilt)
+# Note: We include dist in the image
