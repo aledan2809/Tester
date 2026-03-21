@@ -1,0 +1,276 @@
+{
+  "id": "run-1772005880211",
+  "url": "https://procuchaingo2.vercel.app",
+  "startedAt": "2026-02-25T07:51:03.775Z",
+  "completedAt": "2026-02-25T07:51:20.210Z",
+  "durationMs": 16435,
+  "config": {
+    "headless": true,
+    "maxPages": 30,
+    "maxDepth": 3,
+    "crawlTimeout": 120000,
+    "outputDir": "./reports-run5b",
+    "visualRegression": true,
+    "accessibility": true,
+    "performance": true
+  },
+  "siteMap": {
+    "baseUrl": "https://procuchaingo2.vercel.app",
+    "pages": [
+      {
+        "url": "https://procuchaingo2.vercel.app/",
+        "title": "",
+        "depth": 0,
+        "statusCode": 0,
+        "forms": [],
+        "buttons": [],
+        "links": [],
+        "inputs": [],
+        "modals": [],
+        "isLoginPage": false,
+        "isMfaPage": false,
+        "requiresAuth": false,
+        "hasConsoleErrors": false,
+        "consoleErrors": [],
+        "networkErrors": [],
+        "loadTimeMs": 0,
+        "resourceCount": 0
+      }
+    ],
+    "totalPages": 1,
+    "crawlDurationMs": 30047
+  },
+  "scenarios": [
+    {
+      "scenario": {
+        "id": "TPL-001",
+        "name": "Navigate to https://procuchaingo2.vercel.app/",
+        "description": "Verify page loads successfully with correct status code",
+        "category": "navigation",
+        "priority": "critical",
+        "steps": [
+          {
+            "action": "navigate",
+            "value": "https://procuchaingo2.vercel.app/",
+            "description": "Navigate to https://procuchaingo2.vercel.app/"
+          }
+        ],
+        "assertions": [
+          {
+            "type": "status_code",
+            "expected": 200,
+            "operator": "equals",
+            "description": "Page returns HTTP 200"
+          },
+          {
+            "type": "title_contains",
+            "expected": "",
+            "description": "Page title is present"
+          },
+          {
+            "type": "no_console_errors",
+            "description": "No console errors on page"
+          }
+        ],
+        "tags": [
+          "navigation",
+          "depth-0"
+        ]
+      },
+      "status": "passed",
+      "steps": [
+        {
+          "stepIndex": 0,
+          "action": "navigate",
+          "description": "Navigate to https://procuchaingo2.vercel.app/",
+          "success": true,
+          "durationMs": 8057,
+          "usedAiFallback": false
+        }
+      ],
+      "assertions": [
+        {
+          "assertion": {
+            "type": "status_code",
+            "expected": 200,
+            "operator": "equals",
+            "description": "Page returns HTTP 200"
+          },
+          "passed": true,
+          "actual": 200
+        },
+        {
+          "assertion": {
+            "type": "title_contains",
+            "expected": "",
+            "description": "Page title is present"
+          },
+          "passed": true,
+          "actual": "ProcuChain — AI Supply Chain"
+        },
+        {
+          "assertion": {
+            "type": "no_console_errors",
+            "description": "No console errors on page"
+          },
+          "passed": true,
+          "actual": 0
+        }
+      ],
+      "durationMs": 9119,
+      "screenshots": [
+        {
+          "label": "After all steps",
+          "data": "[screenshot: After all steps]"
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "id": "TPL-002",
+        "name": "Broken links check (0 found)",
+        "description": "Check all discovered pages for HTTP error status codes",
+        "category": "navigation",
+        "priority": "low",
+        "steps": [
+          {
+            "action": "evaluate",
+            "value": "true",
+            "description": "Aggregated from crawl data"
+          }
+        ],
+        "assertions": [],
+        "tags": [
+          "navigation",
+          "broken-links"
+        ]
+      },
+      "status": "passed",
+      "steps": [
+        {
+          "stepIndex": 0,
+          "action": "evaluate",
+          "description": "Aggregated from crawl data",
+          "success": true,
+          "durationMs": 51,
+          "usedAiFallback": false
+        }
+      ],
+      "assertions": [],
+      "durationMs": 1639,
+      "screenshots": [
+        {
+          "label": "After all steps",
+          "data": "[screenshot: After all steps]"
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "id": "TPL-003",
+        "name": "Console errors check (0 pages)",
+        "description": "Check all pages for JavaScript console errors",
+        "category": "error_handling",
+        "priority": "low",
+        "steps": [
+          {
+            "action": "evaluate",
+            "value": "true",
+            "description": "Aggregated from crawl data"
+          }
+        ],
+        "assertions": [],
+        "tags": [
+          "errors",
+          "console"
+        ]
+      },
+      "status": "passed",
+      "steps": [
+        {
+          "stepIndex": 0,
+          "action": "evaluate",
+          "description": "Aggregated from crawl data",
+          "success": true,
+          "durationMs": 137,
+          "usedAiFallback": false
+        }
+      ],
+      "assertions": [],
+      "durationMs": 1467,
+      "screenshots": [
+        {
+          "label": "After all steps",
+          "data": "[screenshot: After all steps]"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "totalScenarios": 3,
+    "passed": 3,
+    "failed": 0,
+    "skipped": 0,
+    "errors": 0,
+    "byCategory": {
+      "auth": {
+        "passed": 0,
+        "failed": 0
+      },
+      "navigation": {
+        "passed": 2,
+        "failed": 0
+      },
+      "forms": {
+        "passed": 0,
+        "failed": 0
+      },
+      "functionality": {
+        "passed": 0,
+        "failed": 0
+      },
+      "error_handling": {
+        "passed": 1,
+        "failed": 0
+      },
+      "visual": {
+        "passed": 0,
+        "failed": 0
+      },
+      "a11y": {
+        "passed": 0,
+        "failed": 0
+      },
+      "performance": {
+        "passed": 0,
+        "failed": 0
+      }
+    },
+    "visualRegressions": 0,
+    "a11yViolations": {
+      "critical": 0,
+      "serious": 0,
+      "moderate": 1,
+      "minor": 0,
+      "violations": [
+        {
+          "id": "landmark-unique",
+          "impact": "moderate",
+          "description": "Ensure landmarks are unique",
+          "nodes": 1
+        }
+      ]
+    },
+    "avgLoadTimeMs": 0,
+    "slowestPages": [
+      {
+        "url": "https://procuchaingo2.vercel.app/",
+        "loadTimeMs": 0
+      }
+    ],
+    "consoleErrors": [],
+    "networkErrors": [],
+    "brokenLinks": [],
+    "overallScore": 98
+  }
+}

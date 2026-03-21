@@ -39,6 +39,7 @@ program
   .option('-o, --output <dir>', 'Output directory', './reports')
   .option('-u, --username <user>', 'Login username')
   .option('-p, --password <pass>', 'Login password')
+  .option('--password-env <var>', 'Read password from environment variable (safe for special chars)')
   .option('--login-url <url>', 'Login page URL')
   .option('--api-key <key>', 'Anthropic API key')
   .option('--mfa', 'Enable MFA prompt', false)
@@ -46,6 +47,9 @@ program
   .option('--session <path>', 'Load session from file')
   .option('--skip <types>', 'Skip test types (e.g., visual,performance)')
   .option('--only <types>', 'Only run these test types (e.g., functional,a11y)')
+  .option('--accessibility', 'Enable accessibility testing', false)
+  .option('--visual-regression', 'Enable visual regression testing', false)
+  .option('--performance', 'Enable performance testing', false)
   .action(runCommand)
 
 // ─── login ───────────────────────────────────────────────

@@ -1,0 +1,1535 @@
+{
+  "id": "run-1772006093655",
+  "url": "https://procuchaingo2.vercel.app",
+  "startedAt": "2026-02-25T07:53:57.504Z",
+  "completedAt": "2026-02-25T07:54:53.654Z",
+  "durationMs": 56150,
+  "config": {
+    "headless": true,
+    "maxPages": 30,
+    "maxDepth": 3,
+    "crawlTimeout": 120000,
+    "outputDir": "./reports-run5c",
+    "visualRegression": true,
+    "accessibility": true,
+    "performance": true
+  },
+  "siteMap": {
+    "baseUrl": "https://procuchaingo2.vercel.app",
+    "pages": [
+      {
+        "url": "https://procuchaingo2.vercel.app/",
+        "title": "ProcuChain — AI Supply Chain",
+        "depth": 0,
+        "statusCode": 200,
+        "forms": [],
+        "buttons": [],
+        "links": [
+          {
+            "href": "https://procuchaingo2.vercel.app/#features",
+            "text": "Features",
+            "isExternal": false,
+            "isNavigation": true
+          },
+          {
+            "href": "https://procuchaingo2.vercel.app/#integrations",
+            "text": "Integrations",
+            "isExternal": false,
+            "isNavigation": true
+          },
+          {
+            "href": "https://procuchaingo2.vercel.app/#how",
+            "text": "How it works",
+            "isExternal": false,
+            "isNavigation": true
+          },
+          {
+            "href": "https://procuchaingo2.vercel.app/pricing",
+            "text": "Pricing",
+            "isExternal": false,
+            "isNavigation": true
+          },
+          {
+            "href": "https://procuchaingo2.vercel.app/login",
+            "text": "Sign in",
+            "isExternal": false,
+            "isNavigation": true
+          },
+          {
+            "href": "https://procuchaingo2.vercel.app/register",
+            "text": "Start Free Trial",
+            "isExternal": false,
+            "isNavigation": true
+          }
+        ],
+        "inputs": [],
+        "modals": [],
+        "isLoginPage": false,
+        "isMfaPage": false,
+        "requiresAuth": true,
+        "hasConsoleErrors": false,
+        "consoleErrors": [],
+        "networkErrors": [],
+        "loadTimeMs": 7788,
+        "resourceCount": 21
+      },
+      {
+        "url": "https://procuchaingo2.vercel.app/pricing",
+        "title": "ProcuChain — AI Supply Chain",
+        "depth": 1,
+        "statusCode": 200,
+        "forms": [],
+        "buttons": [
+          {
+            "selector": ".relative.w-12.h-6.rounded-full.transition-colors.bg-gray-600",
+            "text": "",
+            "type": "submit",
+            "isSubmit": true
+          },
+          {
+            "selector": ".relative.text-left.bg-gradient-to-br.from-blue-600/20.to-blue-900/10.border-blue-700/40.border.rounded-xl.p-6.transition-all.hover:scale-[1.02].ring-2.ring-blue-500.border-blue-500",
+            "text": "EssentialFor small shops starting with demand planning€147/moIncludes:Base Platform (dashboard, CSV ",
+            "type": "submit",
+            "isSubmit": true
+          },
+          {
+            "selector": ".relative.text-left.bg-gradient-to-br.from-purple-600/20.to-purple-900/10.border-purple-700/40.border.rounded-xl.p-6.transition-all.hover:scale-[1.02]",
+            "text": "Most PopularProfessionalFor growing businesses managing multiple channels€306/moIncludes:Base Platfo",
+            "type": "submit",
+            "isSubmit": true
+          },
+          {
+            "selector": ".relative.text-left.bg-gradient-to-br.from-amber-600/20.to-amber-900/10.border-amber-700/40.border.rounded-xl.p-6.transition-all.hover:scale-[1.02]",
+            "text": "BusinessFor established companies wanting full AI copilot€627/moIncludes:Base Platform (dashboard, C",
+            "type": "submit",
+            "isSubmit": true
+          },
+          {
+            "selector": ".text-sm.text-blue-400.hover:text-blue-300.transition-colors",
+            "text": "Switch to custom",
+            "type": "submit",
+            "isSubmit": true
+          },
+          {
+            "selector": ".text-left.rounded-xl.border.p-4.transition-all.bg-green-900/30.border-opacity-100.ring-1.ring-current/20",
+            "text": "AI Forecasting+€59Multi-layer demand forecasting: statistical + ML + AI reasoningLinear regression +",
+            "type": "submit",
+            "isSubmit": true
+          },
+          {
+            "selector": ".text-left.rounded-xl.border.p-4.transition-all.bg-blue-900/30.border-opacity-100.ring-1.ring-current/20",
+            "text": "Stock Optimizer+€39Safety stock, reorder points, ABC classification, automatic alertsSafety stock ca",
+            "type": "submit",
+            "isSubmit": true
+          },
+          {
+            "selector": ".text-left.rounded-xl.border.p-4.transition-all.bg-gray-800/30.border-gray-700/50.opacity-60.hover:opacity-80",
+            "text": "Purchase Ordering+€49Auto-generate purchase orders based on forecast + stock levels",
+            "type": "submit",
+            "isSubmit": true
+          },
+          {
+            "selector": ".text-left.rounded-xl.border.p-4.transition-all.bg-gray-800/30.border-gray-700/50.opacity-60.hover:opacity-80",
+            "text": "Correlation Engine+€69Detect demand drivers: weather, holidays, promotions, events",
+            "type": "submit",
+            "isSubmit": true
+          },
+          {
+            "selector": ".text-left.rounded-xl.border.p-4.transition-all.bg-gray-800/30.border-gray-700/50.opacity-60.hover:opacity-80",
+            "text": "Multi-Channel+€39Unified view across Shopify, WooCommerce, Amazon, Salla and more",
+            "type": "submit",
+            "isSubmit": true
+          },
+          {
+            "selector": ".text-left.rounded-xl.border.p-4.transition-all.bg-gray-800/30.border-gray-700/50.opacity-60.hover:opacity-80",
+            "text": "Multi-Location+€49Warehouse-level forecasting and inter-warehouse transfer suggestions",
+            "type": "submit",
+            "isSubmit": true
+          },
+          {
+            "selector": ".text-left.rounded-xl.border.p-4.transition-all.bg-gray-800/30.border-gray-700/50.opacity-60.hover:opacity-80",
+            "text": "Supplier Intelligence+€39Track supplier reliability, lead time accuracy, and auto-score vendors",
+            "type": "submit",
+            "isSubmit": true
+          },
+          {
+            "selector": ".relative.text-left.rounded-lg.border.p-3.transition-all.border-blue-500.bg-blue-900/20.ring-1.ring-blue-500/50",
+            "text": "60%Guided1x price",
+            "type": "submit",
+            "isSubmit": true
+          },
+          {
+            "selector": ".relative.text-left.rounded-lg.border.p-3.transition-all.border-gray-700.bg-gray-800/30.hover:bg-gray-700/30",
+            "text": "80%Smart1.3x price",
+            "type": "submit",
+            "isSubmit": true
+          },
+          {
+            "selector": ".relative.text-left.rounded-lg.border.p-3.transition-all.border-gray-700.bg-gray-800/30.hover:bg-gray-700/30",
+            "text": "90%Autonomous1.6x price",
+            "type": "submit",
+            "isSubmit": true
+          },
+          {
+            "selector": ".relative.text-left.rounded-lg.border.p-3.transition-all.border-gray-700/30.bg-gray-800/20.opacity-50.cursor-not-allowed",
+            "text": "100%Full Autopilot2x price",
+            "type": "submit",
+            "isSubmit": true
+          },
+          {
+            "selector": ".w-full.px-4.py-2.bg-gray-700.hover:bg-gray-600.text-white.text-sm.font-medium.rounded-lg.transition-colors",
+            "text": "Contact Sales",
+            "type": "submit",
+            "isSubmit": true
+          }
+        ],
+        "links": [
+          {
+            "href": "https://procuchaingo2.vercel.app/",
+            "text": "ProcuChain",
+            "isExternal": false,
+            "isNavigation": true
+          },
+          {
+            "href": "https://procuchaingo2.vercel.app/login",
+            "text": "Sign in",
+            "isExternal": false,
+            "isNavigation": true
+          },
+          {
+            "href": "https://procuchaingo2.vercel.app/register",
+            "text": "Start Free Trial",
+            "isExternal": false,
+            "isNavigation": true
+          }
+        ],
+        "inputs": [
+          {
+            "selector": "input:nth-of-type(1)",
+            "name": "input_0",
+            "type": "number",
+            "required": false
+          },
+          {
+            "selector": "input:nth-of-type(2)",
+            "name": "input_1",
+            "type": "number",
+            "required": false
+          },
+          {
+            "selector": "input:nth-of-type(3)",
+            "name": "input_2",
+            "type": "number",
+            "required": false
+          },
+          {
+            "selector": "input:nth-of-type(4)",
+            "name": "input_3",
+            "type": "number",
+            "required": false
+          }
+        ],
+        "modals": [],
+        "isLoginPage": false,
+        "isMfaPage": false,
+        "requiresAuth": true,
+        "hasConsoleErrors": false,
+        "consoleErrors": [],
+        "networkErrors": [],
+        "loadTimeMs": 3261,
+        "resourceCount": 20
+      },
+      {
+        "url": "https://procuchaingo2.vercel.app/login",
+        "title": "ProcuChain — AI Supply Chain",
+        "depth": 1,
+        "statusCode": 200,
+        "forms": [
+          {
+            "selector": "form:nth-of-type(1)",
+            "action": "https://procuchaingo2.vercel.app/login",
+            "method": "GET",
+            "fields": [
+              {
+                "name": "email",
+                "type": "email",
+                "selector": "#email",
+                "required": true,
+                "placeholder": "you@company.com",
+                "label": "Email"
+              },
+              {
+                "name": "password",
+                "type": "password",
+                "selector": "#password",
+                "required": true,
+                "placeholder": "Enter your password",
+                "label": "Password"
+              }
+            ],
+            "submitSelector": "form:nth-of-type(1) button[type=\"submit\"], form:nth-of-type(1) input[type=\"submit\"]"
+          }
+        ],
+        "buttons": [],
+        "links": [
+          {
+            "href": "https://procuchaingo2.vercel.app/register",
+            "text": "Create one",
+            "isExternal": false,
+            "isNavigation": false
+          }
+        ],
+        "inputs": [],
+        "modals": [],
+        "isLoginPage": true,
+        "isMfaPage": false,
+        "requiresAuth": false,
+        "hasConsoleErrors": false,
+        "consoleErrors": [],
+        "networkErrors": [],
+        "loadTimeMs": 1559,
+        "resourceCount": 16
+      },
+      {
+        "url": "https://procuchaingo2.vercel.app/register",
+        "title": "ProcuChain — AI Supply Chain",
+        "depth": 1,
+        "statusCode": 200,
+        "forms": [
+          {
+            "selector": "form:nth-of-type(1)",
+            "action": "https://procuchaingo2.vercel.app/register",
+            "method": "GET",
+            "fields": [
+              {
+                "name": "companyName",
+                "type": "text",
+                "selector": "#companyName",
+                "required": true,
+                "placeholder": "Your FMCG Company",
+                "label": "Company Name"
+              },
+              {
+                "name": "name",
+                "type": "text",
+                "selector": "#name",
+                "required": true,
+                "placeholder": "John Doe",
+                "label": "Your Name"
+              },
+              {
+                "name": "email",
+                "type": "email",
+                "selector": "#email",
+                "required": true,
+                "placeholder": "you@company.com",
+                "label": "Email"
+              },
+              {
+                "name": "password",
+                "type": "password",
+                "selector": "#password",
+                "required": true,
+                "placeholder": "Min. 8 characters",
+                "label": "Password"
+              }
+            ],
+            "submitSelector": "form:nth-of-type(1) button[type=\"submit\"], form:nth-of-type(1) input[type=\"submit\"]"
+          }
+        ],
+        "buttons": [],
+        "links": [
+          {
+            "href": "https://procuchaingo2.vercel.app/login",
+            "text": "Sign in",
+            "isExternal": false,
+            "isNavigation": false
+          }
+        ],
+        "inputs": [],
+        "modals": [],
+        "isLoginPage": true,
+        "isMfaPage": false,
+        "requiresAuth": false,
+        "hasConsoleErrors": false,
+        "consoleErrors": [],
+        "networkErrors": [],
+        "loadTimeMs": 1528,
+        "resourceCount": 16
+      }
+    ],
+    "totalPages": 4,
+    "crawlDurationMs": 18562
+  },
+  "scenarios": [
+    {
+      "scenario": {
+        "id": "TPL-001",
+        "name": "Navigate to ProcuChain — AI Supply Chain",
+        "description": "Verify page loads successfully with correct status code",
+        "category": "navigation",
+        "priority": "critical",
+        "steps": [
+          {
+            "action": "navigate",
+            "value": "https://procuchaingo2.vercel.app/",
+            "description": "Navigate to https://procuchaingo2.vercel.app/"
+          }
+        ],
+        "assertions": [
+          {
+            "type": "status_code",
+            "expected": 200,
+            "operator": "equals",
+            "description": "Page returns HTTP 200"
+          },
+          {
+            "type": "title_contains",
+            "expected": "ProcuChain — AI Supply Chain",
+            "description": "Page title is present"
+          },
+          {
+            "type": "no_console_errors",
+            "description": "No console errors on page"
+          }
+        ],
+        "tags": [
+          "navigation",
+          "depth-0"
+        ]
+      },
+      "status": "passed",
+      "steps": [
+        {
+          "stepIndex": 0,
+          "action": "navigate",
+          "description": "Navigate to https://procuchaingo2.vercel.app/",
+          "success": true,
+          "durationMs": 1997,
+          "usedAiFallback": false
+        }
+      ],
+      "assertions": [
+        {
+          "assertion": {
+            "type": "status_code",
+            "expected": 200,
+            "operator": "equals",
+            "description": "Page returns HTTP 200"
+          },
+          "passed": true,
+          "actual": 200
+        },
+        {
+          "assertion": {
+            "type": "title_contains",
+            "expected": "ProcuChain — AI Supply Chain",
+            "description": "Page title is present"
+          },
+          "passed": true,
+          "actual": "ProcuChain — AI Supply Chain"
+        },
+        {
+          "assertion": {
+            "type": "no_console_errors",
+            "description": "No console errors on page"
+          },
+          "passed": true,
+          "actual": 0
+        }
+      ],
+      "durationMs": 3167,
+      "screenshots": [
+        {
+          "label": "After all steps",
+          "data": "[screenshot: After all steps]"
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "id": "TPL-002",
+        "name": "Navigate to ProcuChain — AI Supply Chain",
+        "description": "Verify page loads successfully with correct status code",
+        "category": "navigation",
+        "priority": "medium",
+        "steps": [
+          {
+            "action": "navigate",
+            "value": "https://procuchaingo2.vercel.app/pricing",
+            "description": "Navigate to https://procuchaingo2.vercel.app/pricing"
+          }
+        ],
+        "assertions": [
+          {
+            "type": "status_code",
+            "expected": 200,
+            "operator": "equals",
+            "description": "Page returns HTTP 200"
+          },
+          {
+            "type": "title_contains",
+            "expected": "ProcuChain — AI Supply Chain",
+            "description": "Page title is present"
+          },
+          {
+            "type": "no_console_errors",
+            "description": "No console errors on page"
+          }
+        ],
+        "tags": [
+          "navigation",
+          "depth-1"
+        ]
+      },
+      "status": "passed",
+      "steps": [
+        {
+          "stepIndex": 0,
+          "action": "navigate",
+          "description": "Navigate to https://procuchaingo2.vercel.app/pricing",
+          "success": true,
+          "durationMs": 2666,
+          "usedAiFallback": false
+        }
+      ],
+      "assertions": [
+        {
+          "assertion": {
+            "type": "status_code",
+            "expected": 200,
+            "operator": "equals",
+            "description": "Page returns HTTP 200"
+          },
+          "passed": true,
+          "actual": 200
+        },
+        {
+          "assertion": {
+            "type": "title_contains",
+            "expected": "ProcuChain — AI Supply Chain",
+            "description": "Page title is present"
+          },
+          "passed": true,
+          "actual": "ProcuChain — AI Supply Chain"
+        },
+        {
+          "assertion": {
+            "type": "no_console_errors",
+            "description": "No console errors on page"
+          },
+          "passed": true,
+          "actual": 0
+        }
+      ],
+      "durationMs": 4634,
+      "screenshots": [
+        {
+          "label": "After all steps",
+          "data": "[screenshot: After all steps]"
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "id": "TPL-003",
+        "name": "Navigate to ProcuChain — AI Supply Chain",
+        "description": "Verify page loads successfully with correct status code",
+        "category": "navigation",
+        "priority": "medium",
+        "steps": [
+          {
+            "action": "navigate",
+            "value": "https://procuchaingo2.vercel.app/login",
+            "description": "Navigate to https://procuchaingo2.vercel.app/login"
+          }
+        ],
+        "assertions": [
+          {
+            "type": "status_code",
+            "expected": 200,
+            "operator": "equals",
+            "description": "Page returns HTTP 200"
+          },
+          {
+            "type": "title_contains",
+            "expected": "ProcuChain — AI Supply Chain",
+            "description": "Page title is present"
+          },
+          {
+            "type": "no_console_errors",
+            "description": "No console errors on page"
+          }
+        ],
+        "tags": [
+          "navigation",
+          "depth-1"
+        ]
+      },
+      "status": "passed",
+      "steps": [
+        {
+          "stepIndex": 0,
+          "action": "navigate",
+          "description": "Navigate to https://procuchaingo2.vercel.app/login",
+          "success": true,
+          "durationMs": 1383,
+          "usedAiFallback": false
+        }
+      ],
+      "assertions": [
+        {
+          "assertion": {
+            "type": "status_code",
+            "expected": 200,
+            "operator": "equals",
+            "description": "Page returns HTTP 200"
+          },
+          "passed": true,
+          "actual": 200
+        },
+        {
+          "assertion": {
+            "type": "title_contains",
+            "expected": "ProcuChain — AI Supply Chain",
+            "description": "Page title is present"
+          },
+          "passed": true,
+          "actual": "ProcuChain — AI Supply Chain"
+        },
+        {
+          "assertion": {
+            "type": "no_console_errors",
+            "description": "No console errors on page"
+          },
+          "passed": true,
+          "actual": 0
+        }
+      ],
+      "durationMs": 2597,
+      "screenshots": [
+        {
+          "label": "After all steps",
+          "data": "[screenshot: After all steps]"
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "id": "TPL-004",
+        "name": "Submit form on ProcuChain — AI Supply Chain",
+        "description": "Fill and submit the form with valid test data",
+        "category": "forms",
+        "priority": "high",
+        "steps": [
+          {
+            "action": "navigate",
+            "value": "https://procuchaingo2.vercel.app/login",
+            "description": "Go to https://procuchaingo2.vercel.app/login"
+          },
+          {
+            "action": "fill",
+            "target": "#email",
+            "value": "test@example.com",
+            "description": "Fill Email (email)"
+          },
+          {
+            "action": "fill",
+            "target": "#password",
+            "value": "TestPassword123!",
+            "description": "Fill Password (password)"
+          },
+          {
+            "action": "click",
+            "target": "form:nth-of-type(1) button[type=\"submit\"], form:nth-of-type(1) input[type=\"submit\"]",
+            "description": "Click submit"
+          },
+          {
+            "action": "wait",
+            "value": "2000",
+            "description": "Wait for response"
+          }
+        ],
+        "assertions": [
+          {
+            "type": "no_console_errors",
+            "description": "No JS errors after submit"
+          },
+          {
+            "type": "no_network_errors",
+            "description": "No network errors after submit"
+          }
+        ],
+        "tags": [
+          "forms",
+          "positive"
+        ]
+      },
+      "status": "passed",
+      "steps": [
+        {
+          "stepIndex": 0,
+          "action": "navigate",
+          "description": "Go to https://procuchaingo2.vercel.app/login",
+          "success": true,
+          "durationMs": 993,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 1,
+          "action": "fill",
+          "description": "Fill Email (email)",
+          "success": true,
+          "durationMs": 1334,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 2,
+          "action": "fill",
+          "description": "Fill Password (password)",
+          "success": true,
+          "durationMs": 1434,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 3,
+          "action": "click",
+          "description": "Click submit",
+          "success": true,
+          "durationMs": 66,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 4,
+          "action": "wait",
+          "description": "Wait for response",
+          "success": true,
+          "durationMs": 2023,
+          "usedAiFallback": false
+        }
+      ],
+      "assertions": [
+        {
+          "assertion": {
+            "type": "no_console_errors",
+            "description": "No JS errors after submit"
+          },
+          "passed": true,
+          "actual": 0
+        },
+        {
+          "assertion": {
+            "type": "no_network_errors",
+            "description": "No network errors after submit"
+          },
+          "passed": true,
+          "actual": 0
+        }
+      ],
+      "durationMs": 6611,
+      "screenshots": [
+        {
+          "label": "After all steps",
+          "data": "[screenshot: After all steps]"
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "id": "TPL-005",
+        "name": "Submit empty form on ProcuChain — AI Supply Chain",
+        "description": "Submit form without filling required fields — should show validation",
+        "category": "forms",
+        "priority": "medium",
+        "steps": [
+          {
+            "action": "navigate",
+            "value": "https://procuchaingo2.vercel.app/login",
+            "description": "Go to https://procuchaingo2.vercel.app/login"
+          },
+          {
+            "action": "click",
+            "target": "form:nth-of-type(1) button[type=\"submit\"], form:nth-of-type(1) input[type=\"submit\"]",
+            "description": "Click submit without filling"
+          },
+          {
+            "action": "wait",
+            "value": "1000",
+            "description": "Wait for validation"
+          }
+        ],
+        "assertions": [
+          {
+            "type": "url_contains",
+            "expected": "https://procuchaingo2.vercel.app/login",
+            "description": "Stay on same page (not submitted)"
+          }
+        ],
+        "tags": [
+          "forms",
+          "negative",
+          "validation"
+        ]
+      },
+      "status": "passed",
+      "steps": [
+        {
+          "stepIndex": 0,
+          "action": "navigate",
+          "description": "Go to https://procuchaingo2.vercel.app/login",
+          "success": true,
+          "durationMs": 983,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 1,
+          "action": "click",
+          "description": "Click submit without filling",
+          "success": true,
+          "durationMs": 337,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 2,
+          "action": "wait",
+          "description": "Wait for validation",
+          "success": true,
+          "durationMs": 1001,
+          "usedAiFallback": false
+        }
+      ],
+      "assertions": [
+        {
+          "assertion": {
+            "type": "url_contains",
+            "expected": "https://procuchaingo2.vercel.app/login",
+            "description": "Stay on same page (not submitted)"
+          },
+          "passed": true,
+          "actual": "https://procuchaingo2.vercel.app/login"
+        }
+      ],
+      "durationMs": 3173,
+      "screenshots": [
+        {
+          "label": "After all steps",
+          "data": "[screenshot: After all steps]"
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "id": "TPL-006",
+        "name": "Invalid login on ProcuChain — AI Supply Chain",
+        "description": "Attempt login with invalid credentials — should show error",
+        "category": "auth",
+        "priority": "high",
+        "steps": [
+          {
+            "action": "navigate",
+            "value": "https://procuchaingo2.vercel.app/login",
+            "description": "Go to login page"
+          },
+          {
+            "action": "fill",
+            "target": "input[type=\"email\"], input[name*=\"user\"], input[name*=\"email\"], input[type=\"text\"]",
+            "value": "invalid@test.invalid",
+            "description": "Fill invalid email"
+          },
+          {
+            "action": "fill",
+            "target": "input[type=\"password\"]",
+            "value": "wrongpassword123",
+            "description": "Fill wrong password"
+          },
+          {
+            "action": "click",
+            "target": "button[type=\"submit\"], input[type=\"submit\"]",
+            "description": "Click sign in"
+          },
+          {
+            "action": "wait",
+            "value": "3000",
+            "description": "Wait for response"
+          }
+        ],
+        "assertions": [
+          {
+            "type": "element_visible",
+            "target": ".error, .alert-danger, [role=\"alert\"], .text-red-500",
+            "description": "Error message is displayed"
+          },
+          {
+            "type": "no_console_errors",
+            "description": "No unhandled JS errors"
+          }
+        ],
+        "tags": [
+          "auth",
+          "negative"
+        ]
+      },
+      "status": "failed",
+      "steps": [
+        {
+          "stepIndex": 0,
+          "action": "navigate",
+          "description": "Go to login page",
+          "success": true,
+          "durationMs": 920,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 1,
+          "action": "fill",
+          "description": "Fill invalid email",
+          "success": true,
+          "durationMs": 1975,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 2,
+          "action": "fill",
+          "description": "Fill wrong password",
+          "success": true,
+          "durationMs": 1407,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 3,
+          "action": "click",
+          "description": "Click sign in",
+          "success": true,
+          "durationMs": 215,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 4,
+          "action": "wait",
+          "description": "Wait for response",
+          "success": true,
+          "durationMs": 3004,
+          "usedAiFallback": false
+        }
+      ],
+      "assertions": [
+        {
+          "assertion": {
+            "type": "element_visible",
+            "target": ".error, .alert-danger, [role=\"alert\"], .text-red-500",
+            "description": "Error message is displayed"
+          },
+          "passed": true,
+          "actual": true
+        },
+        {
+          "assertion": {
+            "type": "no_console_errors",
+            "description": "No unhandled JS errors"
+          },
+          "passed": false,
+          "actual": 1,
+          "error": "1 console error(s): Failed to load resource: the server responded with a status of 401 ()"
+        }
+      ],
+      "durationMs": 8417,
+      "screenshots": [
+        {
+          "label": "After all steps",
+          "data": "[screenshot: After all steps]"
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "id": "TPL-007",
+        "name": "Navigate to ProcuChain — AI Supply Chain",
+        "description": "Verify page loads successfully with correct status code",
+        "category": "navigation",
+        "priority": "medium",
+        "steps": [
+          {
+            "action": "navigate",
+            "value": "https://procuchaingo2.vercel.app/register",
+            "description": "Navigate to https://procuchaingo2.vercel.app/register"
+          }
+        ],
+        "assertions": [
+          {
+            "type": "status_code",
+            "expected": 200,
+            "operator": "equals",
+            "description": "Page returns HTTP 200"
+          },
+          {
+            "type": "title_contains",
+            "expected": "ProcuChain — AI Supply Chain",
+            "description": "Page title is present"
+          },
+          {
+            "type": "no_console_errors",
+            "description": "No console errors on page"
+          }
+        ],
+        "tags": [
+          "navigation",
+          "depth-1"
+        ]
+      },
+      "status": "passed",
+      "steps": [
+        {
+          "stepIndex": 0,
+          "action": "navigate",
+          "description": "Navigate to https://procuchaingo2.vercel.app/register",
+          "success": true,
+          "durationMs": 917,
+          "usedAiFallback": false
+        }
+      ],
+      "assertions": [
+        {
+          "assertion": {
+            "type": "status_code",
+            "expected": 200,
+            "operator": "equals",
+            "description": "Page returns HTTP 200"
+          },
+          "passed": true,
+          "actual": 200
+        },
+        {
+          "assertion": {
+            "type": "title_contains",
+            "expected": "ProcuChain — AI Supply Chain",
+            "description": "Page title is present"
+          },
+          "passed": true,
+          "actual": "ProcuChain — AI Supply Chain"
+        },
+        {
+          "assertion": {
+            "type": "no_console_errors",
+            "description": "No console errors on page"
+          },
+          "passed": true,
+          "actual": 0
+        }
+      ],
+      "durationMs": 1746,
+      "screenshots": [
+        {
+          "label": "After all steps",
+          "data": "[screenshot: After all steps]"
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "id": "TPL-008",
+        "name": "Submit form on ProcuChain — AI Supply Chain",
+        "description": "Fill and submit the form with valid test data",
+        "category": "forms",
+        "priority": "high",
+        "steps": [
+          {
+            "action": "navigate",
+            "value": "https://procuchaingo2.vercel.app/register",
+            "description": "Go to https://procuchaingo2.vercel.app/register"
+          },
+          {
+            "action": "fill",
+            "target": "#companyName",
+            "value": "Test User",
+            "description": "Fill Company Name (text)"
+          },
+          {
+            "action": "fill",
+            "target": "#name",
+            "value": "Test User",
+            "description": "Fill Your Name (text)"
+          },
+          {
+            "action": "fill",
+            "target": "#email",
+            "value": "test@example.com",
+            "description": "Fill Email (email)"
+          },
+          {
+            "action": "fill",
+            "target": "#password",
+            "value": "TestPassword123!",
+            "description": "Fill Password (password)"
+          },
+          {
+            "action": "click",
+            "target": "form:nth-of-type(1) button[type=\"submit\"], form:nth-of-type(1) input[type=\"submit\"]",
+            "description": "Click submit"
+          },
+          {
+            "action": "wait",
+            "value": "2000",
+            "description": "Wait for response"
+          }
+        ],
+        "assertions": [
+          {
+            "type": "no_console_errors",
+            "description": "No JS errors after submit"
+          },
+          {
+            "type": "no_network_errors",
+            "description": "No network errors after submit"
+          }
+        ],
+        "tags": [
+          "forms",
+          "positive"
+        ]
+      },
+      "status": "failed",
+      "steps": [
+        {
+          "stepIndex": 0,
+          "action": "navigate",
+          "description": "Go to https://procuchaingo2.vercel.app/register",
+          "success": true,
+          "durationMs": 874,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 1,
+          "action": "fill",
+          "description": "Fill Company Name (text)",
+          "success": true,
+          "durationMs": 1909,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 2,
+          "action": "fill",
+          "description": "Fill Your Name (text)",
+          "success": true,
+          "durationMs": 747,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 3,
+          "action": "fill",
+          "description": "Fill Email (email)",
+          "success": true,
+          "durationMs": 1179,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 4,
+          "action": "fill",
+          "description": "Fill Password (password)",
+          "success": true,
+          "durationMs": 1217,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 5,
+          "action": "click",
+          "description": "Click submit",
+          "success": true,
+          "durationMs": 186,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 6,
+          "action": "wait",
+          "description": "Wait for response",
+          "success": true,
+          "durationMs": 2009,
+          "usedAiFallback": false
+        }
+      ],
+      "assertions": [
+        {
+          "assertion": {
+            "type": "no_console_errors",
+            "description": "No JS errors after submit"
+          },
+          "passed": false,
+          "actual": 1,
+          "error": "1 console error(s): Failed to load resource: the server responded with a status of 409 ()"
+        },
+        {
+          "assertion": {
+            "type": "no_network_errors",
+            "description": "No network errors after submit"
+          },
+          "passed": false,
+          "actual": 1,
+          "error": "1 network error(s): https://procuchaingo2.vercel.app/api/auth/register (409)"
+        }
+      ],
+      "durationMs": 8842,
+      "screenshots": [
+        {
+          "label": "After all steps",
+          "data": "[screenshot: After all steps]"
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "id": "TPL-009",
+        "name": "Submit empty form on ProcuChain — AI Supply Chain",
+        "description": "Submit form without filling required fields — should show validation",
+        "category": "forms",
+        "priority": "medium",
+        "steps": [
+          {
+            "action": "navigate",
+            "value": "https://procuchaingo2.vercel.app/register",
+            "description": "Go to https://procuchaingo2.vercel.app/register"
+          },
+          {
+            "action": "click",
+            "target": "form:nth-of-type(1) button[type=\"submit\"], form:nth-of-type(1) input[type=\"submit\"]",
+            "description": "Click submit without filling"
+          },
+          {
+            "action": "wait",
+            "value": "1000",
+            "description": "Wait for validation"
+          }
+        ],
+        "assertions": [
+          {
+            "type": "url_contains",
+            "expected": "https://procuchaingo2.vercel.app/register",
+            "description": "Stay on same page (not submitted)"
+          }
+        ],
+        "tags": [
+          "forms",
+          "negative",
+          "validation"
+        ]
+      },
+      "status": "passed",
+      "steps": [
+        {
+          "stepIndex": 0,
+          "action": "navigate",
+          "description": "Go to https://procuchaingo2.vercel.app/register",
+          "success": true,
+          "durationMs": 899,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 1,
+          "action": "click",
+          "description": "Click submit without filling",
+          "success": true,
+          "durationMs": 945,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 2,
+          "action": "wait",
+          "description": "Wait for validation",
+          "success": true,
+          "durationMs": 1023,
+          "usedAiFallback": false
+        }
+      ],
+      "assertions": [
+        {
+          "assertion": {
+            "type": "url_contains",
+            "expected": "https://procuchaingo2.vercel.app/register",
+            "description": "Stay on same page (not submitted)"
+          },
+          "passed": true,
+          "actual": "https://procuchaingo2.vercel.app/register"
+        }
+      ],
+      "durationMs": 3699,
+      "screenshots": [
+        {
+          "label": "After all steps",
+          "data": "[screenshot: After all steps]"
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "id": "TPL-010",
+        "name": "Invalid login on ProcuChain — AI Supply Chain",
+        "description": "Attempt login with invalid credentials — should show error",
+        "category": "auth",
+        "priority": "high",
+        "steps": [
+          {
+            "action": "navigate",
+            "value": "https://procuchaingo2.vercel.app/register",
+            "description": "Go to login page"
+          },
+          {
+            "action": "fill",
+            "target": "input[type=\"email\"], input[name*=\"user\"], input[name*=\"email\"], input[type=\"text\"]",
+            "value": "invalid@test.invalid",
+            "description": "Fill invalid email"
+          },
+          {
+            "action": "fill",
+            "target": "input[type=\"password\"]",
+            "value": "wrongpassword123",
+            "description": "Fill wrong password"
+          },
+          {
+            "action": "click",
+            "target": "button[type=\"submit\"], input[type=\"submit\"]",
+            "description": "Click sign in"
+          },
+          {
+            "action": "wait",
+            "value": "3000",
+            "description": "Wait for response"
+          }
+        ],
+        "assertions": [
+          {
+            "type": "element_visible",
+            "target": ".error, .alert-danger, [role=\"alert\"], .text-red-500",
+            "description": "Error message is displayed"
+          },
+          {
+            "type": "no_console_errors",
+            "description": "No unhandled JS errors"
+          }
+        ],
+        "tags": [
+          "auth",
+          "negative"
+        ]
+      },
+      "status": "passed",
+      "steps": [
+        {
+          "stepIndex": 0,
+          "action": "navigate",
+          "description": "Go to login page",
+          "success": true,
+          "durationMs": 1428,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 1,
+          "action": "fill",
+          "description": "Fill invalid email",
+          "success": true,
+          "durationMs": 2718,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 2,
+          "action": "fill",
+          "description": "Fill wrong password",
+          "success": true,
+          "durationMs": 1721,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 3,
+          "action": "click",
+          "description": "Click sign in",
+          "success": true,
+          "durationMs": 184,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 4,
+          "action": "wait",
+          "description": "Wait for response",
+          "success": true,
+          "durationMs": 3010,
+          "usedAiFallback": false
+        }
+      ],
+      "assertions": [
+        {
+          "assertion": {
+            "type": "element_visible",
+            "target": ".error, .alert-danger, [role=\"alert\"], .text-red-500",
+            "description": "Error message is displayed"
+          },
+          "passed": true,
+          "actual": true
+        },
+        {
+          "assertion": {
+            "type": "no_console_errors",
+            "description": "No unhandled JS errors"
+          },
+          "passed": true,
+          "actual": 0
+        }
+      ],
+      "durationMs": 9897,
+      "screenshots": [
+        {
+          "label": "After all steps",
+          "data": "[screenshot: After all steps]"
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "id": "TPL-011",
+        "name": "Broken links check (0 found)",
+        "description": "Check all discovered pages for HTTP error status codes",
+        "category": "navigation",
+        "priority": "low",
+        "steps": [
+          {
+            "action": "evaluate",
+            "value": "true",
+            "description": "Aggregated from crawl data"
+          }
+        ],
+        "assertions": [],
+        "tags": [
+          "navigation",
+          "broken-links"
+        ]
+      },
+      "status": "passed",
+      "steps": [
+        {
+          "stepIndex": 0,
+          "action": "evaluate",
+          "description": "Aggregated from crawl data",
+          "success": true,
+          "durationMs": 4,
+          "usedAiFallback": false
+        }
+      ],
+      "assertions": [],
+      "durationMs": 724,
+      "screenshots": [
+        {
+          "label": "After all steps",
+          "data": "[screenshot: After all steps]"
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "id": "TPL-012",
+        "name": "Console errors check (0 pages)",
+        "description": "Check all pages for JavaScript console errors",
+        "category": "error_handling",
+        "priority": "low",
+        "steps": [
+          {
+            "action": "evaluate",
+            "value": "true",
+            "description": "Aggregated from crawl data"
+          }
+        ],
+        "assertions": [],
+        "tags": [
+          "errors",
+          "console"
+        ]
+      },
+      "status": "passed",
+      "steps": [
+        {
+          "stepIndex": 0,
+          "action": "evaluate",
+          "description": "Aggregated from crawl data",
+          "success": true,
+          "durationMs": 30,
+          "usedAiFallback": false
+        }
+      ],
+      "assertions": [],
+      "durationMs": 766,
+      "screenshots": [
+        {
+          "label": "After all steps",
+          "data": "[screenshot: After all steps]"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "totalScenarios": 12,
+    "passed": 10,
+    "failed": 2,
+    "skipped": 0,
+    "errors": 0,
+    "byCategory": {
+      "auth": {
+        "passed": 1,
+        "failed": 1
+      },
+      "navigation": {
+        "passed": 5,
+        "failed": 0
+      },
+      "forms": {
+        "passed": 3,
+        "failed": 1
+      },
+      "functionality": {
+        "passed": 0,
+        "failed": 0
+      },
+      "error_handling": {
+        "passed": 1,
+        "failed": 0
+      },
+      "visual": {
+        "passed": 0,
+        "failed": 0
+      },
+      "a11y": {
+        "passed": 0,
+        "failed": 0
+      },
+      "performance": {
+        "passed": 0,
+        "failed": 0
+      }
+    },
+    "visualRegressions": 0,
+    "a11yViolations": {
+      "critical": 0,
+      "serious": 0,
+      "moderate": 0,
+      "minor": 0,
+      "violations": []
+    },
+    "avgLoadTimeMs": 3534,
+    "slowestPages": [
+      {
+        "url": "https://procuchaingo2.vercel.app/",
+        "loadTimeMs": 7788
+      },
+      {
+        "url": "https://procuchaingo2.vercel.app/pricing",
+        "loadTimeMs": 3261
+      },
+      {
+        "url": "https://procuchaingo2.vercel.app/login",
+        "loadTimeMs": 1559
+      },
+      {
+        "url": "https://procuchaingo2.vercel.app/register",
+        "loadTimeMs": 1528
+      }
+    ],
+    "consoleErrors": [],
+    "networkErrors": [],
+    "brokenLinks": [],
+    "overallScore": 90
+  }
+}

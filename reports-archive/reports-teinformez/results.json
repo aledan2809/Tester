@@ -1,0 +1,1811 @@
+{
+  "id": "run-1772492107055",
+  "url": "https://teinformez.eu",
+  "startedAt": "2026-03-02T22:54:29.532Z",
+  "completedAt": "2026-03-02T22:55:07.055Z",
+  "durationMs": 37523,
+  "config": {
+    "headless": true,
+    "maxPages": 10,
+    "maxDepth": 2,
+    "crawlTimeout": 120000,
+    "outputDir": "./reports-teinformez",
+    "visualRegression": false,
+    "accessibility": true,
+    "performance": true
+  },
+  "siteMap": {
+    "baseUrl": "https://teinformez.eu",
+    "pages": [
+      {
+        "url": "https://teinformez.eu/",
+        "title": "TeInformez.eu - Știri personalizate, livrate când vrei tu",
+        "depth": 0,
+        "statusCode": 200,
+        "forms": [],
+        "buttons": [
+          {
+            "selector": ".p-2.rounded-lg.text-gray-500.hover:bg-gray-100.dark:text-gray-400.dark:hover:bg-gray-700.transition-colors",
+            "text": "",
+            "type": "submit",
+            "isSubmit": true
+          }
+        ],
+        "links": [
+          {
+            "href": "https://teinformez.eu/login",
+            "text": "Autentificare",
+            "isExternal": false,
+            "isNavigation": true
+          },
+          {
+            "href": "https://teinformez.eu/register",
+            "text": "Înregistrare gratuită",
+            "isExternal": false,
+            "isNavigation": true
+          },
+          {
+            "href": "https://teinformez.eu/#features",
+            "text": "Află mai multe",
+            "isExternal": false,
+            "isNavigation": false
+          },
+          {
+            "href": "https://teinformez.eu/privacy",
+            "text": "Politica de confidențialitate",
+            "isExternal": false,
+            "isNavigation": false
+          },
+          {
+            "href": "https://teinformez.eu/terms",
+            "text": "Termeni și condiții",
+            "isExternal": false,
+            "isNavigation": false
+          },
+          {
+            "href": "https://teinformez.eu/gdpr",
+            "text": "GDPR",
+            "isExternal": false,
+            "isNavigation": false
+          }
+        ],
+        "inputs": [],
+        "modals": [],
+        "isLoginPage": false,
+        "isMfaPage": false,
+        "requiresAuth": true,
+        "hasConsoleErrors": true,
+        "consoleErrors": [
+          {
+            "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+            "level": "error",
+            "url": "https://teinformez.eu/"
+          }
+        ],
+        "networkErrors": [
+          {
+            "url": "https://teinformez.eu/favicon.ico",
+            "statusCode": 404,
+            "resource": "other"
+          }
+        ],
+        "loadTimeMs": 2682,
+        "resourceCount": 16
+      },
+      {
+        "url": "https://teinformez.eu/login",
+        "title": "Autentificare | TeInformez.eu",
+        "depth": 1,
+        "statusCode": 200,
+        "forms": [
+          {
+            "selector": "form:nth-of-type(1)",
+            "action": "https://teinformez.eu/login",
+            "method": "GET",
+            "fields": [
+              {
+                "name": "email",
+                "type": "email",
+                "selector": "#email",
+                "required": false,
+                "placeholder": "nume@exemplu.ro",
+                "label": "Email"
+              },
+              {
+                "name": "password",
+                "type": "password",
+                "selector": "#password",
+                "required": false,
+                "placeholder": "••••••••",
+                "label": "Parolă"
+              },
+              {
+                "name": "remember",
+                "type": "checkbox",
+                "selector": "#remember",
+                "required": false,
+                "label": "Ține-mă minte"
+              }
+            ],
+            "submitSelector": "form:nth-of-type(1) button[type=\"submit\"], form:nth-of-type(1) input[type=\"submit\"]"
+          }
+        ],
+        "buttons": [],
+        "links": [
+          {
+            "href": "https://teinformez.eu/",
+            "text": "TeInformez.eu",
+            "isExternal": false,
+            "isNavigation": false
+          },
+          {
+            "href": "https://teinformez.eu/register",
+            "text": "creează cont gratuit",
+            "isExternal": false,
+            "isNavigation": false
+          },
+          {
+            "href": "https://teinformez.eu/forgot-password",
+            "text": "Ai uitat parola?",
+            "isExternal": false,
+            "isNavigation": false
+          }
+        ],
+        "inputs": [],
+        "modals": [],
+        "isLoginPage": true,
+        "isMfaPage": false,
+        "requiresAuth": false,
+        "hasConsoleErrors": false,
+        "consoleErrors": [],
+        "networkErrors": [],
+        "loadTimeMs": 2172,
+        "resourceCount": 17
+      },
+      {
+        "url": "https://teinformez.eu/register",
+        "title": "Înregistrare gratuită | TeInformez.eu",
+        "depth": 1,
+        "statusCode": 200,
+        "forms": [
+          {
+            "selector": "form:nth-of-type(1)",
+            "action": "https://teinformez.eu/register",
+            "method": "GET",
+            "fields": [
+              {
+                "name": "name",
+                "type": "text",
+                "selector": "#name",
+                "required": false,
+                "placeholder": "Ion Popescu",
+                "label": "Nume (opțional)"
+              },
+              {
+                "name": "email",
+                "type": "email",
+                "selector": "#email",
+                "required": false,
+                "placeholder": "nume@exemplu.ro",
+                "label": "Email *"
+              },
+              {
+                "name": "password",
+                "type": "password",
+                "selector": "#password",
+                "required": false,
+                "placeholder": "••••••••",
+                "label": "Parolă *"
+              },
+              {
+                "name": "confirmPassword",
+                "type": "password",
+                "selector": "#confirmPassword",
+                "required": false,
+                "placeholder": "••••••••",
+                "label": "Confirmă parola *"
+              },
+              {
+                "name": "gdprConsent",
+                "type": "checkbox",
+                "selector": "#gdprConsent",
+                "required": false,
+                "label": "Accept Politica de confidențialitate și sunt de acord ca datele mele să fie procesate pentru a primi știri personalizate. *"
+              }
+            ],
+            "submitSelector": "form:nth-of-type(1) button[type=\"submit\"], form:nth-of-type(1) input[type=\"submit\"]"
+          }
+        ],
+        "buttons": [],
+        "links": [
+          {
+            "href": "https://teinformez.eu/",
+            "text": "TeInformez.eu",
+            "isExternal": false,
+            "isNavigation": false
+          },
+          {
+            "href": "https://teinformez.eu/login",
+            "text": "autentifică-te dacă ai deja cont",
+            "isExternal": false,
+            "isNavigation": false
+          },
+          {
+            "href": "https://teinformez.eu/privacy",
+            "text": "Politica de confidențialitate",
+            "isExternal": false,
+            "isNavigation": false
+          }
+        ],
+        "inputs": [],
+        "modals": [],
+        "isLoginPage": true,
+        "isMfaPage": false,
+        "requiresAuth": false,
+        "hasConsoleErrors": false,
+        "consoleErrors": [],
+        "networkErrors": [],
+        "loadTimeMs": 2132,
+        "resourceCount": 17
+      },
+      {
+        "url": "https://teinformez.eu/privacy",
+        "title": "Politica de Confidențialitate | TeInformez.eu",
+        "depth": 1,
+        "statusCode": 200,
+        "forms": [],
+        "buttons": [],
+        "links": [
+          {
+            "href": "https://teinformez.eu/",
+            "text": "← Inapoi",
+            "isExternal": false,
+            "isNavigation": true
+          },
+          {
+            "href": "https://teinformez.eu/gdpr",
+            "text": "GDPR",
+            "isExternal": false,
+            "isNavigation": false
+          },
+          {
+            "href": "https://www.dataprotection.ro/",
+            "text": "www.dataprotection.ro",
+            "isExternal": true,
+            "isNavigation": false
+          }
+        ],
+        "inputs": [],
+        "modals": [],
+        "isLoginPage": false,
+        "isMfaPage": false,
+        "requiresAuth": false,
+        "hasConsoleErrors": false,
+        "consoleErrors": [],
+        "networkErrors": [],
+        "loadTimeMs": 2145,
+        "resourceCount": 10
+      },
+      {
+        "url": "https://teinformez.eu/terms",
+        "title": "Termeni și Condiții | TeInformez.eu",
+        "depth": 1,
+        "statusCode": 200,
+        "forms": [],
+        "buttons": [],
+        "links": [
+          {
+            "href": "https://teinformez.eu/",
+            "text": "← Inapoi",
+            "isExternal": false,
+            "isNavigation": true
+          },
+          {
+            "href": "https://teinformez.eu/privacy",
+            "text": "Politica de Confidentialitate",
+            "isExternal": false,
+            "isNavigation": false
+          },
+          {
+            "href": "https://teinformez.eu/gdpr",
+            "text": "Pagina GDPR — Drepturile dumneavoastra",
+            "isExternal": false,
+            "isNavigation": false
+          }
+        ],
+        "inputs": [],
+        "modals": [],
+        "isLoginPage": false,
+        "isMfaPage": false,
+        "requiresAuth": false,
+        "hasConsoleErrors": false,
+        "consoleErrors": [],
+        "networkErrors": [],
+        "loadTimeMs": 2116,
+        "resourceCount": 10
+      },
+      {
+        "url": "https://teinformez.eu/gdpr",
+        "title": "GDPR — Drepturile Tale | TeInformez.eu",
+        "depth": 1,
+        "statusCode": 200,
+        "forms": [],
+        "buttons": [],
+        "links": [
+          {
+            "href": "https://teinformez.eu/",
+            "text": "← Inapoi",
+            "isExternal": false,
+            "isNavigation": true
+          },
+          {
+            "href": "https://www.dataprotection.ro/",
+            "text": "www.dataprotection.ro",
+            "isExternal": true,
+            "isNavigation": false
+          },
+          {
+            "href": "https://teinformez.eu/privacy",
+            "text": "Politica de Confidentialitate",
+            "isExternal": false,
+            "isNavigation": false
+          },
+          {
+            "href": "https://teinformez.eu/terms",
+            "text": "Termenii si Conditiile",
+            "isExternal": false,
+            "isNavigation": false
+          }
+        ],
+        "inputs": [],
+        "modals": [],
+        "isLoginPage": false,
+        "isMfaPage": false,
+        "requiresAuth": false,
+        "hasConsoleErrors": false,
+        "consoleErrors": [],
+        "networkErrors": [],
+        "loadTimeMs": 2165,
+        "resourceCount": 10
+      },
+      {
+        "url": "https://teinformez.eu/forgot-password",
+        "title": "Recuperare parolă | TeInformez.eu",
+        "depth": 2,
+        "statusCode": 200,
+        "forms": [
+          {
+            "selector": "form:nth-of-type(1)",
+            "action": "https://teinformez.eu/forgot-password",
+            "method": "GET",
+            "fields": [
+              {
+                "name": "email",
+                "type": "email",
+                "selector": "#email",
+                "required": false,
+                "placeholder": "email@exemplu.com",
+                "label": "Adresa de email"
+              }
+            ],
+            "submitSelector": "form:nth-of-type(1) button[type=\"submit\"], form:nth-of-type(1) input[type=\"submit\"]"
+          }
+        ],
+        "buttons": [],
+        "links": [
+          {
+            "href": "https://teinformez.eu/login",
+            "text": "Înapoi la autentificare",
+            "isExternal": false,
+            "isNavigation": false
+          }
+        ],
+        "inputs": [],
+        "modals": [],
+        "isLoginPage": false,
+        "isMfaPage": false,
+        "requiresAuth": false,
+        "hasConsoleErrors": false,
+        "consoleErrors": [],
+        "networkErrors": [],
+        "loadTimeMs": 2138,
+        "resourceCount": 13
+      }
+    ],
+    "totalPages": 7,
+    "crawlDurationMs": 22721
+  },
+  "scenarios": [
+    {
+      "scenario": {
+        "id": "TPL-001",
+        "name": "Navigate to TeInformez.eu - Știri personalizate, livrate când vrei tu",
+        "description": "Verify page loads successfully with correct status code",
+        "category": "navigation",
+        "priority": "critical",
+        "steps": [
+          {
+            "action": "navigate",
+            "value": "https://teinformez.eu/",
+            "description": "Navigate to https://teinformez.eu/"
+          }
+        ],
+        "assertions": [
+          {
+            "type": "status_code",
+            "expected": 200,
+            "operator": "equals",
+            "description": "Page returns HTTP 200"
+          },
+          {
+            "type": "title_contains",
+            "expected": "TeInformez.eu - Știri personalizate, livrate când vrei tu",
+            "description": "Page title is present"
+          },
+          {
+            "type": "no_console_errors",
+            "description": "No console errors on page"
+          }
+        ],
+        "tags": [
+          "navigation",
+          "depth-0"
+        ]
+      },
+      "status": "passed",
+      "steps": [
+        {
+          "stepIndex": 0,
+          "action": "navigate",
+          "description": "Navigate to https://teinformez.eu/",
+          "success": true,
+          "durationMs": 2141,
+          "usedAiFallback": false
+        }
+      ],
+      "assertions": [
+        {
+          "assertion": {
+            "type": "status_code",
+            "expected": 200,
+            "operator": "equals",
+            "description": "Page returns HTTP 200"
+          },
+          "passed": true,
+          "actual": 200
+        },
+        {
+          "assertion": {
+            "type": "title_contains",
+            "expected": "TeInformez.eu - Știri personalizate, livrate când vrei tu",
+            "description": "Page title is present"
+          },
+          "passed": true,
+          "actual": "TeInformez.eu - Știri personalizate, livrate când vrei tu"
+        },
+        {
+          "assertion": {
+            "type": "no_console_errors",
+            "description": "No console errors on page"
+          },
+          "passed": true,
+          "actual": 0
+        }
+      ],
+      "durationMs": 2285,
+      "screenshots": [
+        {
+          "label": "After all steps",
+          "data": "[screenshot: After all steps]"
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "id": "TPL-002",
+        "name": "Navigate to Autentificare | TeInformez.eu",
+        "description": "Verify page loads successfully with correct status code",
+        "category": "navigation",
+        "priority": "medium",
+        "steps": [
+          {
+            "action": "navigate",
+            "value": "https://teinformez.eu/login",
+            "description": "Navigate to https://teinformez.eu/login"
+          }
+        ],
+        "assertions": [
+          {
+            "type": "status_code",
+            "expected": 200,
+            "operator": "equals",
+            "description": "Page returns HTTP 200"
+          },
+          {
+            "type": "title_contains",
+            "expected": "Autentificare | TeInformez.eu",
+            "description": "Page title is present"
+          },
+          {
+            "type": "no_console_errors",
+            "description": "No console errors on page"
+          }
+        ],
+        "tags": [
+          "navigation",
+          "depth-1"
+        ]
+      },
+      "status": "passed",
+      "steps": [
+        {
+          "stepIndex": 0,
+          "action": "navigate",
+          "description": "Navigate to https://teinformez.eu/login",
+          "success": true,
+          "durationMs": 1409,
+          "usedAiFallback": false
+        }
+      ],
+      "assertions": [
+        {
+          "assertion": {
+            "type": "status_code",
+            "expected": 200,
+            "operator": "equals",
+            "description": "Page returns HTTP 200"
+          },
+          "passed": true,
+          "actual": 200
+        },
+        {
+          "assertion": {
+            "type": "title_contains",
+            "expected": "Autentificare | TeInformez.eu",
+            "description": "Page title is present"
+          },
+          "passed": true,
+          "actual": "Autentificare | TeInformez.eu"
+        },
+        {
+          "assertion": {
+            "type": "no_console_errors",
+            "description": "No console errors on page"
+          },
+          "passed": true,
+          "actual": 0
+        }
+      ],
+      "durationMs": 1568,
+      "screenshots": [
+        {
+          "label": "After all steps",
+          "data": "[screenshot: After all steps]"
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "id": "TPL-003",
+        "name": "Submit form on Autentificare | TeInformez.eu",
+        "description": "Fill and submit the login form with test data (expects rejection)",
+        "category": "forms",
+        "priority": "high",
+        "steps": [
+          {
+            "action": "navigate",
+            "value": "https://teinformez.eu/login",
+            "description": "Go to https://teinformez.eu/login"
+          },
+          {
+            "action": "fill",
+            "target": "#email",
+            "value": "test@example.com",
+            "description": "Fill Email (email)"
+          },
+          {
+            "action": "fill",
+            "target": "#password",
+            "value": "TestPassword123!",
+            "description": "Fill Parolă (password)"
+          },
+          {
+            "action": "fill",
+            "target": "#remember",
+            "value": "test input",
+            "description": "Fill Ține-mă minte (checkbox)"
+          },
+          {
+            "action": "click",
+            "target": "form:nth-of-type(1) button[type=\"submit\"], form:nth-of-type(1) input[type=\"submit\"]",
+            "description": "Click submit"
+          },
+          {
+            "action": "wait",
+            "value": "2000",
+            "description": "Wait for response"
+          }
+        ],
+        "assertions": [
+          {
+            "type": "url_contains",
+            "expected": "https://teinformez.eu/login",
+            "description": "Stay on login page (credentials rejected)"
+          }
+        ],
+        "tags": [
+          "forms",
+          "positive"
+        ]
+      },
+      "status": "passed",
+      "steps": [
+        {
+          "stepIndex": 0,
+          "action": "navigate",
+          "description": "Go to https://teinformez.eu/login",
+          "success": true,
+          "durationMs": 1107,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 1,
+          "action": "fill",
+          "description": "Fill Email (email)",
+          "success": true,
+          "durationMs": 28,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 2,
+          "action": "fill",
+          "description": "Fill Parolă (password)",
+          "success": true,
+          "durationMs": 10,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 3,
+          "action": "fill",
+          "description": "Fill Ține-mă minte (checkbox)",
+          "success": true,
+          "durationMs": 9,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 4,
+          "action": "click",
+          "description": "Click submit",
+          "success": true,
+          "durationMs": 49,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 5,
+          "action": "wait",
+          "description": "Wait for response",
+          "success": true,
+          "durationMs": 2000,
+          "usedAiFallback": false
+        }
+      ],
+      "assertions": [
+        {
+          "assertion": {
+            "type": "url_contains",
+            "expected": "https://teinformez.eu/login",
+            "description": "Stay on login page (credentials rejected)"
+          },
+          "passed": true,
+          "actual": "https://teinformez.eu/login"
+        }
+      ],
+      "durationMs": 3370,
+      "screenshots": [
+        {
+          "label": "After all steps",
+          "data": "[screenshot: After all steps]"
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "id": "TPL-004",
+        "name": "Invalid login on Autentificare | TeInformez.eu",
+        "description": "Attempt login with invalid credentials — should show error",
+        "category": "auth",
+        "priority": "high",
+        "steps": [
+          {
+            "action": "navigate",
+            "value": "https://teinformez.eu/login",
+            "description": "Go to login page"
+          },
+          {
+            "action": "fill",
+            "target": "input[type=\"email\"], input[name*=\"user\"], input[name*=\"email\"], input[type=\"text\"]",
+            "value": "invalid@test.invalid",
+            "description": "Fill invalid email"
+          },
+          {
+            "action": "fill",
+            "target": "input[type=\"password\"]",
+            "value": "wrongpassword123",
+            "description": "Fill wrong password"
+          },
+          {
+            "action": "click",
+            "target": "button[type=\"submit\"], input[type=\"submit\"]",
+            "description": "Click sign in"
+          },
+          {
+            "action": "wait",
+            "value": "5000",
+            "description": "Wait for server response and error render"
+          }
+        ],
+        "assertions": [
+          {
+            "type": "element_visible",
+            "target": ".error, .alert-danger, .alert-error, [role=\"alert\"], .login-error, #login_error, .form-error, .field-error, .message-error, .notice-error, .text-red-500, .text-red-600, .text-red-700, .text-red-800, .text-danger, .text-destructive, [class*=\"bg-red-\"], [class*=\"border-red-\"], [class*=\"error-message\"], [class*=\"error_message\"], [data-testid*=\"error\"], [data-test*=\"error\"]",
+            "description": "Error message is displayed"
+          }
+        ],
+        "tags": [
+          "auth",
+          "negative"
+        ]
+      },
+      "status": "passed",
+      "steps": [
+        {
+          "stepIndex": 0,
+          "action": "navigate",
+          "description": "Go to login page",
+          "success": true,
+          "durationMs": 1062,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 1,
+          "action": "fill",
+          "description": "Fill invalid email",
+          "success": true,
+          "durationMs": 55,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 2,
+          "action": "fill",
+          "description": "Fill wrong password",
+          "success": true,
+          "durationMs": 9,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 3,
+          "action": "click",
+          "description": "Click sign in",
+          "success": true,
+          "durationMs": 22,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 4,
+          "action": "wait",
+          "description": "Wait for server response and error render",
+          "success": true,
+          "durationMs": 5006,
+          "usedAiFallback": false
+        }
+      ],
+      "assertions": [
+        {
+          "assertion": {
+            "type": "element_visible",
+            "target": ".error, .alert-danger, .alert-error, [role=\"alert\"], .login-error, #login_error, .form-error, .field-error, .message-error, .notice-error, .text-red-500, .text-red-600, .text-red-700, .text-red-800, .text-danger, .text-destructive, [class*=\"bg-red-\"], [class*=\"border-red-\"], [class*=\"error-message\"], [class*=\"error_message\"], [data-testid*=\"error\"], [data-test*=\"error\"]",
+            "description": "Error message is displayed"
+          },
+          "passed": true,
+          "actual": true
+        }
+      ],
+      "durationMs": 6312,
+      "screenshots": [
+        {
+          "label": "After all steps",
+          "data": "[screenshot: After all steps]"
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "id": "TPL-005",
+        "name": "Navigate to Înregistrare gratuită | TeInformez.eu",
+        "description": "Verify page loads successfully with correct status code",
+        "category": "navigation",
+        "priority": "medium",
+        "steps": [
+          {
+            "action": "navigate",
+            "value": "https://teinformez.eu/register",
+            "description": "Navigate to https://teinformez.eu/register"
+          }
+        ],
+        "assertions": [
+          {
+            "type": "status_code",
+            "expected": 200,
+            "operator": "equals",
+            "description": "Page returns HTTP 200"
+          },
+          {
+            "type": "title_contains",
+            "expected": "Înregistrare gratuită | TeInformez.eu",
+            "description": "Page title is present"
+          },
+          {
+            "type": "no_console_errors",
+            "description": "No console errors on page"
+          }
+        ],
+        "tags": [
+          "navigation",
+          "depth-1"
+        ]
+      },
+      "status": "passed",
+      "steps": [
+        {
+          "stepIndex": 0,
+          "action": "navigate",
+          "description": "Navigate to https://teinformez.eu/register",
+          "success": true,
+          "durationMs": 1605,
+          "usedAiFallback": false
+        }
+      ],
+      "assertions": [
+        {
+          "assertion": {
+            "type": "status_code",
+            "expected": 200,
+            "operator": "equals",
+            "description": "Page returns HTTP 200"
+          },
+          "passed": true,
+          "actual": 200
+        },
+        {
+          "assertion": {
+            "type": "title_contains",
+            "expected": "Înregistrare gratuită | TeInformez.eu",
+            "description": "Page title is present"
+          },
+          "passed": true,
+          "actual": "Înregistrare gratuită | TeInformez.eu"
+        },
+        {
+          "assertion": {
+            "type": "no_console_errors",
+            "description": "No console errors on page"
+          },
+          "passed": true,
+          "actual": 0
+        }
+      ],
+      "durationMs": 1732,
+      "screenshots": [
+        {
+          "label": "After all steps",
+          "data": "[screenshot: After all steps]"
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "id": "TPL-006",
+        "name": "Submit form on Înregistrare gratuită | TeInformez.eu",
+        "description": "Fill and submit the login form with test data (expects rejection)",
+        "category": "forms",
+        "priority": "high",
+        "steps": [
+          {
+            "action": "navigate",
+            "value": "https://teinformez.eu/register",
+            "description": "Go to https://teinformez.eu/register"
+          },
+          {
+            "action": "fill",
+            "target": "#name",
+            "value": "Test User",
+            "description": "Fill Nume (opțional) (text)"
+          },
+          {
+            "action": "fill",
+            "target": "#email",
+            "value": "test@example.com",
+            "description": "Fill Email * (email)"
+          },
+          {
+            "action": "fill",
+            "target": "#password",
+            "value": "TestPassword123!",
+            "description": "Fill Parolă * (password)"
+          },
+          {
+            "action": "fill",
+            "target": "#confirmPassword",
+            "value": "TestPassword123!",
+            "description": "Fill Confirmă parola * (password)"
+          },
+          {
+            "action": "fill",
+            "target": "#gdprConsent",
+            "value": "test input",
+            "description": "Fill Accept Politica de confidențialitate și sunt de acord ca datele mele să fie procesate pentru a primi știri personalizate. * (checkbox)"
+          },
+          {
+            "action": "click",
+            "target": "form:nth-of-type(1) button[type=\"submit\"], form:nth-of-type(1) input[type=\"submit\"]",
+            "description": "Click submit"
+          },
+          {
+            "action": "wait",
+            "value": "2000",
+            "description": "Wait for response"
+          }
+        ],
+        "assertions": [
+          {
+            "type": "url_contains",
+            "expected": "https://teinformez.eu/register",
+            "description": "Stay on login page (credentials rejected)"
+          }
+        ],
+        "tags": [
+          "forms",
+          "positive"
+        ]
+      },
+      "status": "passed",
+      "steps": [
+        {
+          "stepIndex": 0,
+          "action": "navigate",
+          "description": "Go to https://teinformez.eu/register",
+          "success": true,
+          "durationMs": 1120,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 1,
+          "action": "fill",
+          "description": "Fill Nume (opțional) (text)",
+          "success": true,
+          "durationMs": 21,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 2,
+          "action": "fill",
+          "description": "Fill Email * (email)",
+          "success": true,
+          "durationMs": 14,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 3,
+          "action": "fill",
+          "description": "Fill Parolă * (password)",
+          "success": true,
+          "durationMs": 12,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 4,
+          "action": "fill",
+          "description": "Fill Confirmă parola * (password)",
+          "success": true,
+          "durationMs": 10,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 5,
+          "action": "fill",
+          "description": "Fill Accept Politica de confidențialitate și sunt de acord ca datele mele să fie procesate pentru a primi știri personalizate. * (checkbox)",
+          "success": true,
+          "durationMs": 10,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 6,
+          "action": "click",
+          "description": "Click submit",
+          "success": true,
+          "durationMs": 34,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 7,
+          "action": "wait",
+          "description": "Wait for response",
+          "success": true,
+          "durationMs": 2006,
+          "usedAiFallback": false
+        }
+      ],
+      "assertions": [
+        {
+          "assertion": {
+            "type": "url_contains",
+            "expected": "https://teinformez.eu/register",
+            "description": "Stay on login page (credentials rejected)"
+          },
+          "passed": true,
+          "actual": "https://teinformez.eu/register"
+        }
+      ],
+      "durationMs": 3378,
+      "screenshots": [
+        {
+          "label": "After all steps",
+          "data": "[screenshot: After all steps]"
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "id": "TPL-007",
+        "name": "Invalid login on Înregistrare gratuită | TeInformez.eu",
+        "description": "Attempt login with invalid credentials — should show error",
+        "category": "auth",
+        "priority": "high",
+        "steps": [
+          {
+            "action": "navigate",
+            "value": "https://teinformez.eu/register",
+            "description": "Go to login page"
+          },
+          {
+            "action": "fill",
+            "target": "input[type=\"email\"], input[name*=\"user\"], input[name*=\"email\"], input[type=\"text\"]",
+            "value": "invalid@test.invalid",
+            "description": "Fill invalid email"
+          },
+          {
+            "action": "fill",
+            "target": "input[type=\"password\"]",
+            "value": "wrongpassword123",
+            "description": "Fill wrong password"
+          },
+          {
+            "action": "click",
+            "target": "button[type=\"submit\"], input[type=\"submit\"]",
+            "description": "Click sign in"
+          },
+          {
+            "action": "wait",
+            "value": "5000",
+            "description": "Wait for server response and error render"
+          }
+        ],
+        "assertions": [
+          {
+            "type": "element_visible",
+            "target": ".error, .alert-danger, .alert-error, [role=\"alert\"], .login-error, #login_error, .form-error, .field-error, .message-error, .notice-error, .text-red-500, .text-red-600, .text-red-700, .text-red-800, .text-danger, .text-destructive, [class*=\"bg-red-\"], [class*=\"border-red-\"], [class*=\"error-message\"], [class*=\"error_message\"], [data-testid*=\"error\"], [data-test*=\"error\"]",
+            "description": "Error message is displayed"
+          }
+        ],
+        "tags": [
+          "auth",
+          "negative"
+        ]
+      },
+      "status": "passed",
+      "steps": [
+        {
+          "stepIndex": 0,
+          "action": "navigate",
+          "description": "Go to login page",
+          "success": true,
+          "durationMs": 1141,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 1,
+          "action": "fill",
+          "description": "Fill invalid email",
+          "success": true,
+          "durationMs": 20,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 2,
+          "action": "fill",
+          "description": "Fill wrong password",
+          "success": true,
+          "durationMs": 15,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 3,
+          "action": "click",
+          "description": "Click sign in",
+          "success": true,
+          "durationMs": 32,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 4,
+          "action": "wait",
+          "description": "Wait for server response and error render",
+          "success": true,
+          "durationMs": 5012,
+          "usedAiFallback": false
+        }
+      ],
+      "assertions": [
+        {
+          "assertion": {
+            "type": "element_visible",
+            "target": ".error, .alert-danger, .alert-error, [role=\"alert\"], .login-error, #login_error, .form-error, .field-error, .message-error, .notice-error, .text-red-500, .text-red-600, .text-red-700, .text-red-800, .text-danger, .text-destructive, [class*=\"bg-red-\"], [class*=\"border-red-\"], [class*=\"error-message\"], [class*=\"error_message\"], [data-testid*=\"error\"], [data-test*=\"error\"]",
+            "description": "Error message is displayed"
+          },
+          "passed": true,
+          "actual": true
+        }
+      ],
+      "durationMs": 6395,
+      "screenshots": [
+        {
+          "label": "After all steps",
+          "data": "[screenshot: After all steps]"
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "id": "TPL-008",
+        "name": "Navigate to Politica de Confidențialitate | TeInformez.eu",
+        "description": "Verify page loads successfully with correct status code",
+        "category": "navigation",
+        "priority": "medium",
+        "steps": [
+          {
+            "action": "navigate",
+            "value": "https://teinformez.eu/privacy",
+            "description": "Navigate to https://teinformez.eu/privacy"
+          }
+        ],
+        "assertions": [
+          {
+            "type": "status_code",
+            "expected": 200,
+            "operator": "equals",
+            "description": "Page returns HTTP 200"
+          },
+          {
+            "type": "title_contains",
+            "expected": "Politica de Confidențialitate | TeInformez.eu",
+            "description": "Page title is present"
+          },
+          {
+            "type": "no_console_errors",
+            "description": "No console errors on page"
+          }
+        ],
+        "tags": [
+          "navigation",
+          "depth-1"
+        ]
+      },
+      "status": "passed",
+      "steps": [
+        {
+          "stepIndex": 0,
+          "action": "navigate",
+          "description": "Navigate to https://teinformez.eu/privacy",
+          "success": true,
+          "durationMs": 2117,
+          "usedAiFallback": false
+        }
+      ],
+      "assertions": [
+        {
+          "assertion": {
+            "type": "status_code",
+            "expected": 200,
+            "operator": "equals",
+            "description": "Page returns HTTP 200"
+          },
+          "passed": true,
+          "actual": 200
+        },
+        {
+          "assertion": {
+            "type": "title_contains",
+            "expected": "Politica de Confidențialitate | TeInformez.eu",
+            "description": "Page title is present"
+          },
+          "passed": true,
+          "actual": "Politica de Confidențialitate | TeInformez.eu"
+        },
+        {
+          "assertion": {
+            "type": "no_console_errors",
+            "description": "No console errors on page"
+          },
+          "passed": true,
+          "actual": 0
+        }
+      ],
+      "durationMs": 2271,
+      "screenshots": [
+        {
+          "label": "After all steps",
+          "data": "[screenshot: After all steps]"
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "id": "TPL-009",
+        "name": "Navigate to Termeni și Condiții | TeInformez.eu",
+        "description": "Verify page loads successfully with correct status code",
+        "category": "navigation",
+        "priority": "medium",
+        "steps": [
+          {
+            "action": "navigate",
+            "value": "https://teinformez.eu/terms",
+            "description": "Navigate to https://teinformez.eu/terms"
+          }
+        ],
+        "assertions": [
+          {
+            "type": "status_code",
+            "expected": 200,
+            "operator": "equals",
+            "description": "Page returns HTTP 200"
+          },
+          {
+            "type": "title_contains",
+            "expected": "Termeni și Condiții | TeInformez.eu",
+            "description": "Page title is present"
+          },
+          {
+            "type": "no_console_errors",
+            "description": "No console errors on page"
+          }
+        ],
+        "tags": [
+          "navigation",
+          "depth-1"
+        ]
+      },
+      "status": "passed",
+      "steps": [
+        {
+          "stepIndex": 0,
+          "action": "navigate",
+          "description": "Navigate to https://teinformez.eu/terms",
+          "success": true,
+          "durationMs": 1333,
+          "usedAiFallback": false
+        }
+      ],
+      "assertions": [
+        {
+          "assertion": {
+            "type": "status_code",
+            "expected": 200,
+            "operator": "equals",
+            "description": "Page returns HTTP 200"
+          },
+          "passed": true,
+          "actual": 200
+        },
+        {
+          "assertion": {
+            "type": "title_contains",
+            "expected": "Termeni și Condiții | TeInformez.eu",
+            "description": "Page title is present"
+          },
+          "passed": true,
+          "actual": "Termeni și Condiții | TeInformez.eu"
+        },
+        {
+          "assertion": {
+            "type": "no_console_errors",
+            "description": "No console errors on page"
+          },
+          "passed": true,
+          "actual": 0
+        }
+      ],
+      "durationMs": 1504,
+      "screenshots": [
+        {
+          "label": "After all steps",
+          "data": "[screenshot: After all steps]"
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "id": "TPL-010",
+        "name": "Navigate to GDPR — Drepturile Tale | TeInformez.eu",
+        "description": "Verify page loads successfully with correct status code",
+        "category": "navigation",
+        "priority": "medium",
+        "steps": [
+          {
+            "action": "navigate",
+            "value": "https://teinformez.eu/gdpr",
+            "description": "Navigate to https://teinformez.eu/gdpr"
+          }
+        ],
+        "assertions": [
+          {
+            "type": "status_code",
+            "expected": 200,
+            "operator": "equals",
+            "description": "Page returns HTTP 200"
+          },
+          {
+            "type": "title_contains",
+            "expected": "GDPR — Drepturile Tale | TeInformez.eu",
+            "description": "Page title is present"
+          },
+          {
+            "type": "no_console_errors",
+            "description": "No console errors on page"
+          }
+        ],
+        "tags": [
+          "navigation",
+          "depth-1"
+        ]
+      },
+      "status": "passed",
+      "steps": [
+        {
+          "stepIndex": 0,
+          "action": "navigate",
+          "description": "Navigate to https://teinformez.eu/gdpr",
+          "success": true,
+          "durationMs": 2117,
+          "usedAiFallback": false
+        }
+      ],
+      "assertions": [
+        {
+          "assertion": {
+            "type": "status_code",
+            "expected": 200,
+            "operator": "equals",
+            "description": "Page returns HTTP 200"
+          },
+          "passed": true,
+          "actual": 200
+        },
+        {
+          "assertion": {
+            "type": "title_contains",
+            "expected": "GDPR — Drepturile Tale | TeInformez.eu",
+            "description": "Page title is present"
+          },
+          "passed": true,
+          "actual": "GDPR — Drepturile Tale | TeInformez.eu"
+        },
+        {
+          "assertion": {
+            "type": "no_console_errors",
+            "description": "No console errors on page"
+          },
+          "passed": true,
+          "actual": 0
+        }
+      ],
+      "durationMs": 2277,
+      "screenshots": [
+        {
+          "label": "After all steps",
+          "data": "[screenshot: After all steps]"
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "id": "TPL-011",
+        "name": "Navigate to Recuperare parolă | TeInformez.eu",
+        "description": "Verify page loads successfully with correct status code",
+        "category": "navigation",
+        "priority": "medium",
+        "steps": [
+          {
+            "action": "navigate",
+            "value": "https://teinformez.eu/forgot-password",
+            "description": "Navigate to https://teinformez.eu/forgot-password"
+          }
+        ],
+        "assertions": [
+          {
+            "type": "status_code",
+            "expected": 200,
+            "operator": "equals",
+            "description": "Page returns HTTP 200"
+          },
+          {
+            "type": "title_contains",
+            "expected": "Recuperare parolă | TeInformez.eu",
+            "description": "Page title is present"
+          },
+          {
+            "type": "no_console_errors",
+            "description": "No console errors on page"
+          }
+        ],
+        "tags": [
+          "navigation",
+          "depth-2"
+        ]
+      },
+      "status": "passed",
+      "steps": [
+        {
+          "stepIndex": 0,
+          "action": "navigate",
+          "description": "Navigate to https://teinformez.eu/forgot-password",
+          "success": true,
+          "durationMs": 2106,
+          "usedAiFallback": false
+        }
+      ],
+      "assertions": [
+        {
+          "assertion": {
+            "type": "status_code",
+            "expected": 200,
+            "operator": "equals",
+            "description": "Page returns HTTP 200"
+          },
+          "passed": true,
+          "actual": 200
+        },
+        {
+          "assertion": {
+            "type": "title_contains",
+            "expected": "Recuperare parolă | TeInformez.eu",
+            "description": "Page title is present"
+          },
+          "passed": true,
+          "actual": "Recuperare parolă | TeInformez.eu"
+        },
+        {
+          "assertion": {
+            "type": "no_console_errors",
+            "description": "No console errors on page"
+          },
+          "passed": true,
+          "actual": 0
+        }
+      ],
+      "durationMs": 2272,
+      "screenshots": [
+        {
+          "label": "After all steps",
+          "data": "[screenshot: After all steps]"
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "id": "TPL-012",
+        "name": "Submit form on Recuperare parolă | TeInformez.eu",
+        "description": "Fill and submit the form with valid test data",
+        "category": "forms",
+        "priority": "high",
+        "steps": [
+          {
+            "action": "navigate",
+            "value": "https://teinformez.eu/forgot-password",
+            "description": "Go to https://teinformez.eu/forgot-password"
+          },
+          {
+            "action": "fill",
+            "target": "#email",
+            "value": "test@example.com",
+            "description": "Fill Adresa de email (email)"
+          },
+          {
+            "action": "click",
+            "target": "form:nth-of-type(1) button[type=\"submit\"], form:nth-of-type(1) input[type=\"submit\"]",
+            "description": "Click submit"
+          },
+          {
+            "action": "wait",
+            "value": "2000",
+            "description": "Wait for response"
+          }
+        ],
+        "assertions": [
+          {
+            "type": "no_console_errors",
+            "description": "No JS errors after submit"
+          },
+          {
+            "type": "no_network_errors",
+            "description": "No network errors after submit"
+          }
+        ],
+        "tags": [
+          "forms",
+          "positive"
+        ]
+      },
+      "status": "passed",
+      "steps": [
+        {
+          "stepIndex": 0,
+          "action": "navigate",
+          "description": "Go to https://teinformez.eu/forgot-password",
+          "success": true,
+          "durationMs": 1111,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 1,
+          "action": "fill",
+          "description": "Fill Adresa de email (email)",
+          "success": true,
+          "durationMs": 42,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 2,
+          "action": "click",
+          "description": "Click submit",
+          "success": true,
+          "durationMs": 25,
+          "usedAiFallback": false
+        },
+        {
+          "stepIndex": 3,
+          "action": "wait",
+          "description": "Wait for response",
+          "success": true,
+          "durationMs": 2014,
+          "usedAiFallback": false
+        }
+      ],
+      "assertions": [
+        {
+          "assertion": {
+            "type": "no_console_errors",
+            "description": "No JS errors after submit"
+          },
+          "passed": true,
+          "actual": 0
+        },
+        {
+          "assertion": {
+            "type": "no_network_errors",
+            "description": "No network errors after submit"
+          },
+          "passed": true,
+          "actual": 0
+        }
+      ],
+      "durationMs": 3338,
+      "screenshots": [
+        {
+          "label": "After all steps",
+          "data": "[screenshot: After all steps]"
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "id": "TPL-013",
+        "name": "Broken links check (0 found)",
+        "description": "Check all discovered pages for HTTP error status codes",
+        "category": "navigation",
+        "priority": "low",
+        "steps": [
+          {
+            "action": "evaluate",
+            "value": "true",
+            "description": "Aggregated from crawl data"
+          }
+        ],
+        "assertions": [],
+        "tags": [
+          "navigation",
+          "broken-links"
+        ]
+      },
+      "status": "passed",
+      "steps": [
+        {
+          "stepIndex": 0,
+          "action": "evaluate",
+          "description": "Aggregated from crawl data",
+          "success": true,
+          "durationMs": 2,
+          "usedAiFallback": false
+        }
+      ],
+      "assertions": [],
+      "durationMs": 111,
+      "screenshots": [
+        {
+          "label": "After all steps",
+          "data": "[screenshot: After all steps]"
+        }
+      ]
+    },
+    {
+      "scenario": {
+        "id": "TPL-014",
+        "name": "Console errors check (1 pages)",
+        "description": "Check all pages for JavaScript console errors",
+        "category": "error_handling",
+        "priority": "high",
+        "steps": [
+          {
+            "action": "evaluate",
+            "value": "true",
+            "description": "Aggregated from crawl data"
+          }
+        ],
+        "assertions": [
+          {
+            "type": "no_console_errors",
+            "description": "https://teinformez.eu/ has 1 console error(s)"
+          }
+        ],
+        "tags": [
+          "errors",
+          "console"
+        ]
+      },
+      "status": "passed",
+      "steps": [
+        {
+          "stepIndex": 0,
+          "action": "evaluate",
+          "description": "Aggregated from crawl data",
+          "success": true,
+          "durationMs": 2,
+          "usedAiFallback": false
+        }
+      ],
+      "assertions": [
+        {
+          "assertion": {
+            "type": "no_console_errors",
+            "description": "https://teinformez.eu/ has 1 console error(s)"
+          },
+          "passed": true,
+          "actual": 0
+        }
+      ],
+      "durationMs": 119,
+      "screenshots": [
+        {
+          "label": "After all steps",
+          "data": "[screenshot: After all steps]"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "totalScenarios": 14,
+    "passed": 14,
+    "failed": 0,
+    "skipped": 0,
+    "errors": 0,
+    "byCategory": {
+      "auth": {
+        "passed": 2,
+        "failed": 0
+      },
+      "navigation": {
+        "passed": 8,
+        "failed": 0
+      },
+      "forms": {
+        "passed": 3,
+        "failed": 0
+      },
+      "functionality": {
+        "passed": 0,
+        "failed": 0
+      },
+      "error_handling": {
+        "passed": 1,
+        "failed": 0
+      },
+      "visual": {
+        "passed": 0,
+        "failed": 0
+      },
+      "a11y": {
+        "passed": 0,
+        "failed": 0
+      },
+      "performance": {
+        "passed": 0,
+        "failed": 0
+      }
+    },
+    "visualRegressions": 0,
+    "a11yViolations": {
+      "critical": 0,
+      "serious": 0,
+      "moderate": 3,
+      "minor": 0,
+      "violations": [
+        {
+          "id": "landmark-one-main",
+          "impact": "moderate",
+          "description": "Ensure the document has a main landmark",
+          "nodes": 1
+        },
+        {
+          "id": "page-has-heading-one",
+          "impact": "moderate",
+          "description": "Ensure that the page, or at least one of its frames contains a level-one heading",
+          "nodes": 1
+        },
+        {
+          "id": "region",
+          "impact": "moderate",
+          "description": "Ensure all page content is contained by landmarks",
+          "nodes": 4
+        }
+      ]
+    },
+    "avgLoadTimeMs": 2221,
+    "slowestPages": [
+      {
+        "url": "https://teinformez.eu/",
+        "loadTimeMs": 2682
+      },
+      {
+        "url": "https://teinformez.eu/login",
+        "loadTimeMs": 2172
+      },
+      {
+        "url": "https://teinformez.eu/gdpr",
+        "loadTimeMs": 2165
+      },
+      {
+        "url": "https://teinformez.eu/privacy",
+        "loadTimeMs": 2145
+      },
+      {
+        "url": "https://teinformez.eu/forgot-password",
+        "loadTimeMs": 2138
+      }
+    ],
+    "consoleErrors": [
+      {
+        "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+        "level": "error",
+        "url": "https://teinformez.eu/"
+      }
+    ],
+    "networkErrors": [
+      {
+        "url": "https://teinformez.eu/favicon.ico",
+        "statusCode": 404,
+        "resource": "other"
+      }
+    ],
+    "brokenLinks": [],
+    "overallScore": 92
+  }
+}

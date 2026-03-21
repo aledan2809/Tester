@@ -1,0 +1,401 @@
+{
+  "baseUrl": "https://teinformez.eu",
+  "pages": [
+    {
+      "url": "https://teinformez.eu/",
+      "title": "TeInformez.eu - Știri personalizate, livrate când vrei tu",
+      "depth": 0,
+      "statusCode": 200,
+      "forms": [],
+      "buttons": [
+        {
+          "selector": ".p-2.rounded-lg.text-gray-500.hover:bg-gray-100.dark:text-gray-400.dark:hover:bg-gray-700.transition-colors",
+          "text": "",
+          "type": "submit",
+          "isSubmit": true
+        }
+      ],
+      "links": [
+        {
+          "href": "https://teinformez.eu/login",
+          "text": "Autentificare",
+          "isExternal": false,
+          "isNavigation": true
+        },
+        {
+          "href": "https://teinformez.eu/register",
+          "text": "Înregistrare gratuită",
+          "isExternal": false,
+          "isNavigation": true
+        },
+        {
+          "href": "https://teinformez.eu/#features",
+          "text": "Află mai multe",
+          "isExternal": false,
+          "isNavigation": false
+        },
+        {
+          "href": "https://teinformez.eu/privacy",
+          "text": "Politica de confidențialitate",
+          "isExternal": false,
+          "isNavigation": false
+        },
+        {
+          "href": "https://teinformez.eu/terms",
+          "text": "Termeni și condiții",
+          "isExternal": false,
+          "isNavigation": false
+        },
+        {
+          "href": "https://teinformez.eu/gdpr",
+          "text": "GDPR",
+          "isExternal": false,
+          "isNavigation": false
+        }
+      ],
+      "inputs": [],
+      "modals": [],
+      "isLoginPage": false,
+      "isMfaPage": false,
+      "requiresAuth": true,
+      "hasConsoleErrors": true,
+      "consoleErrors": [
+        {
+          "message": "Failed to load resource: the server responded with a status of 404 (Not Found)",
+          "level": "error",
+          "url": "https://teinformez.eu/"
+        }
+      ],
+      "networkErrors": [
+        {
+          "url": "https://teinformez.eu/favicon.ico",
+          "statusCode": 404,
+          "resource": "other"
+        }
+      ],
+      "loadTimeMs": 2719,
+      "resourceCount": 16
+    },
+    {
+      "url": "https://teinformez.eu/login",
+      "title": "Autentificare | TeInformez.eu",
+      "depth": 1,
+      "statusCode": 200,
+      "forms": [
+        {
+          "selector": "form:nth-of-type(1)",
+          "action": "https://teinformez.eu/login",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "email",
+              "type": "email",
+              "selector": "#email",
+              "required": false,
+              "placeholder": "nume@exemplu.ro",
+              "label": "Email"
+            },
+            {
+              "name": "password",
+              "type": "password",
+              "selector": "#password",
+              "required": false,
+              "placeholder": "••••••••",
+              "label": "Parolă"
+            },
+            {
+              "name": "remember",
+              "type": "checkbox",
+              "selector": "#remember",
+              "required": false,
+              "label": "Ține-mă minte"
+            }
+          ],
+          "submitSelector": "form:nth-of-type(1) button[type=\"submit\"], form:nth-of-type(1) input[type=\"submit\"]"
+        }
+      ],
+      "buttons": [],
+      "links": [
+        {
+          "href": "https://teinformez.eu/",
+          "text": "TeInformez.eu",
+          "isExternal": false,
+          "isNavigation": false
+        },
+        {
+          "href": "https://teinformez.eu/register",
+          "text": "creează cont gratuit",
+          "isExternal": false,
+          "isNavigation": false
+        },
+        {
+          "href": "https://teinformez.eu/forgot-password",
+          "text": "Ai uitat parola?",
+          "isExternal": false,
+          "isNavigation": false
+        }
+      ],
+      "inputs": [],
+      "modals": [],
+      "isLoginPage": true,
+      "isMfaPage": false,
+      "requiresAuth": false,
+      "hasConsoleErrors": false,
+      "consoleErrors": [],
+      "networkErrors": [],
+      "loadTimeMs": 1007,
+      "resourceCount": 17
+    },
+    {
+      "url": "https://teinformez.eu/register",
+      "title": "Înregistrare gratuită | TeInformez.eu",
+      "depth": 1,
+      "statusCode": 200,
+      "forms": [
+        {
+          "selector": "form:nth-of-type(1)",
+          "action": "https://teinformez.eu/register",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "name",
+              "type": "text",
+              "selector": "#name",
+              "required": false,
+              "placeholder": "Ion Popescu",
+              "label": "Nume (opțional)"
+            },
+            {
+              "name": "email",
+              "type": "email",
+              "selector": "#email",
+              "required": false,
+              "placeholder": "nume@exemplu.ro",
+              "label": "Email *"
+            },
+            {
+              "name": "password",
+              "type": "password",
+              "selector": "#password",
+              "required": false,
+              "placeholder": "••••••••",
+              "label": "Parolă *"
+            },
+            {
+              "name": "confirmPassword",
+              "type": "password",
+              "selector": "#confirmPassword",
+              "required": false,
+              "placeholder": "••••••••",
+              "label": "Confirmă parola *"
+            },
+            {
+              "name": "gdprConsent",
+              "type": "checkbox",
+              "selector": "#gdprConsent",
+              "required": false,
+              "label": "Accept Politica de confidențialitate și sunt de acord ca datele mele să fie procesate pentru a primi știri personalizate. *"
+            }
+          ],
+          "submitSelector": "form:nth-of-type(1) button[type=\"submit\"], form:nth-of-type(1) input[type=\"submit\"]"
+        }
+      ],
+      "buttons": [],
+      "links": [
+        {
+          "href": "https://teinformez.eu/",
+          "text": "TeInformez.eu",
+          "isExternal": false,
+          "isNavigation": false
+        },
+        {
+          "href": "https://teinformez.eu/login",
+          "text": "autentifică-te dacă ai deja cont",
+          "isExternal": false,
+          "isNavigation": false
+        },
+        {
+          "href": "https://teinformez.eu/privacy",
+          "text": "Politica de confidențialitate",
+          "isExternal": false,
+          "isNavigation": false
+        }
+      ],
+      "inputs": [],
+      "modals": [],
+      "isLoginPage": true,
+      "isMfaPage": false,
+      "requiresAuth": false,
+      "hasConsoleErrors": false,
+      "consoleErrors": [],
+      "networkErrors": [],
+      "loadTimeMs": 2136,
+      "resourceCount": 17
+    },
+    {
+      "url": "https://teinformez.eu/privacy",
+      "title": "Politica de Confidențialitate | TeInformez.eu",
+      "depth": 1,
+      "statusCode": 200,
+      "forms": [],
+      "buttons": [],
+      "links": [
+        {
+          "href": "https://teinformez.eu/",
+          "text": "← Inapoi",
+          "isExternal": false,
+          "isNavigation": true
+        },
+        {
+          "href": "https://teinformez.eu/gdpr",
+          "text": "GDPR",
+          "isExternal": false,
+          "isNavigation": false
+        },
+        {
+          "href": "https://www.dataprotection.ro/",
+          "text": "www.dataprotection.ro",
+          "isExternal": true,
+          "isNavigation": false
+        }
+      ],
+      "inputs": [],
+      "modals": [],
+      "isLoginPage": false,
+      "isMfaPage": false,
+      "requiresAuth": false,
+      "hasConsoleErrors": false,
+      "consoleErrors": [],
+      "networkErrors": [],
+      "loadTimeMs": 1007,
+      "resourceCount": 10
+    },
+    {
+      "url": "https://teinformez.eu/terms",
+      "title": "Termeni și Condiții | TeInformez.eu",
+      "depth": 1,
+      "statusCode": 200,
+      "forms": [],
+      "buttons": [],
+      "links": [
+        {
+          "href": "https://teinformez.eu/",
+          "text": "← Inapoi",
+          "isExternal": false,
+          "isNavigation": true
+        },
+        {
+          "href": "https://teinformez.eu/privacy",
+          "text": "Politica de Confidentialitate",
+          "isExternal": false,
+          "isNavigation": false
+        },
+        {
+          "href": "https://teinformez.eu/gdpr",
+          "text": "Pagina GDPR — Drepturile dumneavoastra",
+          "isExternal": false,
+          "isNavigation": false
+        }
+      ],
+      "inputs": [],
+      "modals": [],
+      "isLoginPage": false,
+      "isMfaPage": false,
+      "requiresAuth": false,
+      "hasConsoleErrors": false,
+      "consoleErrors": [],
+      "networkErrors": [],
+      "loadTimeMs": 2211,
+      "resourceCount": 10
+    },
+    {
+      "url": "https://teinformez.eu/gdpr",
+      "title": "GDPR — Drepturile Tale | TeInformez.eu",
+      "depth": 1,
+      "statusCode": 200,
+      "forms": [],
+      "buttons": [],
+      "links": [
+        {
+          "href": "https://teinformez.eu/",
+          "text": "← Inapoi",
+          "isExternal": false,
+          "isNavigation": true
+        },
+        {
+          "href": "https://www.dataprotection.ro/",
+          "text": "www.dataprotection.ro",
+          "isExternal": true,
+          "isNavigation": false
+        },
+        {
+          "href": "https://teinformez.eu/privacy",
+          "text": "Politica de Confidentialitate",
+          "isExternal": false,
+          "isNavigation": false
+        },
+        {
+          "href": "https://teinformez.eu/terms",
+          "text": "Termenii si Conditiile",
+          "isExternal": false,
+          "isNavigation": false
+        }
+      ],
+      "inputs": [],
+      "modals": [],
+      "isLoginPage": false,
+      "isMfaPage": false,
+      "requiresAuth": false,
+      "hasConsoleErrors": false,
+      "consoleErrors": [],
+      "networkErrors": [],
+      "loadTimeMs": 1698,
+      "resourceCount": 10
+    },
+    {
+      "url": "https://teinformez.eu/forgot-password",
+      "title": "Recuperare parolă | TeInformez.eu",
+      "depth": 2,
+      "statusCode": 200,
+      "forms": [
+        {
+          "selector": "form:nth-of-type(1)",
+          "action": "https://teinformez.eu/forgot-password",
+          "method": "GET",
+          "fields": [
+            {
+              "name": "email",
+              "type": "email",
+              "selector": "#email",
+              "required": false,
+              "placeholder": "email@exemplu.com",
+              "label": "Adresa de email"
+            }
+          ],
+          "submitSelector": "form:nth-of-type(1) button[type=\"submit\"], form:nth-of-type(1) input[type=\"submit\"]"
+        }
+      ],
+      "buttons": [],
+      "links": [
+        {
+          "href": "https://teinformez.eu/login",
+          "text": "Înapoi la autentificare",
+          "isExternal": false,
+          "isNavigation": false
+        }
+      ],
+      "inputs": [],
+      "modals": [],
+      "isLoginPage": false,
+      "isMfaPage": false,
+      "requiresAuth": false,
+      "hasConsoleErrors": false,
+      "consoleErrors": [],
+      "networkErrors": [],
+      "loadTimeMs": 1937,
+      "resourceCount": 13
+    }
+  ],
+  "totalPages": 7,
+  "crawlDurationMs": 19887
+}

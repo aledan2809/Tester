@@ -6,7 +6,7 @@
 import { AITester } from '../../tester'
 import { formatSiteMapSummary } from '../../discovery/sitemap'
 import { generateReports } from '../../reporter/index'
-import { log, logSuccess, logWarn, logError, formatDuration, startSpinner, stopSpinner } from '../utils'
+import { log, logSuccess, logWarn, logError, formatDuration, startSpinner, stopSpinner, writeLine } from '../utils'
 
 interface RunOptions {
   maxPages: number
@@ -16,6 +16,7 @@ interface RunOptions {
   output: string
   username?: string
   password?: string
+  passwordEnv?: string
   loginUrl?: string
   apiKey?: string
   mfa: boolean
@@ -23,12 +24,20 @@ interface RunOptions {
   session?: string
   skip?: string
   only?: string
+  accessibility: boolean
+  visualRegression: boolean
+  performance: boolean
 }
 
 export async function runCommand(url: string, options: RunOptions): Promise<void> {
   const normalizedUrl = url.startsWith('http') ? url : `https://${url}`
 
   log(`Starting test run for ${normalizedUrl}`)
+
+  // Resolve password: --password-env takes precedence (safe for special chars like > < !)
+  const resolvedPassword = options.passwordEnv
+    ? (process.env[options.passwordEnv] || '')
+    : (options.password || '')
 
   const tester = new AITester({
     headless: options.headless,
@@ -39,14 +48,14 @@ export async function runCommand(url: string, options: RunOptions): Promise<void
     anthropicApiKey: options.apiKey || process.env.ANTHROPIC_API_KEY,
     credentials: options.username ? {
       username: options.username,
-      password: options.password || '',
+      password: resolvedPassword,
       loginUrl: options.loginUrl,
       mfaSecret: options.mfaSecret,
     } : undefined,
     sessionPath: options.session,
-    visualRegression: !options.skip?.includes('visual'),
-    accessibility: !options.skip?.includes('a11y'),
-    performance: !options.skip?.includes('performance'),
+    visualRegression: options.visualRegression || (!options.skip?.includes('visual') && !options.only),
+    accessibility: options.accessibility || (!options.skip?.includes('a11y') && !options.only),
+    performance: options.performance || (!options.skip?.includes('performance') && !options.only),
   })
 
   try {
@@ -70,9 +79,9 @@ export async function runCommand(url: string, options: RunOptions): Promise<void
     startSpinner('Discovering pages...')
     const siteMap = await tester.discover(normalizedUrl)
     stopSpinner(`Discovered ${siteMap.totalPages} pages in ${formatDuration(siteMap.crawlDurationMs)}`)
-    console.log('')
-    console.log(formatSiteMapSummary(siteMap))
-    console.log('')
+    writeLine('')
+    writeLine(formatSiteMapSummary(siteMap))
+    writeLine('')
 
     // Phase 3: Generate scenarios
     startSpinner('Generating test scenarios...')
