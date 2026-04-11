@@ -50,6 +50,7 @@ program
   .option('--accessibility', 'Enable accessibility testing', false)
   .option('--visual-regression', 'Enable visual regression testing', false)
   .option('--performance', 'Enable performance testing', false)
+  .option('--plan <path>', 'Load test plan from JSON file (skips AI scenario generation)')
   .action(runCommand)
 
 // ─── login ───────────────────────────────────────────────

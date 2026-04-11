@@ -3,10 +3,12 @@
  * Full autonomous test run: discover → login → generate → execute → report.
  */
 
+import fs from 'fs'
 import { AITester } from '../../tester'
 import { formatSiteMapSummary } from '../../discovery/sitemap'
 import { generateReports } from '../../reporter/index'
 import { log, logSuccess, logWarn, logError, formatDuration, startSpinner, stopSpinner, writeLine } from '../utils'
+import type { TestScenario } from '../../core/types'
 
 interface RunOptions {
   maxPages: number
@@ -27,6 +29,7 @@ interface RunOptions {
   accessibility: boolean
   visualRegression: boolean
   performance: boolean
+  plan?: string
 }
 
 export async function runCommand(url: string, options: RunOptions): Promise<void> {
@@ -75,18 +78,34 @@ export async function runCommand(url: string, options: RunOptions): Promise<void
       }
     }
 
-    // Phase 2: Discover
-    startSpinner('Discovering pages...')
-    const siteMap = await tester.discover(normalizedUrl)
-    stopSpinner(`Discovered ${siteMap.totalPages} pages in ${formatDuration(siteMap.crawlDurationMs)}`)
-    writeLine('')
-    writeLine(formatSiteMapSummary(siteMap))
-    writeLine('')
+    // Phase 2 + 3: Discover + Generate (or load from --plan file)
+    let scenarios: TestScenario[]
 
-    // Phase 3: Generate scenarios
-    startSpinner('Generating test scenarios...')
-    const scenarios = await tester.generateScenarios(siteMap)
-    stopSpinner(`Generated ${scenarios.length} test scenarios`)
+    if (options.plan) {
+      // F3: Load pre-defined test plan from JSON file, skip discovery + AI generation
+      log(`Loading test plan from ${options.plan}`)
+      try {
+        const raw = JSON.parse(fs.readFileSync(options.plan, 'utf8'))
+        scenarios = Array.isArray(raw) ? raw : (raw.scenarios || raw.flows || [])
+        logSuccess(`Loaded ${scenarios.length} scenarios from plan file`)
+      } catch (err) {
+        logError(`Failed to load plan file: ${err instanceof Error ? err.message : String(err)}`)
+        process.exit(1)
+        return
+      }
+    } else {
+      // Standard flow: discover then generate
+      startSpinner('Discovering pages...')
+      const siteMap = await tester.discover(normalizedUrl)
+      stopSpinner(`Discovered ${siteMap.totalPages} pages in ${formatDuration(siteMap.crawlDurationMs)}`)
+      writeLine('')
+      writeLine(formatSiteMapSummary(siteMap))
+      writeLine('')
+
+      startSpinner('Generating test scenarios...')
+      scenarios = await tester.generateScenarios(siteMap)
+      stopSpinner(`Generated ${scenarios.length} test scenarios`)
+    }
 
     const byCat: Record<string, number> = {}
     for (const s of scenarios) {

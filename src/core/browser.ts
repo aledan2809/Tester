@@ -31,6 +31,8 @@ const DEFAULT_CONFIG: Required<Omit<TesterConfig, 'credentials' | 'mfaHandler' |
   screenshotOnError: true,
   screenshotEveryStep: false,
   stepTimeout: 10_000,
+  concurrency: 1,
+  videoDir: '',
   visualRegression: true,
   accessibility: true,
   performance: true,

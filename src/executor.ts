@@ -37,9 +37,38 @@ export async function executeScenarios(
   // Aggregate a11y + performance across pages
   let totalA11y: A11yViolationSummary = { critical: 0, serious: 0, moderate: 0, minor: 0, violations: [] }
 
-  for (const scenario of scenarios) {
-    const result = await executeScenario(browser, scenario, config)
-    results.push(result)
+  // F4: Parallel scenario execution in batches (concurrency configurable, default 1 = sequential)
+  const concurrency = config.concurrency || 1
+  if (concurrency <= 1) {
+    // Sequential (original behavior, safest with single browser context)
+    for (const scenario of scenarios) {
+      const result = await executeScenario(browser, scenario, config)
+      results.push(result)
+    }
+  } else {
+    // Batched parallel — scenarios in each batch run concurrently
+    for (let i = 0; i < scenarios.length; i += concurrency) {
+      const batch = scenarios.slice(i, i + concurrency)
+      const batchResults = await Promise.allSettled(
+        batch.map(scenario => executeScenario(browser, scenario, config))
+      )
+      for (const r of batchResults) {
+        if (r.status === 'fulfilled') {
+          results.push(r.value)
+        } else {
+          // Rejected scenario — create a failed result
+          results.push({
+            scenario: batch[batchResults.indexOf(r)],
+            status: 'error' as const,
+            steps: [],
+            assertions: [],
+            screenshots: [],
+            error: r.reason?.message || String(r.reason),
+            durationMs: 0,
+          } as unknown as ScenarioResult)
+        }
+      }
+    }
   }
 
   // Run page-level a11y + perf if features enabled
@@ -81,6 +110,19 @@ async function executeScenario(
 
   // Timeout guard for the whole scenario
   const guard = createTimeoutGuard(300_000) // 5 min per scenario
+
+  // F5: Video recording — start screencast if videoDir configured
+  let screencastSession: { stop: () => Promise<void> } | null = null
+  try {
+    const page = browser.getPage()
+    if (page && config.videoDir) {
+      const { mkdirSync } = await import('fs')
+      mkdirSync(config.videoDir, { recursive: true })
+      const videoPath = `${config.videoDir}/${scenario.id || 'scenario'}_${Date.now()}.webm` as `${string}.webm`
+      const recorder = await page.screencast({ path: videoPath })
+      screencastSession = recorder
+    }
+  } catch {}
 
   try {
     // Clear errors before scenario
@@ -174,6 +216,10 @@ async function executeScenario(
       screenshots,
     }
   } finally {
+    // F5: Stop video recording
+    if (screencastSession) {
+      try { await screencastSession.stop() } catch {}
+    }
     guard.clear()
   }
 }

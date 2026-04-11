@@ -28,6 +28,7 @@ interface Job {
   completedAt?: Date
   result?: TestRun
   error?: string
+  callbackUrl?: string
 }
 
 // ─── State ──────────────────────────────────────────────
@@ -82,7 +83,7 @@ app.get('/api/health', (_req, res) => {
 
 /** Start a new test */
 app.post('/api/test/start', (req, res) => {
-  const { url, config } = req.body as { url?: string; config?: Partial<TesterConfig> }
+  const { url, config, callbackUrl } = req.body as { url?: string; config?: Partial<TesterConfig>; callbackUrl?: string }
 
   if (!url) {
     res.status(400).json({ error: 'url is required' })
@@ -116,6 +117,7 @@ app.post('/api/test/start', (req, res) => {
     config: config || {},
     status: 'queued',
     startedAt: now,
+    callbackUrl: callbackUrl || undefined,
   }
 
   // Save to SQLite
@@ -377,6 +379,14 @@ async function runTest(job: Job): Promise<void> {
     })
 
     console.info(`[${job.id}] Test completed: ${result.summary.passed}/${result.summary.totalScenarios} passed (score: ${result.summary.overallScore})`)
+
+    // F2: Fire callback webhook if configured (non-blocking)
+    if (job.callbackUrl) {
+      fireCallback(job.callbackUrl, {
+        testId: job.id, url: job.url, status: 'completed',
+        summary: result.summary, completedAt: completedAt.toISOString(),
+      }).catch(err => console.warn(`[${job.id}] Callback failed: ${err.message}`))
+    }
   } catch (err) {
     const completedAt = new Date()
     const error = err instanceof Error ? err.message : String(err)
@@ -390,6 +400,14 @@ async function runTest(job: Job): Promise<void> {
       error,
     })
     console.error(`[${job.id}] Test failed:`, error)
+
+    // F2: Fire callback webhook on failure too
+    if (job.callbackUrl) {
+      fireCallback(job.callbackUrl, {
+        testId: job.id, url: job.url, status: 'failed', error,
+        completedAt: completedAt.toISOString(),
+      }).catch(err => console.warn(`[${job.id}] Callback failed: ${err.message}`))
+    }
   } finally {
     await tester.close().catch(() => {})
     if (activeJobId === job.id) activeJobId = null
@@ -408,6 +426,23 @@ function stripScreenshotData(testRun: TestRun): TestRun {
         data: `[stripped]`,
       })),
     })),
+  }
+}
+
+// ─── Callback Webhook (F2: AVE/Guru integration) ────
+
+async function fireCallback(callbackUrl: string, payload: Record<string, unknown>): Promise<void> {
+  const secret = process.env.TESTER_CALLBACK_SECRET || process.env.TESTER_API_SECRET || ''
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' }
+  if (secret) headers['Authorization'] = `Bearer ${secret}`
+  const res = await fetch(callbackUrl, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(payload),
+    signal: AbortSignal.timeout(10_000),
+  })
+  if (!res.ok) {
+    throw new Error(`Callback returned ${res.status}: ${await res.text().catch(() => '')}`)
   }
 }
 

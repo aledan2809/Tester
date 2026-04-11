@@ -15,6 +15,7 @@ export interface LoginResult {
   error?: string
   platform?: string
   usedGenericDetection?: boolean
+  redirectUrl?: string
 }
 
 /**

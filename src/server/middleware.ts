@@ -46,3 +46,16 @@ export function requestLogger(req: Request, _res: Response, next: NextFunction):
   console.log(`[${timestamp}] ${req.method} ${req.path}`)
   next()
 }
+
+/**
+ * Session creation stub — returns an opaque session token.
+ * Real session storage is handled in a later phase.
+ */
+export function createSession(_data: {
+  url: string
+  username: string
+  platform?: string
+  cookies?: string
+}): string {
+  return `sess_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`
+}

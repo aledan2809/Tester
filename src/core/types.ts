@@ -57,6 +57,12 @@ export interface TesterConfig {
   /** Enable performance testing (default: true) */
   performance?: boolean
 
+  // Execution
+  /** Number of scenarios to run concurrently (default: 1 = sequential) */
+  concurrency?: number
+  /** Directory to save video recordings (default: disabled) */
+  videoDir?: string
+
   // Output
   /** Directory for reports (default: ./reports) */
   outputDir?: string
