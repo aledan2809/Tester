@@ -8,6 +8,7 @@ import { discoverCommand } from './commands/discover'
 import { runCommand } from './commands/run'
 import { loginCommand } from './commands/login'
 import { reportCommand } from './commands/report'
+import { auditCommand } from './commands/audit'
 
 const program = new Command()
 
@@ -73,5 +74,18 @@ program
   .option('--title <title>', 'Report title')
   .option('--no-screenshots', 'Exclude screenshots from report')
   .action(reportCommand)
+
+// ─── audit ──────────────────────────────────────────────
+program
+  .command('audit <url>')
+  .description('Deep E2E audit: security, a11y, API, DB, load, cross-browser (via Master plugin system)')
+  .option('--project <name>', 'Project name for credential lookup')
+  .option('-o, --output <dir>', 'Output directory', './reports')
+  .option('--plugins <ids>', 'Only run these plugins (comma-separated)')
+  .option('--skip-plugins <ids>', 'Skip these plugins (comma-separated)')
+  .option('--deep', 'Also run slow plugins (load-tester, email-tester)', false)
+  .option('--no-auth', 'Skip auth-resolver plugin')
+  .option('--json', 'Output raw JSON instead of markdown', false)
+  .action(auditCommand)
 
 program.parse()
