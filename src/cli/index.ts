@@ -1,5 +1,5 @@
 /**
- * CLI Entry Point — @aledan/tester
+ * CLI Entry Point — @aledan007/tester
  * Autonomous AI-powered web testing engine.
  */
 

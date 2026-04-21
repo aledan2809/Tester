@@ -1,8 +1,8 @@
 /**
- * @aledan/tester — AI-powered autonomous web testing engine
+ * @aledan007/tester — AI-powered autonomous web testing engine
  *
  * Library barrel export. Use this to import from other projects:
- *   import { AITester } from '@aledan/tester'
+ *   import { AITester } from '@aledan007/tester'
  */
 
 // Main class
@@ -41,6 +41,14 @@ export { executeScenarios } from './executor'
 // Reporter
 export { generateReports, generateJsonReport, generateHtmlReport, generateHtmlString, formatCiSummary } from './reporter/index'
 export type { ReportOptions, JsonReportOptions, HtmlReportOptions } from './reporter/index'
+
+// Validator
+export { AuditOnlyValidator, auditValidator } from './validator/audit-only'
+export type { AuditViolation } from './validator/audit-only'
+
+// Gaps Reporter
+export { generateGapsMarkdown, writeGapsReport, writeAuditFailedLog } from './reporter/gaps-generator'
+export type { AuditFinding, AuditMetadata, AuditReport, FindingSeverity } from './reporter/gaps-generator'
 
 // Types — re-export everything
 export type {

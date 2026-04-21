@@ -3,7 +3,7 @@
  * Autonomous web testing engine that discovers, generates, executes, and reports.
  *
  * Usage:
- *   import { AITester } from '@aledan/tester'
+ *   import { AITester } from '@aledan007/tester'
  *   const tester = new AITester({ headless: true })
  *   await tester.launch()
  *   const siteMap = await tester.discover('https://example.com')

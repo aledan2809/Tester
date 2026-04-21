@@ -12,15 +12,15 @@
  *
  * Usage:
  *   # In a project directory with .journey-audit.json:
- *   npx @aledan/tester journey-audit \
+ *   npx @aledan007/tester journey-audit \
  *     --email $MY_EMAIL --password $MY_PW
  *
  *   # Explicit project name → reads packaged config:
- *   npx @aledan/tester journey-audit --project tradeinvest \
+ *   npx @aledan007/tester journey-audit --project tradeinvest \
  *     --email $MY_EMAIL --password $MY_PW
  *
  *   # Explicit config path:
- *   npx @aledan/tester journey-audit --config ./path/to/cfg.json \
+ *   npx @aledan007/tester journey-audit --config ./path/to/cfg.json \
  *     --email ... --password ...
  */
 
