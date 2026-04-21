@@ -9,6 +9,8 @@ import { runCommand } from './commands/run'
 import { loginCommand } from './commands/login'
 import { reportCommand } from './commands/report'
 import { auditCommand } from './commands/audit'
+import { auditOnlyCommand } from './commands/audit-only'
+import { journeyAuditCliAction } from './commands/journey-audit'
 
 const program = new Command()
 
@@ -87,5 +89,25 @@ program
   .option('--no-auth', 'Skip auth-resolver plugin')
   .option('--json', 'Output raw JSON instead of markdown', false)
   .action(auditCommand)
+
+// ─── audit-only ─────────────────────────────────────────
+program
+  .command('audit-only')
+  .description('NO-TOUCH CRITIC: static code audit in read-only mode (ML2 Wave 2)')
+  .option('-o, --output <dir>', 'Output directory', './Reports')
+  .option('--date <date>', 'Audit date (YYYY-MM-DD)', new Date().toISOString().split('T')[0])
+  .action(auditOnlyCommand)
+
+// ─── journey-audit ──────────────────────────────────────
+program
+  .command('journey-audit')
+  .description('User-journey audit with real browser: login + walk every nav link + screenshots')
+  .option('--project <name>', 'Project name (reads packaged config by that name)')
+  .option('--config <path>', 'Explicit path to a .journey-audit.json file')
+  .option('--email <email>', 'Login email (overrides env var from config.credentials.emailEnv)')
+  .option('--password <pw>', 'Login password (overrides env var from config.credentials.passwordEnv)')
+  .option('--headed', 'Show the browser window', false)
+  .option('-o, --output <dir>', 'Output directory root', './journey-audit-results')
+  .action(journeyAuditCliAction)
 
 program.parse()

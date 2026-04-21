@@ -1,0 +1,43 @@
+{
+  "name": "TradeInvest",
+  "baseUrl": "https://tradeinvest.knowbest.ro",
+  "login": {
+    "path": "/auth/login",
+    "emailSelector": "input[type=email]",
+    "passwordSelector": "input[type=password]",
+    "submitSelector": "button[type=submit]",
+    "successUrlPattern": "/(dashboard|simulator|settings|$)"
+  },
+  "credentials": {
+    "emailEnv": "JOURNEY_EMAIL",
+    "passwordEnv": "JOURNEY_PASSWORD"
+  },
+  "navLinks": [
+    { "name": "Dashboard", "href": "/dashboard" },
+    { "name": "Portofoliu", "href": "/portfolio" },
+    { "name": "Simboluri", "href": "/symbols" },
+    { "name": "Strategii", "href": "/strategies" },
+    { "name": "Analize", "href": "/analysis" },
+    { "name": "Pozitii", "href": "/positions" },
+    { "name": "Ordere", "href": "/orders" },
+    { "name": "Signals", "href": "/signals" },
+    { "name": "Trade Journal", "href": "/journal" },
+    { "name": "Instrumente", "href": "/tools" },
+    { "name": "Optimizations", "href": "/optimization" },
+    { "name": "Alerte AI", "href": "/alerts" },
+    { "name": "Evenimente", "href": "/events" },
+    { "name": "Master Agent", "href": "/master-agent" },
+    { "name": "Simulator", "href": "/simulator" },
+    { "name": "Coach", "href": "/coach" },
+    { "name": "cTrader", "href": "/ctrader" },
+    { "name": "Settings", "href": "/settings" },
+    { "name": "Settings › Providers", "href": "/settings/providers" },
+    { "name": "Settings › Experimental", "href": "/settings/experimental" }
+  ],
+  "onboardingMarkers": "Set CTRADER_|Link your|Connect|Configure|Activate.*account",
+  "emptyStateMarkers": "No .*yet|No .*found|empty|Niciun|Nu exista",
+  "errorMarkers": "error|failed|eroare",
+  "viewport": { "width": 1440, "height": 900 },
+  "pageTimeout": 20000,
+  "settleDelay": 2000
+}
