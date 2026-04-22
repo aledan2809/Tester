@@ -36,14 +36,14 @@ interface NavLink {
 interface JourneyConfig {
   name: string
   baseUrl: string
-  login: {
+  login?: {
     path: string
     emailSelector: string
     passwordSelector: string
     submitSelector: string
     successUrlPattern: string
   }
-  credentials: {
+  credentials?: {
     emailEnv: string
     passwordEnv: string
   }
@@ -68,8 +68,8 @@ export interface JourneyAuditOptions {
 function readConfigFile(p: string): JourneyConfig {
   const raw = fs.readFileSync(p, 'utf-8')
   const cfg = JSON.parse(raw) as JourneyConfig
-  if (!cfg.name || !cfg.baseUrl || !cfg.navLinks || !cfg.login) {
-    throw new Error(`Config at ${p} is missing required fields (name, baseUrl, navLinks, login)`)
+  if (!cfg.name || !cfg.baseUrl || !cfg.navLinks) {
+    throw new Error(`Config at ${p} is missing required fields (name, baseUrl, navLinks)`)
   }
   return cfg
 }
@@ -132,11 +132,12 @@ export async function journeyAuditCommand(opts: JourneyAuditOptions): Promise<vo
   console.log(`  config: ${source}`)
   console.log(`${bar}\n`)
 
-  const email = opts.email || process.env[cfg.credentials.emailEnv]
-  const password = opts.password || process.env[cfg.credentials.passwordEnv]
-  if (!email || !password) {
+  const needsAuth = !!cfg.login
+  const email = needsAuth ? (opts.email || process.env[cfg.credentials!.emailEnv] || '') : ''
+  const password = needsAuth ? (opts.password || process.env[cfg.credentials!.passwordEnv] || '') : ''
+  if (needsAuth && (!email || !password)) {
     throw new Error(
-      `Missing credentials. Provide --email/--password or set env vars ${cfg.credentials.emailEnv} and ${cfg.credentials.passwordEnv}`
+      `Missing credentials. Provide --email/--password or set env vars ${cfg.credentials!.emailEnv} and ${cfg.credentials!.passwordEnv}`
     )
   }
 
@@ -154,54 +155,56 @@ export async function journeyAuditCommand(opts: JourneyAuditOptions): Promise<vo
   const page = await browser.newPage()
 
   try {
-    await page.goto(cfg.baseUrl + cfg.login.path, { waitUntil: 'domcontentloaded' })
-    await page.waitForSelector(cfg.login.emailSelector, { timeout: 10_000 })
+    if (cfg.login) {
+      await page.goto(cfg.baseUrl + cfg.login.path, { waitUntil: 'domcontentloaded' })
+      await page.waitForSelector(cfg.login.emailSelector, { timeout: 10_000 })
 
-    // React-friendly fill: focus first, clear existing value, then type.
-    // Puppeteer's page.type alone can miss React's synthetic events; clicking
-    // focuses the input and triggering native input events ensures React
-    // state syncs.
-    const fillInput = async (selector: string, value: string) => {
-      await page.click(selector, { clickCount: 3 }) // triple-click to select all
-      await page.keyboard.press('Backspace') // clear
-      await page.type(selector, value, { delay: 10 })
-    }
-    await fillInput(cfg.login.emailSelector, email)
-    await fillInput(cfg.login.passwordSelector, password)
+      // React-friendly fill: focus first, clear existing value, then type.
+      // Puppeteer's page.type alone can miss React's synthetic events; clicking
+      // focuses the input and triggering native input events ensures React
+      // state syncs.
+      const fillInput = async (selector: string, value: string) => {
+        await page.click(selector, { clickCount: 3 }) // triple-click to select all
+        await page.keyboard.press('Backspace') // clear
+        await page.type(selector, value, { delay: 10 })
+      }
+      await fillInput(cfg.login.emailSelector, email)
+      await fillInput(cfg.login.passwordSelector, password)
 
-    // Some apps submit via Enter, others only via button click. Do the click
-    // then fall back to Enter if URL hasn't changed after 2s.
-    const loginStartUrl = page.url()
-    await Promise.all([
-      page.waitForNavigation({ timeout: 15_000 }).catch(() => {
-        // client-side redirect or SPA transition — fall through to URL check
-      }),
-      page.click(cfg.login.submitSelector),
-    ])
+      // Some apps submit via Enter, others only via button click. Do the click
+      // then fall back to Enter if URL hasn't changed after 2s.
+      const loginStartUrl = page.url()
+      await Promise.all([
+        page.waitForNavigation({ timeout: 15_000 }).catch(() => {
+          // client-side redirect or SPA transition — fall through to URL check
+        }),
+        page.click(cfg.login.submitSelector),
+      ])
 
-    // If still on the login page after the click, try submitting with Enter
-    if (page.url() === loginStartUrl) {
-      await page.focus(cfg.login.passwordSelector)
-      await page.keyboard.press('Enter')
+      // If still on the login page after the click, try submitting with Enter
+      if (page.url() === loginStartUrl) {
+        await page.focus(cfg.login.passwordSelector)
+        await page.keyboard.press('Enter')
+        await page
+          .waitForNavigation({ timeout: 8_000 })
+          .catch(() => {
+            // fall through; the next assertion reports clear diagnostic
+          })
+      }
+
+      // Confirm login redirect matches the configured pattern
       await page
-        .waitForNavigation({ timeout: 8_000 })
+        .waitForFunction(
+          (src: string) => new RegExp(src).test(window.location.href),
+          { timeout: 10_000 },
+          cfg.login.successUrlPattern
+        )
         .catch(() => {
-          // fall through; the next assertion reports clear diagnostic
+          throw new Error(
+            `Login did not redirect to a URL matching ${cfg.login!.successUrlPattern}. Current URL: ${page.url()} (started: ${loginStartUrl})`
+          )
         })
     }
-
-    // Confirm login redirect matches the configured pattern
-    await page
-      .waitForFunction(
-        (src: string) => new RegExp(src).test(window.location.href),
-        { timeout: 10_000 },
-        cfg.login.successUrlPattern
-      )
-      .catch(() => {
-        throw new Error(
-          `Login did not redirect to a URL matching ${cfg.login.successUrlPattern}. Current URL: ${page.url()} (started: ${loginStartUrl})`
-        )
-      })
 
     const findings: Array<{
       page: string
