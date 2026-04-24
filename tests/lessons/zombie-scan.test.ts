@@ -143,3 +143,71 @@ describe('zombie-scan — at-risk detection', () => {
     }
   })
 })
+
+describe('zombie-scan — T-C6 watchdog-warnings integration', () => {
+  function writeStateWithWarnings(
+    pipelines: Array<Record<string, unknown>>,
+    warnings: Record<string, Record<string, unknown>>,
+  ): string {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'zombie-wd-'))
+    const stateDir = path.join(dir, 'mesh', 'state')
+    fs.mkdirSync(stateDir, { recursive: true })
+    fs.writeFileSync(path.join(stateDir, 'pipelines.json'), JSON.stringify({ pipelines }, null, 2), 'utf8')
+    fs.writeFileSync(path.join(stateDir, 'watchdog-warnings.json'), JSON.stringify(warnings, null, 2), 'utf8')
+    return path.join(stateDir, 'pipelines.json')
+  }
+
+  it('surfaces watchdog_warned=true for pipelines in warnings file', () => {
+    const now = Date.now()
+    const f = writeStateWithWarnings(
+      [{ id: 'pipe_w1', project: 'X', state: 'dev', updatedAt: new Date(now - 20 * MIN).toISOString() }],
+      { pipe_w1: { warned_at: new Date(now - 5 * MIN).toISOString(), project: 'X', state: 'dev', idle_min: 15 } },
+    )
+    try {
+      const res = scanForZombies(f, 15)
+      expect(res.length).toBe(1)
+      expect(res[0].watchdog_warned).toBe(true)
+      expect(res[0].watchdog_warned_at).toBeDefined()
+    } finally {
+      fs.rmSync(path.dirname(path.dirname(path.dirname(f))), { recursive: true, force: true })
+    }
+  })
+
+  it('handles absent watchdog-warnings.json gracefully (default: watchdog_warned=false)', () => {
+    const now = Date.now()
+    const f = writeState([
+      { id: 'pipe_no_wd', project: 'X', state: 'dev', updatedAt: new Date(now - 20 * MIN).toISOString() },
+    ])
+    try {
+      const res = scanForZombies(f, 15)
+      expect(res[0].watchdog_warned).toBe(false)
+      expect(res[0].watchdog_warned_at).toBeUndefined()
+    } finally {
+      fs.rmSync(path.dirname(path.dirname(path.dirname(f))), { recursive: true, force: true })
+    }
+  })
+
+  it('handles corrupted watchdog-warnings.json gracefully', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'zombie-corrupt-'))
+    const stateDir = path.join(dir, 'mesh', 'state')
+    fs.mkdirSync(stateDir, { recursive: true })
+    const now = Date.now()
+    fs.writeFileSync(
+      path.join(stateDir, 'pipelines.json'),
+      JSON.stringify({
+        pipelines: [
+          { id: 'pipe_corrupt', project: 'X', state: 'dev', updatedAt: new Date(now - 20 * MIN).toISOString() },
+        ],
+      }),
+      'utf8',
+    )
+    fs.writeFileSync(path.join(stateDir, 'watchdog-warnings.json'), 'not-json{{{', 'utf8')
+    try {
+      const res = scanForZombies(path.join(stateDir, 'pipelines.json'), 15)
+      expect(res.length).toBe(1)
+      expect(res[0].watchdog_warned).toBe(false) // graceful degrade
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true })
+    }
+  })
+})

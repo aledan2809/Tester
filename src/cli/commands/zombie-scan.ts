@@ -46,6 +46,8 @@ interface ZombieCandidate {
   updatedAt: string
   process_alive?: boolean
   severity: 'info' | 'warning' | 'critical'
+  watchdog_warned?: boolean
+  watchdog_warned_at?: string
 }
 
 const BLOCKED_STATES = new Set(['dev', 'planning', 'qa', 'deploy', 'monitor', 'ci', 'running'])
@@ -102,10 +104,31 @@ function classify(idleMinutes: number, processAlive: boolean | undefined): Zombi
   return 'info'
 }
 
+type WatchdogWarningsMap = Record<
+  string,
+  { warned_at: string; project?: string; state?: string; idle_min?: number; process_alive?: boolean }
+>
+
+function loadWatchdogWarnings(stateFile: string): WatchdogWarningsMap {
+  // Master's waiting_watchdog writes to <stateDir>/watchdog-warnings.json; same
+  // dir as pipelines.json. Best-effort; absent or corrupt file → empty map.
+  const stateDir = path.dirname(stateFile)
+  const file = path.join(stateDir, 'watchdog-warnings.json')
+  if (!fs.existsSync(file)) return {}
+  try {
+    const parsed = JSON.parse(fs.readFileSync(file, 'utf8'))
+    if (parsed && typeof parsed === 'object') return parsed as WatchdogWarningsMap
+  } catch {
+    /* corrupt → empty */
+  }
+  return {}
+}
+
 export function scanForZombies(stateFile: string, thresholdMin: number): ZombieCandidate[] {
   const raw = fs.readFileSync(stateFile, 'utf8')
   const parsed = JSON.parse(raw) as { pipelines?: PipelineRecord[] }
   const pipelines = parsed.pipelines || []
+  const warnings = loadWatchdogWarnings(stateFile)
   const candidates: ZombieCandidate[] = []
   const now = Date.now()
 
@@ -118,6 +141,7 @@ export function scanForZombies(stateFile: string, thresholdMin: number): ZombieC
     if (idleMinutes < thresholdMin) continue
 
     const processAlive = isProcessAlive(p.pid)
+    const warning = warnings[p.id]
     candidates.push({
       id: p.id,
       project: p.project || '(unknown)',
@@ -128,6 +152,8 @@ export function scanForZombies(stateFile: string, thresholdMin: number): ZombieC
       updatedAt,
       process_alive: processAlive,
       severity: classify(idleMinutes, processAlive),
+      watchdog_warned: !!warning,
+      watchdog_warned_at: warning?.warned_at,
     })
   }
 
@@ -183,8 +209,9 @@ export async function zombieScanCmd(opts: ZombieScanOptions): Promise<void> {
       const badge = c.severity === 'critical' ? '✗ CRIT' : c.severity === 'warning' ? '⚠ WARN' : 'ℹ INFO'
       const procTag =
         c.process_alive === false ? 'proc=dead' : c.process_alive === true ? 'proc=alive' : 'proc=unknown'
+      const wdTag = c.watchdog_warned ? ' WD-ACK' : ''
       process.stdout.write(
-        `  ${badge}  ${c.id.padEnd(24)} ${c.project.padEnd(20)} ${c.state.padEnd(10)} idle=${String(c.idle_minutes).padStart(4)}min ${procTag}${c.pid ? ` pid=${c.pid}` : ''}\n`,
+        `  ${badge}  ${c.id.padEnd(24)} ${c.project.padEnd(20)} ${c.state.padEnd(10)} idle=${String(c.idle_minutes).padStart(4)}min ${procTag}${c.pid ? ` pid=${c.pid}` : ''}${wdTag}\n`,
       )
     }
     process.stdout.write(`\nNon-destructive report. Use \`session-bridge --action recover\` or kill PID manually to clean up.\n`)
