@@ -20,6 +20,8 @@ import { installHooks, uninstallHooks } from '../../lessons/hooks'
 import { importFromFile } from '../../lessons/importer'
 import { computePromotionPlan } from '../../lessons/promotion'
 import { refineMatches, buildAstChecksFromLessons } from '../../lessons/ast-linter'
+import { classify as classifyFailure } from '../../lessons/classifier'
+import type { FailureContext } from '../../lessons/classifier'
 import type { Lesson, LessonSeverity, ScanMatch } from '../../lessons/schema'
 
 const fsExistsSync = fs.existsSync
@@ -373,6 +375,60 @@ export async function lessonsImport(from: string, opts: ImportOptions): Promise<
     }
     process.stdout.write(`Pass --out <dir> to write stubs to disk. Review each + fill detection regex.\n`)
   }
+}
+
+interface ClassifyOptions {
+  json?: boolean
+  dir?: string
+  forceHeuristic?: boolean
+}
+
+export async function lessonsClassify(logPath: string, opts: ClassifyOptions): Promise<void> {
+  const { dir } = resolveCorpus(opts.dir)
+  const resolvedLog = path.resolve(logPath)
+  if (!fsExistsSync(resolvedLog)) {
+    process.stderr.write(`[lessons] ERROR: log file does not exist: ${resolvedLog}\n`)
+    process.exit(2)
+  }
+  const raw = fs.readFileSync(resolvedLog, 'utf8')
+  // Build a FailureContext from a free-form log blob. We use heuristics to
+  // split assertion/stack/console — the classifier is tolerant of missing
+  // fields and the sha256 signature is stable under the actual text content.
+  const assertionMatch = raw.match(/(?:expected|assertion|expect\()([^\n]*)/i)
+  const errorMatch = raw.match(/(?:Error:|TypeError:|SyntaxError:|RangeError:|ReferenceError:)([^\n]*)/)
+  const urlMatch = raw.match(/https?:\/\/[^\s"')]+/)
+  const stackLines = raw
+    .split('\n')
+    .filter((l) => /^\s+at\s/.test(l))
+    .slice(0, 20)
+    .join('\n')
+  const consoleLines = raw
+    .split('\n')
+    .filter((l) => /console\.(log|error|warn|info)/.test(l))
+    .slice(0, 10)
+  const ctx: FailureContext = {
+    assertion: assertionMatch ? assertionMatch[0] : undefined,
+    errorMessage: errorMatch ? errorMatch[0] : undefined,
+    stackTrace: stackLines || undefined,
+    consoleErrors: consoleLines.length ? consoleLines : undefined,
+    pageUrl: urlMatch ? urlMatch[0] : undefined,
+    notes: raw.slice(0, 2000),
+  }
+
+  const verdict = await classifyFailure(ctx, { corpusDir: dir, forceHeuristic: opts.forceHeuristic })
+
+  if (opts.json) {
+    process.stdout.write(JSON.stringify({ corpus: dir, log: resolvedLog, context_signature: verdict.signature, ...verdict }, null, 2) + '\n')
+    return
+  }
+
+  const badge = verdict.verdict === 'PRODUCT_BUG' ? '⚑' : verdict.verdict === 'HARNESS_BUG' ? '🔧' : verdict.verdict === 'FLAKE' ? '⚡' : '⚙'
+  process.stdout.write(`Corpus: ${dir}\n`)
+  process.stdout.write(`Log:    ${resolvedLog}\n\n`)
+  process.stdout.write(`${badge} Verdict: ${verdict.verdict}  (confidence ${Math.round(verdict.confidence * 100)}%, source=${verdict.source}${verdict.cached ? ', cached' : ''})\n`)
+  process.stdout.write(`  reasoning:   ${verdict.reasoning}\n`)
+  process.stdout.write(`  remediation: ${verdict.remediation}\n`)
+  process.stdout.write(`  signature:   ${verdict.signature.slice(0, 16)}…\n`)
 }
 
 export async function lessonsPromote(opts: PromoteOptions): Promise<void> {

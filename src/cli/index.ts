@@ -20,10 +20,12 @@ import {
   lessonsInstallHooks,
   lessonsImport,
   lessonsPromote,
+  lessonsClassify,
 } from './commands/lessons'
 import { zombieScanCmd } from './commands/zombie-scan'
 import { selfCheckCommand } from './commands/selfcheck'
 import { coverageCommand } from './commands/coverage'
+import { generateCommand } from './commands/generate'
 
 const program = new Command()
 
@@ -195,6 +197,14 @@ lessonsCmd
   .option('--json', 'Emit JSON (single object)', false)
   .action((from, opts) => lessonsImport(from, opts))
 
+lessonsCmd
+  .command('classify <log-file>')
+  .description('T-004 — AI-backed failure classifier (PRODUCT_BUG/HARNESS_BUG/FLAKE/ENV_MISCONFIG) with sha256 signature dedup + cache')
+  .option('--dir <path>', 'Override lessons directory')
+  .option('--force-heuristic', 'Skip the AI path even if ANTHROPIC_API_KEY is set', false)
+  .option('--json', 'Emit JSON', false)
+  .action((logPath, opts) => lessonsClassify(logPath, opts))
+
 // ─── zombie-scan (T-C6 preventive tooling for L-24) ─────
 program
   .command('zombie-scan')
@@ -220,5 +230,18 @@ program
   .option('--fail-under <ratio>', 'Exit 1 if coverage ratio below this (0..1, e.g. 0.9)', (v) => parseFloat(v))
   .option('--json', 'Emit JSON', false)
   .action(coverageCommand)
+
+// ─── generate (T-005 test generator, Prisma MVP) ─────────
+program
+  .command('generate')
+  .description('T-005 — Generate test skeleton from a Prisma schema (OpenAPI + Zod TBD)')
+  .option('--from-prisma <path>', 'Path to prisma/schema.prisma file')
+  .option('--model <name>', 'Prisma model name to generate tests for')
+  .option('--out <dir>', 'Output directory (default: <repo>/tests/generated/<model>/)')
+  .option('--api-path <path>', 'HTTP API base path (default: /api/<plural-lowercase-model>)')
+  .option('--auth <mode>', 'Auth mode: token | none (default: token)')
+  .option('--overwrite', 'Overwrite existing generated file', false)
+  .option('--json', 'Emit JSON', false)
+  .action(generateCommand)
 
 program.parse()

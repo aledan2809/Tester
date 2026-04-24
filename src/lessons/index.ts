@@ -34,3 +34,13 @@ export { computePromotionPlan } from './promotion'
 export type { PromotionPlan, PromotionProposal, PromotionConfig } from './promotion'
 export { refineMatches, runSingleCheck, buildAstChecksFromLessons, AST_CHECK_IDS } from './ast-linter'
 export type { AstCheckId, AstCheckContext, AstCheckResult, RefineOptions } from './ast-linter'
+export {
+  classify,
+  signatureOf,
+  loadCache as loadClassifCache,
+  saveCache as saveClassifCache,
+  cacheFilePath as classifCachePath,
+  heuristicClassify,
+  _resetClassifCountForTests,
+} from './classifier'
+export type { FailureVerdict, FailureContext, ClassificationResult, ClassifCache } from './classifier'
