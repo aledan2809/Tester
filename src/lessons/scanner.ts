@@ -27,6 +27,46 @@ const IGNORED_DIRS = new Set([
   'test-results',
 ])
 
+/**
+ * Skip directives — for files that intentionally contain defect patterns
+ * (e.g. regression test fixtures, teaching examples, lesson YAMLs themselves).
+ *
+ *   // lessons:skip-all                 -> skip every lesson on this file
+ *   // lessons:skip L-F2                -> skip lesson L-F2 on this file
+ *   // lessons:skip L-F2,L-F8           -> skip multiple
+ *   /* lessons:skip-all *\/             -> block-comment form also supported
+ */
+const SKIP_ALL_RE = /(?:\/\/|\/\*|#)\s*lessons:skip-all\b/
+// Line-based matcher: one "lessons:skip" directive per line; captures only the
+// id list before end-of-line / comment-close / path-separator. Prevents greedy
+// cross-line capture where a plain `\s` class would swallow subsequent code.
+const SKIP_SELECTED_RE = /(?:\/\/|\/\*|#)[ \t]*lessons:skip[ \t]+([^\n\r*/]+)/g
+const ID_SEP_RE = /[\s,]+/
+
+interface SkipDirective {
+  skipAll: boolean
+  skippedIds: Set<string>
+}
+
+function parseSkipDirectives(content: string): SkipDirective {
+  const directive: SkipDirective = { skipAll: false, skippedIds: new Set() }
+  if (SKIP_ALL_RE.test(content)) {
+    directive.skipAll = true
+    return directive
+  }
+  let m: RegExpExecArray | null
+  SKIP_SELECTED_RE.lastIndex = 0
+  while ((m = SKIP_SELECTED_RE.exec(content)) !== null) {
+    for (const raw of m[1].split(ID_SEP_RE)) {
+      const id = raw.trim()
+      if (id && /^L[-_A-Za-z0-9]+$/.test(id)) {
+        directive.skippedIds.add(id)
+      }
+    }
+  }
+  return directive
+}
+
 function fileMatchesGlob(file: string, pattern: string | undefined, type: 'test' | 'source'): boolean {
   if (pattern) {
     try {
@@ -76,9 +116,12 @@ function lineColumnOf(content: string, index: number): { line: number; column: n
 export function scanFile(file: string, lessons: Lesson[]): ScanMatch[] {
   const content = fs.readFileSync(file, 'utf8')
   const matches: ScanMatch[] = []
+  const skip = parseSkipDirectives(content)
+  if (skip.skipAll) return matches
 
   for (const lesson of lessons) {
     if (lesson.status !== 'active') continue
+    if (skip.skippedIds.has(lesson.id)) continue
     for (const rule of lesson.detection) {
       const wantsTest = rule.type === 'regex_in_test_file'
       const wantsSource = rule.type === 'regex_in_source_file'

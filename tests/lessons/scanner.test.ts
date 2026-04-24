@@ -1,5 +1,11 @@
+// lessons:skip-all
 /**
  * T-000 Day-1 — scanner regression tests.
+ *
+ * NOTE: the `// lessons:skip-all` directive above prevents the scanner from
+ * self-flagging this file. It contains INTENTIONAL defect patterns as
+ * positive-case fixtures for F2/F8/F10 detection; without the directive,
+ * walking tests/lessons/ would produce a flood of self-referential matches.
  *
  * The META-TEST gate from TODO_PERSISTENT Phase 0.4:
  *   "Seed broken procu-flows-audit.mjs with F2 ([href!=]), F8 (case-sensitive
@@ -166,5 +172,76 @@ describe('scanner — directory walk', () => {
     } finally {
       fs.rmSync(dir, { recursive: true, force: true })
     }
+  })
+})
+
+describe('scanner — skip directives (gap #3 fix)', () => {
+  it('honors // lessons:skip-all — returns zero matches on defect-heavy file', () => {
+    const content = `
+      // lessons:skip-all
+      // Intentional fixture — all 3 defects
+      document.querySelectorAll('a[href!="/x"]')
+      document.body.innerText.match(/Formula Data/)
+      await page.getByText(/Add vendor/).click()
+    `
+    const file = writeFixture(content)
+    try {
+      expect(scanFile(file, corpus)).toEqual([])
+    } finally {
+      fs.rmSync(path.dirname(file), { recursive: true, force: true })
+    }
+  })
+
+  it('honors /* lessons:skip-all */ block-comment form', () => {
+    const content = `/* lessons:skip-all */\n await page.getByText(/Add vendor/).click()`
+    const file = writeFixture(content)
+    try {
+      expect(scanFile(file, corpus)).toEqual([])
+    } finally {
+      fs.rmSync(path.dirname(file), { recursive: true, force: true })
+    }
+  })
+
+  it('honors // lessons:skip L-F2 — skips only specified lesson, others still fire', () => {
+    const content = `
+      // lessons:skip L-F2
+      document.querySelectorAll('a[href!="/x"]')
+      await page.getByText(/Add vendor/).click()
+    `
+    const file = writeFixture(content)
+    try {
+      const matches = scanFile(file, corpus)
+      const ids = new Set(matches.map((m) => m.lesson_id))
+      expect(ids.has('L-F2')).toBe(false)
+      expect(ids.has('L-F10')).toBe(true)
+    } finally {
+      fs.rmSync(path.dirname(file), { recursive: true, force: true })
+    }
+  })
+
+  it('honors // lessons:skip L-F2,L-F10 — multiple ids', () => {
+    const content = `
+      // lessons:skip L-F2, L-F10
+      document.querySelectorAll('a[href!="/x"]')
+      document.body.innerText.match(/Formula Data/)
+      await page.getByText(/Add vendor/).click()
+    `
+    const file = writeFixture(content)
+    try {
+      const matches = scanFile(file, corpus)
+      const ids = new Set(matches.map((m) => m.lesson_id))
+      expect(ids.has('L-F2')).toBe(false)
+      expect(ids.has('L-F10')).toBe(false)
+      expect(ids.has('L-F8')).toBe(true)
+    } finally {
+      fs.rmSync(path.dirname(file), { recursive: true, force: true })
+    }
+  })
+
+  it('scanning the Tester project root should find ZERO matches in tests/lessons/ (self-reference protection)', () => {
+    const repoRoot = path.resolve(__dirname, '../..')
+    const testsLessonsDir = path.join(repoRoot, 'tests', 'lessons')
+    const matches = scan(testsLessonsDir, corpus)
+    expect(matches).toEqual([])
   })
 })

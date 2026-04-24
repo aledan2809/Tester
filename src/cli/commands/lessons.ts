@@ -8,10 +8,13 @@
  * Day-2 will add: diagnose, validate, stats, import, learn.
  */
 
+import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { loadLessons, findLessonsDir } from '../../lessons/loader'
 import { scan } from '../../lessons/scanner'
 import type { Lesson, LessonSeverity, ScanMatch } from '../../lessons/schema'
+
+const fsExistsSync = fs.existsSync
 
 interface ListOptions {
   severity?: string
@@ -34,6 +37,17 @@ const SEVERITY_ORDER: Record<LessonSeverity, number> = {
   critical: 4,
 }
 
+const VALID_SEVERITIES = new Set<string>(['info', 'low', 'medium', 'high', 'critical'])
+
+function validateSeverityFlag(severity: string | undefined): void {
+  if (severity && !VALID_SEVERITIES.has(severity)) {
+    process.stderr.write(
+      `[lessons] ERROR: --severity must be one of info|low|medium|high|critical, got: ${severity}\n`,
+    )
+    process.exit(2)
+  }
+}
+
 function resolveCorpus(override?: string): { lessons: Lesson[]; dir: string; errors: number } {
   const dir = override ? path.resolve(override) : findLessonsDir()
   const result = loadLessons(dir)
@@ -46,6 +60,7 @@ function resolveCorpus(override?: string): { lessons: Lesson[]; dir: string; err
 }
 
 export async function lessonsList(opts: ListOptions): Promise<void> {
+  validateSeverityFlag(opts.severity)
   const { lessons, dir } = resolveCorpus(opts.dir)
 
   const filterTags = opts.tags
@@ -96,6 +111,10 @@ export async function lessonsScan(target: string, opts: ScanOptions): Promise<vo
   }
 
   const resolvedTarget = path.resolve(target)
+  if (!fsExistsSync(resolvedTarget)) {
+    process.stderr.write(`[lessons] ERROR: scan target does not exist: ${resolvedTarget}\n`)
+    process.exit(2)
+  }
   const matches = scan(resolvedTarget, lessons)
 
   if (opts.json) {
