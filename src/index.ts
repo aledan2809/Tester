@@ -171,7 +171,7 @@ export type { A11yHtmlOptions } from './a11y/html-report'
 export { runAllA11y, writeA11yScanFile } from './a11y/runtime'
 export type { RunAllA11yOptions, A11yScanFile } from './a11y/runtime'
 
-// T-010 perf budget
+// T-010 perf budget + Lighthouse + trend + GitHub
 export {
   loadPerfBudget,
   evaluatePerfBudget,
@@ -179,6 +179,19 @@ export {
   renderCiComment as renderPerfCiComment,
 } from './perf/budget'
 export type { PerfMetrics, PerfRun, PerfBudgetFile, PerfReport } from './perf/budget'
+export { runLighthouse, runLighthouseMulti } from './perf/lighthouse'
+export type { LighthouseOptions } from './perf/lighthouse'
+export {
+  appendTrendRecord,
+  readTrend,
+  computeWeekOverWeek,
+  renderTrendMarkdown,
+  defaultTrendPath,
+  perRouteSeries,
+} from './perf/trend'
+export type { TrendRecord, TimeSeriesPoint, WeekOverWeekEntry } from './perf/trend'
+export { postPrComment, parseGithubActionsContext } from './perf/github'
+export type { PostPrCommentInput, PrCommentResult } from './perf/github'
 
 // T-A1 feature scaffolder
 export { initFeature, loadFeaturesIndex } from './init/scaffolder'
