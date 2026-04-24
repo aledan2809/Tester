@@ -40,6 +40,11 @@ import {
   sessionListCmd,
 } from './commands/session'
 import { scoreCommand } from './commands/score'
+import {
+  regressionAddCmd,
+  regressionListCmd,
+  regressionExpireCmd,
+} from './commands/regression'
 
 const program = new Command()
 
@@ -257,6 +262,38 @@ program
   .option('--overwrite', 'Overwrite existing generated file', false)
   .option('--json', 'Emit JSON', false)
   .action(generateCommand)
+
+// ─── regression (T-B2 sticky fix scaffolder) ─────────────
+const regCmd = program
+  .command('regression')
+  .description('T-B2 — Sticky regression corpus under tests/regressions/')
+
+regCmd
+  .command('add')
+  .description('Scaffold a regression spec + update index')
+  .option('--project <path>', 'Project root (default: cwd)')
+  .option('--slug <slug>', 'Short slug (lowercase, a-z0-9-, max 80 chars)')
+  .option('--title <text>', 'Human-readable regression title')
+  .option('--lesson-id <id>', 'Link to a T-000 lesson (e.g. L-F2)')
+  .option('--fix-commit <sha>', 'Commit that fixed the bug')
+  .option('--expire-at <iso>', 'ISO date when expire is allowed (manual prune)')
+  .option('--source-scenario <id>', 'Scenario this regression came from')
+  .option('--original-assertion <text>', 'Copy the original failing assertion into the spec')
+  .option('--json', 'Emit JSON', false)
+  .action((opts) => regressionAddCmd(opts))
+
+regCmd
+  .command('list')
+  .option('--project <path>', 'Project root (default: cwd)')
+  .option('--json', 'Emit JSON', false)
+  .action((opts) => regressionListCmd(opts))
+
+regCmd
+  .command('expire <slug>')
+  .description('Remove a regression spec + index entry (90d prune workflow)')
+  .option('--project <path>', 'Project root (default: cwd)')
+  .option('--json', 'Emit JSON', false)
+  .action((slug, opts) => regressionExpireCmd(slug, opts))
 
 // ─── score (T-B1 coverage-aware TWG scoring) ─────────────
 program
