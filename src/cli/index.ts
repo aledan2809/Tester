@@ -45,6 +45,7 @@ import {
   regressionListCmd,
   regressionExpireCmd,
 } from './commands/regression'
+import { triageCommand } from './commands/triage'
 
 const program = new Command()
 
@@ -262,6 +263,16 @@ program
   .option('--overwrite', 'Overwrite existing generated file', false)
   .option('--json', 'Emit JSON', false)
   .action(generateCommand)
+
+// ─── triage (T-B3 product-vs-harness routing for TWG) ────
+program
+  .command('triage <log-file>')
+  .description('T-B3 — Classify failure + emit TWG route (guru | tester-self | flake-retry | env-fix)')
+  .option('--dir <path>', 'Override lessons directory')
+  .option('--force-heuristic', 'Skip AI path even if ANTHROPIC_API_KEY set', false)
+  .option('--min-confidence <n>', 'Confidence below this falls back to guru (default 0.5)', (v) => parseFloat(v))
+  .option('--json', 'Emit JSON', false)
+  .action((logPath, opts) => triageCommand(logPath, opts))
 
 // ─── regression (T-B2 sticky fix scaffolder) ─────────────
 const regCmd = program
