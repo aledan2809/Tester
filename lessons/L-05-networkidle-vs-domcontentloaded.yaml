@@ -63,5 +63,5 @@ diagnosis:
     Only fall back to explicit `waitForSelector('[data-testid=user-menu]')`
     if networkidle is unreliable on your target.
 
-regression_test: tests/lessons/L-05.spec.ts
+regression_test: tests/lessons/regression-battery.test.ts
 status: active

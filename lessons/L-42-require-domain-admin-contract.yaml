@@ -62,5 +62,5 @@ diagnosis:
     Also: UI must mirror this — if a user has adminOf = [domainA] but browses
     domainB, don't show edit buttons.
 
-regression_test: tests/lessons/L-42.spec.ts
+regression_test: tests/lessons/regression-battery.test.ts
 status: active

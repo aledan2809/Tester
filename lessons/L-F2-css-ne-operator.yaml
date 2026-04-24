@@ -42,5 +42,5 @@ diagnosis:
     Alternatively, query broader and filter in JS:
       [...document.querySelectorAll('a')].filter(a => a.href !== '/login')
 
-regression_test: tests/lessons/L-F2.spec.ts
+regression_test: tests/lessons/regression-battery.test.ts
 status: active

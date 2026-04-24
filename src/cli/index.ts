@@ -11,7 +11,15 @@ import { reportCommand } from './commands/report'
 import { auditCommand } from './commands/audit'
 import { auditOnlyCommand } from './commands/audit-only'
 import { journeyAuditCliAction } from './commands/journey-audit'
-import { lessonsList, lessonsScan, lessonsDiagnose, lessonsStats } from './commands/lessons'
+import {
+  lessonsList,
+  lessonsScan,
+  lessonsDiagnose,
+  lessonsStats,
+  lessonsValidate,
+  lessonsInstallHooks,
+  lessonsImport,
+} from './commands/lessons'
 
 const program = new Command()
 
@@ -149,5 +157,28 @@ lessonsCmd
   .option('--dir <path>', 'Override lessons directory')
   .option('--json', 'Emit JSON', false)
   .action(lessonsStats)
+
+lessonsCmd
+  .command('validate')
+  .description('Verify every active lesson has its regression_test file present; exit 1 on any missing/failed')
+  .option('--dir <path>', 'Override lessons directory')
+  .option('--repo-root <path>', 'Repository root for resolving regression_test paths')
+  .option('--json', 'Emit JSON', false)
+  .action(lessonsValidate)
+
+lessonsCmd
+  .command('install-hooks')
+  .description('Install a pre-commit hook that runs `tester lessons scan` (T-A2)')
+  .option('--project <path>', 'Project root (default: cwd)')
+  .option('--uninstall', 'Remove the tester-managed hook block', false)
+  .option('--targets <csv>', 'Comma-separated scan targets (default: tests/,src/)')
+  .action(lessonsInstallHooks)
+
+lessonsCmd
+  .command('import <from>')
+  .description('Parse prose markdown (memory/*.md, lessons-learned.md) into YAML stubs; manual review required')
+  .option('--out <dir>', 'Write stubs to this directory instead of stdout')
+  .option('--json', 'Emit JSON (single object)', false)
+  .action((from, opts) => lessonsImport(from, opts))
 
 program.parse()

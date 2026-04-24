@@ -15,6 +15,9 @@ import { loadLessons, findLessonsDir } from '../../lessons/loader'
 import { scan } from '../../lessons/scanner'
 import { diagnoseFile } from '../../lessons/diagnoser'
 import { recordHits, statsSummary } from '../../lessons/stats'
+import { validateLessonFiles } from '../../lessons/validator'
+import { installHooks, uninstallHooks } from '../../lessons/hooks'
+import { importFromFile } from '../../lessons/importer'
 import type { Lesson, LessonSeverity, ScanMatch } from '../../lessons/schema'
 
 const fsExistsSync = fs.existsSync
@@ -43,6 +46,24 @@ interface DiagnoseOptions {
 interface StatsOptions {
   json?: boolean
   dir?: string
+}
+
+interface ValidateOptions {
+  json?: boolean
+  dir?: string
+  repoRoot?: string
+}
+
+interface InstallHooksOptions {
+  dir?: string
+  uninstall?: boolean
+  project?: string
+  targets?: string
+}
+
+interface ImportOptions {
+  out?: string
+  json?: boolean
 }
 
 const SEVERITY_ORDER: Record<LessonSeverity, number> = {
@@ -255,5 +276,106 @@ export async function lessonsStats(opts: StatsOptions): Promise<void> {
   process.stdout.write(`Hit counts (${entries.length} lesson(s)):\n\n`)
   for (const e of entries) {
     process.stdout.write(`  ${e.lesson_id.padEnd(10)} hits=${String(e.hits).padStart(4)}  last=${e.last_hit}\n`)
+  }
+}
+
+export async function lessonsValidate(opts: ValidateOptions): Promise<void> {
+  const { lessons, dir } = resolveCorpus(opts.dir)
+  const repoRoot = opts.repoRoot ? path.resolve(opts.repoRoot) : path.dirname(path.resolve(dir))
+  const summary = validateLessonFiles(lessons, repoRoot)
+
+  if (opts.json) {
+    process.stdout.write(JSON.stringify({ corpus: dir, repo_root: repoRoot, ...summary }, null, 2) + '\n')
+  } else {
+    process.stdout.write(`Corpus: ${dir}\n`)
+    process.stdout.write(`Repo:   ${repoRoot}\n\n`)
+    process.stdout.write(
+      `Validation: ${summary.pass} pass / ${summary.fail} fail / ${summary.missing} missing / ${summary.skipped} skipped\n\n`,
+    )
+    for (const r of summary.results) {
+      const badge = r.status === 'pass' ? '✓' : r.status === 'missing' ? '?' : r.status === 'skipped' ? '·' : '✗'
+      process.stdout.write(
+        `  ${badge} ${r.lesson_id.padEnd(10)} [${r.status.toUpperCase()}]${r.reason ? ' — ' + r.reason : ''}\n`,
+      )
+      if (r.regression_test && r.status === 'pass') {
+        process.stdout.write(`      regression: ${r.regression_test}\n`)
+      }
+    }
+  }
+
+  if (summary.fail > 0 || summary.missing > 0) {
+    process.exit(1)
+  }
+}
+
+export async function lessonsImport(from: string, opts: ImportOptions): Promise<void> {
+  const resolvedFrom = path.resolve(from)
+  if (!fsExistsSync(resolvedFrom)) {
+    process.stderr.write(`[lessons] ERROR: source file does not exist: ${resolvedFrom}\n`)
+    process.exit(2)
+  }
+
+  const imported = importFromFile(resolvedFrom)
+
+  if (opts.json) {
+    process.stdout.write(JSON.stringify({ source: resolvedFrom, count: imported.length, imported }, null, 2) + '\n')
+    return
+  }
+
+  if (imported.length === 0) {
+    process.stdout.write(`No lesson candidates found in ${resolvedFrom}.\n`)
+    process.stdout.write(`Hint: importer looks for markdown headers like "## L42 — Title" or "### L-24: Title".\n`)
+    return
+  }
+
+  process.stdout.write(`Source: ${resolvedFrom}\n`)
+  process.stdout.write(`Found ${imported.length} lesson candidate(s):\n\n`)
+
+  if (opts.out) {
+    const outDir = path.resolve(opts.out)
+    fs.mkdirSync(outDir, { recursive: true })
+    for (const l of imported) {
+      const filename = `${l.proposed_id}-${l.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 50)}.yaml`
+      const out = path.join(outDir, filename)
+      fs.writeFileSync(out, `# IMPORTED — REVIEW BEFORE ACTIVATING\n# Source: ${l.source_file}:${l.source_line}\n# Needs review:\n${l.needs_review.map((r) => `#   - ${r}`).join('\n')}\n\n${l.yaml}`, 'utf8')
+      process.stdout.write(`  → ${out}\n`)
+    }
+    process.stdout.write(`\nWrote ${imported.length} stub(s) to ${outDir}. Review each + fill detection regex before moving to lessons/.\n`)
+  } else {
+    for (const [i, l] of imported.entries()) {
+      process.stdout.write(`--- [${i + 1}/${imported.length}] ${l.proposed_id} — ${l.title}\n`)
+      process.stdout.write(`    source: ${path.relative(process.cwd(), l.source_file)}:${l.source_line}\n`)
+      process.stdout.write(`    needs review:\n`)
+      for (const r of l.needs_review) process.stdout.write(`      • ${r}\n`)
+      process.stdout.write(`\n${l.yaml}\n`)
+    }
+    process.stdout.write(`Pass --out <dir> to write stubs to disk. Review each + fill detection regex.\n`)
+  }
+}
+
+export async function lessonsInstallHooks(opts: InstallHooksOptions): Promise<void> {
+  const projectRoot = opts.project ? path.resolve(opts.project) : process.cwd()
+  const targets = opts.targets
+    ? opts.targets.split(',').map((s) => s.trim()).filter(Boolean)
+    : ['tests/', 'src/']
+
+  const result = opts.uninstall ? uninstallHooks(projectRoot) : installHooks(projectRoot, targets)
+
+  let badge: string
+  if (opts.uninstall) {
+    badge = '✓ uninstalled'
+  } else if (result.installed) {
+    badge = '✓ installed'
+  } else {
+    badge = '✗ failed'
+  }
+
+  process.stdout.write(`${badge}: ${result.path || projectRoot}\n`)
+  process.stdout.write(`  ${result.message}\n`)
+  if (result.backed_up) {
+    process.stdout.write(`  backup: ${result.backed_up}\n`)
+  }
+  if (!result.installed && !opts.uninstall) {
+    process.exit(2)
   }
 }

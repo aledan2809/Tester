@@ -49,5 +49,5 @@ diagnosis:
     If no stable container testid exists, add one in source (see T-003
     stable-selector enforcer) and commit the data-testid alongside the test.
 
-regression_test: tests/lessons/L-F10.spec.ts
+regression_test: tests/lessons/regression-battery.test.ts
 status: active

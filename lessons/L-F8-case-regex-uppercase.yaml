@@ -49,5 +49,5 @@ diagnosis:
       (c) Normalize case explicitly: el.innerText.toLowerCase().includes('formula')
     Option (b) is most robust — it's immune to CSS transforms on unrelated projects.
 
-regression_test: tests/lessons/L-F8.spec.ts
+regression_test: tests/lessons/regression-battery.test.ts
 status: active
