@@ -73,18 +73,35 @@ Each helper documented in its module docstring. Consumers may import these for p
 - `src/server/**` — HTTP server. **Planned split:** a future `@aledan007/tester-service` package will own this. Import from `@aledan007/tester` for library use only; do not couple to internals.
 - Anything exported ad-hoc from a `src/.../internals.ts` file (none today; reserved pattern).
 
-## Package split roadmap (T-D2 follow-up — deferred this commit)
+## Package split (T-D2 — SHIPPED v0.1.0)
 
-Goal: ship a separate `@aledan007/tester-service` package that depends on `@aledan007/tester` for library logic. The current combined package continues to include the CLI and lib surface until a major bump.
+`@aledan007/tester-service` ships alongside `@aledan007/tester` under
+`packages/tester-service/` in this repo. See that package's [README](../packages/tester-service/README.md).
 
-Plan:
+**v0.1.0 scope (this release):**
+- Thin wrapper — `packages/tester-service/src/index.ts` resolves the combined
+  package's `dist/server/index.js` and delegates startup to it. Same
+  Express app, same endpoints, new binary name (`tester-service`),
+  independent versioning handle.
+- Can be built + published today: `cd packages/tester-service && npm install && npm run build`.
+- HTTP server remains Tier 3 on the combined package. For HTTP use, install
+  `@aledan007/tester-service` instead of importing server internals from
+  `@aledan007/tester`.
 
-1. Extract `src/server/**` into a sibling package under a monorepo (pnpm workspace).
-2. `@aledan007/tester-service` depends on `@aledan007/tester@^X.Y.0`.
-3. Existing `npx @aledan007/tester server` invocation becomes `npx @aledan007/tester-service`.
-4. Release cycle: lib patches freely; service follows lib's minor/major.
+**v0.2.0+ plan (after one full lifecycle of v0.1.0):**
+1. Physical move of `src/server/**` into `packages/tester-service/src/` —
+   combined package re-exports for backwards compat.
+2. npm workspaces at repo root so a single `npm install` sets both packages up.
+3. CI builds both packages; publishes happen independently per package
+   version bump.
 
-No action today beyond freezing the `src/server/**` surface as Tier 3 so consumers know not to import from `@aledan007/tester` for HTTP flows.
+**Upgrade path** (unchanged):
+
+| Scenario | What to install | What to change |
+|---|---|---|
+| CLI-only consumer | `@aledan007/tester` | No change |
+| Existing combined-package HTTP consumer | Same | Nothing today; migrate at your own pace after v0.1.0 is published |
+| New HTTP-only deployment | `@aledan007/tester-service` | `npx tester-service` |
 
 ## Deprecation policy
 
