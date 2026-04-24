@@ -47,6 +47,7 @@ import {
 } from './commands/regression'
 import { triageCommand } from './commands/triage'
 import { affectedCommand } from './commands/affected'
+import { pipelineStatsCommand } from './commands/pipeline-stats'
 
 const program = new Command()
 
@@ -264,6 +265,19 @@ program
   .option('--overwrite', 'Overwrite existing generated file', false)
   .option('--json', 'Emit JSON', false)
   .action(generateCommand)
+
+// ─── pipeline-stats (T-C5 failure analytics) ─────────────
+program
+  .command('pipeline-stats')
+  .description('T-C5 — Master pipeline corpus analytics (phase buckets + signature clusters + cost)')
+  .option('--master-path <path>', 'Path to Master repo root (discovered otherwise)')
+  .option('--since <iso>', 'Only pipelines with updatedAt >= since')
+  .option('--until <iso>', 'Only pipelines with updatedAt <= until')
+  .option('--top-n <n>', 'Top-N signatures (default 5)', (v) => parseInt(v, 10))
+  .option('--no-include-archive', 'Skip pipelines_archive.json')
+  .option('--markdown', 'Emit markdown report', false)
+  .option('--json', 'Emit JSON', false)
+  .action(pipelineStatsCommand)
 
 // ─── affected (T-C4 phase-aware test scoping) ────────────
 program
