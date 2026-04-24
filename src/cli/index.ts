@@ -21,6 +21,7 @@ import {
   lessonsImport,
   lessonsPromote,
 } from './commands/lessons'
+import { zombieScanCmd } from './commands/zombie-scan'
 
 const program = new Command()
 
@@ -191,5 +192,14 @@ lessonsCmd
   .option('--out <dir>', 'Write stubs to this directory instead of stdout')
   .option('--json', 'Emit JSON (single object)', false)
   .action((from, opts) => lessonsImport(from, opts))
+
+// ─── zombie-scan (T-C6 preventive tooling for L-24) ─────
+program
+  .command('zombie-scan')
+  .description('T-C6 — List Master pipelines at risk of zombie cleanup (L-24) — non-destructive')
+  .option('--master-path <path>', 'Path to Master repo root (or direct path to pipelines.json)')
+  .option('--threshold-min <n>', 'Idle threshold in minutes (default: 15 = watchdog warning)', (v) => parseInt(v, 10))
+  .option('--json', 'Emit JSON', false)
+  .action(zombieScanCmd)
 
 program.parse()

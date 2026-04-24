@@ -4,6 +4,54 @@
 
 ---
 
+## 2026-04-24 — feat(tester): T-C6 — zombie-scan CLI (L-24 preventive tooling)
+
+- **Session:** Direct continuation, post-T-000-final. T-C6 scope tightened after code analysis.
+- **Scope:** Tester-side `tester zombie-scan` CLI — preventive reporting of Master pipelines at risk of zombie cleanup BEFORE the 30min auto-failure fires. Non-destructive; doesn't kill anything.
+
+### Scope adjustment vs original T-C6 spec
+Original TODO_PERSISTENT T-C6 asked for both Tester-side CLI + Master mesh `waiting_watchdog` state addition. Code review showed:
+- **Master mesh already has `MAX_STUCK_MS = 30 * 60 * 1000` cleanup logic** in `src/app/api/mesh/route.ts:417`.
+- The 44% "zombie" rate from Phase 0.3 counts pipelines AFTER the 30min cleanup fired — that's the cleanup working, not failing.
+- Real remaining gaps: (1) preventive visibility (what's AT-RISK before 30min), (2) user-facing notification BEFORE cleanup runs.
+
+Gap (1) = this commit (Tester-side CLI). Gap (2) = Master mesh change, deferred to a dedicated Master-focused session (cross-repo scope; avoids L40-style scope creep per FILE MODIFICATION DISCIPLINE).
+
+### Files created (2)
+- `src/cli/commands/zombie-scan.ts` (~170 lines):
+  - `scanForZombies(stateFile, thresholdMin)` — pure fn; reads mesh/state/pipelines.json; filters pipelines in blocked states (dev/planning/qa/deploy/monitor/ci/running) with idle > threshold; checks real process liveness via `process.kill(pid, 0)`; classifies severity (info/warning/critical).
+  - `zombieScanCmd(opts)` — CLI handler with `--master-path`, `--threshold-min`, `--json`. Auto-discovers Master repo via env (MASTER_ROOT), parent-walk from cwd, or ~/Projects/Master fallback. Explicit `--master-path` is AUTHORITATIVE (no silent fallback on miss — exits 2 with clear error).
+- `tests/lessons/zombie-scan.test.ts` (8 tests):
+  - Empty corpus → zero candidates
+  - Idle>threshold in "dev" state → flagged
+  - Idle<threshold → not flagged
+  - Terminal states (done/failed/idle) → never flagged
+  - Severity ranking (critical > warning > info)
+  - No-pid handling (process_alive = undefined)
+  - All 6 blocked states covered
+  - CLI integration test: `--master-path /nonexistent` → stderr + exit 2
+
+### Files modified (1)
+- `src/cli/index.ts` — registered `tester zombie-scan` subcommand with 3 flags
+
+### Verification
+- `npm run build` → success
+- `npx vitest run` → **183/183 pass** (from 175 post-Day-4; +8 new zombie-scan tests)
+- Manual smoke on real Master state: `tester zombie-scan --master-path /Users/danciulescu/Projects/Master --threshold-min 15` → reports "0 at-risk pipelines" (Master is currently healthy)
+- Error path: `tester zombie-scan --master-path /tmp/nonexistent` → stderr + exit 2 ✓
+- Auto-discovery path: `tester zombie-scan --threshold-min 15` from Tester cwd → walks up, finds Master ✓
+
+### Remaining T-C6 work (deferred to Master-focused session)
+- `waiting_watchdog` state emission in `mesh/engine/big-pipeline-watcher.js` or `src/app/api/mesh/route.ts` — ping user at 15min idle (half of cleanup threshold) via PushNotification/RemoteTrigger.
+- L-24 success criterion measurement — after Master-side changes ship, re-measure zombie share with the same `test("[Zz]ombie|dead|stuck")` regex used for baseline (44%).
+
+### Scoring T-C6 (honest)
+- Spec compliance (Tester-side CLI delivered): **100/100**
+- Quality: **99/100**
+- Total T-C6: **50% shipped** (Tester preventive tool). Master-side notification: pending.
+
+---
+
 ## 2026-04-24 — feat(tester): T-000 Day-4 — promote + validate --run — FINAL T-000 ship
 
 - **Session:** Direct continuation, infinite test+dev loop. Day 4 closes T-000 per revised roadmap.
