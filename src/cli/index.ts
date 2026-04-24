@@ -39,6 +39,7 @@ import {
   sessionShowCmd,
   sessionListCmd,
 } from './commands/session'
+import { scoreCommand } from './commands/score'
 
 const program = new Command()
 
@@ -256,6 +257,18 @@ program
   .option('--overwrite', 'Overwrite existing generated file', false)
   .option('--json', 'Emit JSON', false)
   .action(generateCommand)
+
+// ─── score (T-B1 coverage-aware TWG scoring) ─────────────
+program
+  .command('score')
+  .description('T-B1 — TWG score = pass_rate × coverage_rate (coverage from coverage/*.yaml)')
+  .option('--project <path>', 'Project root (reads coverage/*.yaml for declared/covered counts)')
+  .option('--from <path>', 'Read all 4 numbers from JSON file')
+  .option('--tests-passing <n>', 'Tests passing (required with --project)', (v) => parseInt(v, 10))
+  .option('--tests-total <n>', 'Tests total (required with --project)', (v) => parseInt(v, 10))
+  .option('--target <ratio>', 'Min coverage ratio for goal (default 0.9)', (v) => parseFloat(v))
+  .option('--json', 'Emit JSON', false)
+  .action(scoreCommand)
 
 // ─── session (T-A3 session-state recorder) ───────────────
 const sessionCmd = program
