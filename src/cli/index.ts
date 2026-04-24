@@ -28,6 +28,7 @@ import { coverageCommand } from './commands/coverage'
 import { generateCommand } from './commands/generate'
 import { untestedCommand } from './commands/untested'
 import { snapshotCommand } from './commands/snapshot'
+import { a11yCommand } from './commands/a11y'
 
 const program = new Command()
 
@@ -245,6 +246,18 @@ program
   .option('--overwrite', 'Overwrite existing generated file', false)
   .option('--json', 'Emit JSON', false)
   .action(generateCommand)
+
+// ─── a11y (T-009 baseline + budget) ──────────────────────
+program
+  .command('a11y')
+  .description('T-009 — A11y baseline store + budget enforcement (axe-core violations in / diff out)')
+  .option('--project <path>', 'Project root (required)')
+  .option('--from <path>', 'Scan JSON file path { "scans": [{route, violations[]}] }')
+  .option('--baseline', 'Store current scan as baseline (coverage/a11y-baseline.json)', false)
+  .option('--check', 'Diff current scan against baseline + enforce budget', false)
+  .option('--no-budget', 'Skip budget check when --check is set (diff-only)')
+  .option('--json', 'Emit JSON', false)
+  .action(a11yCommand)
 
 // ─── snapshot (T-008 visual baseline MVP) ────────────────
 program
