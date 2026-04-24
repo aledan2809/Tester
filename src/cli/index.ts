@@ -31,6 +31,14 @@ import { snapshotCommand } from './commands/snapshot'
 import { a11yCommand } from './commands/a11y'
 import { perfCommand } from './commands/perf'
 import { initCommand } from './commands/init'
+import {
+  sessionStartCmd,
+  sessionLogCmd,
+  sessionEndCmd,
+  sessionLastCmd,
+  sessionShowCmd,
+  sessionListCmd,
+} from './commands/session'
 
 const program = new Command()
 
@@ -248,6 +256,56 @@ program
   .option('--overwrite', 'Overwrite existing generated file', false)
   .option('--json', 'Emit JSON', false)
   .action(generateCommand)
+
+// ─── session (T-A3 session-state recorder) ───────────────
+const sessionCmd = program
+  .command('session')
+  .description('T-A3 — Structured session logger under .tester/sessions/ for cross-session continuity')
+
+sessionCmd
+  .command('start <description>')
+  .option('--project <path>', 'Project root (default: cwd)')
+  .option('--json', 'Emit JSON', false)
+  .action((desc, opts) => sessionStartCmd(desc, opts))
+
+sessionCmd
+  .command('log')
+  .description('Append an event to the current session (defaults to kind=note)')
+  .option('--project <path>', 'Project root (default: cwd)')
+  .option('--kind <kind>', 'Event kind: tool_call | commit | test_run | note', 'note')
+  .option('--note <text>', 'Free-form message payload')
+  .option('--json', 'Emit JSON', false)
+  .action((opts) => sessionLogCmd(opts))
+
+sessionCmd
+  .command('end')
+  .description('Close the current session with optional summary metadata')
+  .option('--project <path>', 'Project root (default: cwd)')
+  .option('--tests-passed <n>', 'Summary: tests passed', (v) => parseInt(v, 10))
+  .option('--tests-failed <n>', 'Summary: tests failed', (v) => parseInt(v, 10))
+  .option('--commits <csv>', 'Summary: comma-separated commit hashes')
+  .option('--summary-note <text>', 'Summary: free-form note')
+  .option('--json', 'Emit JSON', false)
+  .action((opts) => sessionEndCmd(opts))
+
+sessionCmd
+  .command('last')
+  .description('Print the latest session JSON (next-session boot context)')
+  .option('--project <path>', 'Project root (default: cwd)')
+  .action((opts) => sessionLastCmd(opts))
+
+sessionCmd
+  .command('show <id>')
+  .description('Print a specific session by id')
+  .option('--project <path>', 'Project root (default: cwd)')
+  .action((id, opts) => sessionShowCmd(id, opts))
+
+sessionCmd
+  .command('list')
+  .description('Summary table of recorded sessions (latest first)')
+  .option('--project <path>', 'Project root (default: cwd)')
+  .option('--json', 'Emit JSON', false)
+  .action((opts) => sessionListCmd(opts))
 
 // ─── init (T-A1 feature scaffolder) ──────────────────────
 program
