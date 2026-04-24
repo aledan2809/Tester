@@ -26,6 +26,7 @@ import { zombieScanCmd } from './commands/zombie-scan'
 import { selfCheckCommand } from './commands/selfcheck'
 import { coverageCommand } from './commands/coverage'
 import { generateCommand } from './commands/generate'
+import { untestedCommand } from './commands/untested'
 
 const program = new Command()
 
@@ -243,5 +244,15 @@ program
   .option('--overwrite', 'Overwrite existing generated file', false)
   .option('--json', 'Emit JSON', false)
   .action(generateCommand)
+
+// ─── untested (T-006 session-awareness query) ────────────
+program
+  .command('untested')
+  .description('T-006 — Rank untested items from coverage YAML + AUDIT_GAPS.md + DEVELOPMENT_STATUS.md TODO + Reports/*.json')
+  .option('--project <path>', 'Project root directory')
+  .option('--sources <csv>', 'Comma-separated sources (coverage,audit_gaps,dev_status,reports). Default: all.')
+  .option('--json', 'Emit JSON', false)
+  .option('--markdown', 'Emit Markdown table', false)
+  .action(untestedCommand)
 
 program.parse()

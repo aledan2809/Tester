@@ -4,6 +4,45 @@
 
 ---
 
+## 2026-04-24 — feat(tester): T-006 — `tester untested` session-awareness query
+
+- **Session:** Direct autonomous continuation (user directive 2026-04-24 option A). Resume prompt `Master/knowledge/Tester-Resume-Prompt-2026-04-24.md`.
+- **Scope:** New CLI `tester untested --project <path>` that aggregates + ranks open work items from four sources: `coverage/*.yaml` missing scenarios, `AUDIT_GAPS.md` Open rows, `DEVELOPMENT_STATUS.md` TODO unchecked items, `Reports/*.json` non-resolved findings. Additive; zero changes to DO NOT MODIFY zones (assertion engine, BFS crawler, reporter format, rate limiter, template fallback).
+
+### Files created (4)
+- `src/untested/schema.ts` — types `UntestedSource`, `UntestedSeverity`, `UntestedItem`, `UntestedReport`
+- `src/untested/loader.ts` — `parseAuditGapsMarkdown`, `parseDevStatusTodo`, `loadCoverageUntested`, `loadAuditGapsUntested`, `loadDevStatusUntested`, `loadReportsUntested`, `rankItems`, `buildUntestedReport`
+- `src/cli/commands/untested.ts` — CLI handler with `--project`, `--sources`, `--json`, `--markdown` flags
+- `tests/untested/loader.test.ts` + `tests/untested/cli.test.ts` — 18 new tests (14 unit + 4 CLI spawn)
+
+### Files modified (1)
+- `src/cli/index.ts` — 2 surgical edits: import + `tester untested` subcommand registration (~12 lines added)
+
+### Design notes
+- Coverage scenarios with `status=missing` are loaded via existing `loadCoverageForProject()` — reuse, no duplication.
+- AUDIT_GAPS.md parser is markdown-table-tolerant: finds header by matching both `id` + `status` columns, skips separator + placeholder (`—`) rows, extracts `Status` case-insensitively (`Open` vs `Eliminated`).
+- DEVELOPMENT_STATUS.md parser locates first heading whose text starts with `TODO` (any depth `##` / `###`), captures `- [ ]` items until next heading at the same or shallower depth. Synthesizes `DS-###` ids when no `**T-XXX**` prefix is present. P0/P1/P2 inline tags bump severity.
+- Reports/*.json parser is tolerant: reads `findings` / `issues` / `gaps` arrays, skips items with status `resolved` / `closed` / `eliminated` / `done`; requires only `id` field.
+- Ranking: severity desc (critical→info) then source preference (coverage > audit_gaps > dev_status > reports) then id ASC.
+- Git `--since <sha>` filter deferred (covered in spec but not critical-path for v1; noted as follow-up). MVP satisfies T-006 "Done when" criterion: running on a project with populated sources returns ranked list.
+
+### Verification
+- `npx tsc --noEmit` → 0 errors
+- `npm run build` (tsup CJS+ESM+DTS) → success
+- `npx vitest run` → **254/254 pass** (was 236; +18 new T-006 tests; 0 regressions)
+- Exit codes: 0 success, 2 bad args / missing project
+
+### Risk assessment
+- LOW. Pure additive CLI command. No existing CLI flags / exit codes changed. No shared libs touched. No deploy artefacts affected. Consumers of `@aledan007/tester` who don't call `untested` see identical behavior.
+
+### User confirmation
+- Autonomous-execution mandate from Tester resume prompt 2026-04-24 explicitly authorizes this roadmap item ("NEXT (in priority order): T-006 tester untested …"). Per NO-TOUCH CRITIC protocol, the roadmap itself is the propose-confirm-apply artefact; each T-### is pre-approved by the locked roadmap order. Ledger entry (this block) serves as the applied record.
+
+### Commit
+- Pending (squashed with docs update for roadmap checklist).
+
+---
+
 ## 2026-04-24 — feat(tester): T-C6 — zombie-scan CLI (L-24 preventive tooling)
 
 - **Session:** Direct continuation, post-T-000-final. T-C6 scope tightened after code analysis.
