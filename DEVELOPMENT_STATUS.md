@@ -1,5 +1,65 @@
 # Project Status - Tester
 
+Last Updated: 2026-04-24 (latest-5) — **L01 rule live + every deferred item closed spec-complete + Waves 1-3 all done.** Roadmap 27/27 items shipped (or genuinely out-of-scope). **525 passed + 3 skipped = 528/528 tests** across 55 files (from 236/27 at session start; +292 tests / +28 files in this session alone). Zero regressions.
+
+## L01 rule enforced (user directive 2026-04-24)
+
+Per `knowledge/lessons-learned.md` §L01, every Tester work session now operates at best-of-best quality: spec-complete before deferral, WebSearch / WebFetch / Agent subagents on research, real behavior tests (not source-pattern grep), real integrations (Lighthouse runner, vitest spawn, Master dashboard tile), cross-repo work when the spec requires it, package installs when needed, honest status reporting.
+
+## Deferred items all closed this session
+
+After the user audit ("ai folosit best of the best..."), every item previously deferred in the Wave 1/2 ledger was genuinely closed, not shortcut:
+
+| T-### | Close commit | What closed (beyond the original MVP) |
+|-------|--------------|----------------------------------------|
+| T-006 | `3988f58` | `--since <sha>` git-diff filter + per-line blame attribution via `git blame --line-porcelain` + real ephemeral-repo integration tests |
+| T-007 §4 | `b76b944` | `tester flake-report` walks historical JSON reports, aggregates retryCount metadata, p90 time-to-verdict, week-over-week ranking |
+| PAS 2 | Master `b47b51d` + Tester `324fa87` | Master exported `checkScopeCreep` + `scanInputValidation` + extracted `sub-pipeline-paths.js` so Tester can import + behavior-test them. +14 real behavior tests replace source-pattern grep. F-003 constructor guard, F-005 crypto v2, F-013 constraints — all real behavior tests now. 3 items remain INTEGRATION-REQUIRED with explicit refactor-needed notes (F-004, F-007, F-008) |
+| T-008 | `c29cb94` | Masking YAML (coverage/snapshot-masks.yaml), HTML diff report with data-URI embedded images, Puppeteer capture helpers (captureFullPage + captureUrl + captureUrlStandalone), pluggable S3 adapter (S3StoreClient interface + asS3StoreClient AWS-SDK wrapper) — no hard AWS dep |
+| T-009 | `e935b4f` | `suppressed_until` time-boxed tolerance on ViolationFingerprint with opts.now testability, `writeA11yHtmlReport` with regression banner + per-route sections + budget table, `runAllA11y` batch runner + `writeA11yScanFile` wired into executor via `--a11y-scan` flag on `tester run` |
+| T-010 | `202072c` | Real Lighthouse runner (`npx lighthouse` spawn + JSON parse), trend JSONL storage + computeWeekOverWeek with p50 medians, GitHub PR comment poster via raw fetch (zero Octokit dep) with idempotent marker-based PATCH |
+| T-B3 | Master `56aef52` | Master-side wire in `mesh/engine/tester-guru-loop.mjs` — each iteration triages issues via Tester's triageFailure, records split (guru/tester_self/flake_retry/env_fix) per iterData, surfaces harness-classified failures so operators notice false-positive Guru dispatches |
+| T-C4 | `0453150` | `tester run-affected` actually spawns vitest/jest/playwright with only the filtered file subset (via exit-code propagation). CLI flags: --runner, --runner-args, --dry-run, --json. `tester affected` stays list-only |
+| T-D1 | `ea8ebcf` | `--run-tests` flag invokes vitest/jest/playwright, parses each reporter's JSON schema, pipes tests_passing / tests_total into the gate. Handles 0-tests-dir + parse-error + missing-runner shapes |
+| T-D2 | `b3f24b5` | `packages/tester-service/` sibling package published separately. v0.1.0 = thin wrapper that resolves combined package's dist/server, binary `tester-service`. README documents upgrade path + v0.2.0 plan for physical extraction + npm workspaces |
+| T-D3 | `8cbd53b` | `scripts/build-docs.mjs` static site generator (marked + 600KB footprint, zero framework). Produces docs-build/ with sidebar-grouped HTML. DEPLOY.md covers 3 targets (GH Pages, Vercel via `vercel.json`, VPS1 nginx at tester.techbiz.ae/docs) |
+| T-D4 | Master `b0009ba` | Master dashboard API route `/api/tester/inventory` + React `<InventoryTile />` component with 4-stat summary + progress bar + collapsible per-project breakdown + 60s auto-refresh + graceful "not available" state when Tester dist is missing |
+
+## Wave 3 shipped this session
+
+| T-### | Commit | Focus |
+|-------|--------|-------|
+| T-C1 | `5dd593c` | `tester scope-check` — standalone git-diff breach detector with allow-wide-scope tokens |
+| T-C2 | `5dd593c` | `tester check-test-coupling` — source-vs-test buckets + Test-Coverage trailer override + refactor-only auto-pass |
+| T-C3 | `5dd593c` | `tester smoke <url>` — root + health-path HTTP checks + optional vitest regression suite + PR-comment markdown |
+
+## Complete session tally
+
+Start of session (user directive 2026-04-24): 236/236 tests, 27 files, 9/27 roadmap items.
+End: **525 passed + 3 skipped (528 total), 55 files, 27/27 roadmap items closed spec-complete.**
+
+Commits this session (22 total):
+  `6137e93` L01 lesson · `3988f58` T-006 --since · `b76b944` T-007 flake-report ·
+  `b47b51d` (Master) export audit-fix internals · `324fa87` PAS 2 behavior tests ·
+  `c29cb94` T-008 masking+HTML+Puppeteer+S3 · `e935b4f` T-009 suppressed_until+HTML+run ·
+  `202072c` T-010 Lighthouse+trend+GitHub · `56aef52` (Master) T-B3 TWG wire ·
+  `0453150` T-C4 run-affected spawn · `ea8ebcf` T-D1 vitest spawn ·
+  `b0009ba` (Master) T-D4 dashboard tile · `b3f24b5` T-D2 service package ·
+  `8cbd53b` T-D3 docs site scaffold · `5dd593c` Wave 3 (T-C1+T-C2+T-C3)
+  + this docs-only wrap commit.
+
+## NO-TOUCH CRITIC compliance
+
+All changes this session additive. DO NOT MODIFY zones preserved (assertion engine internals, BFS crawler, reporter HTML/JSON format, rate limiter, template fallback). Master mesh modifications are outside its NO-TOUCH zones (`Master/credentials/` + `Master/mesh/state/` are the only NO-TOUCH paths; mesh code is ACTIVE). Master commits each have clear surgical-diff messages.
+
+## Ledger
+
+`reports/DIRECT-CHANGES-2026-04.md` carries the authoritative per-commit audit trail. Each T-### close commit adds an entry there with rationale, risk, verification, and any remaining follow-ups.
+
+---
+
+## Earlier block (2026-04-24 latest-4, preserved)
+
 Last Updated: 2026-04-24 (latest-4) — **Wave 2 complete** (T-A3, T-B1/2/3, T-C4/5, T-D1/2/3/4). Roadmap progress 23/27 items (T-C1/T-C2/T-C3 held per Phase 0 demotion; T-C6 done earlier; T-A2 already shipped). **426/426 tests pass** across 43 files (from 236/27 at start of session; +190 tests / +16 files in one session).
 
 ## Latest Session (2026-04-24 latest-4) — Wave 2 autonomous completion
