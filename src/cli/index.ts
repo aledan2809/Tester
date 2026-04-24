@@ -22,6 +22,7 @@ import {
   lessonsPromote,
 } from './commands/lessons'
 import { zombieScanCmd } from './commands/zombie-scan'
+import { selfCheckCommand } from './commands/selfcheck'
 
 const program = new Command()
 
@@ -201,5 +202,12 @@ program
   .option('--threshold-min <n>', 'Idle threshold in minutes (default: 15 = watchdog warning)', (v) => parseInt(v, 10))
   .option('--json', 'Emit JSON', false)
   .action(zombieScanCmd)
+
+// ─── selfcheck (T-001 harness self-test battery) ─────────
+program
+  .command('selfcheck')
+  .description('T-001 — Run harness self-test battery (CSS validator + timing + corpus presence). Exit 0 pass, 1 warn, 2 fail')
+  .option('--json', 'Emit JSON', false)
+  .action(selfCheckCommand)
 
 program.parse()
