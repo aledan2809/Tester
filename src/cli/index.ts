@@ -29,6 +29,7 @@ import { generateCommand } from './commands/generate'
 import { untestedCommand } from './commands/untested'
 import { snapshotCommand } from './commands/snapshot'
 import { a11yCommand } from './commands/a11y'
+import { perfCommand } from './commands/perf'
 
 const program = new Command()
 
@@ -246,6 +247,20 @@ program
   .option('--overwrite', 'Overwrite existing generated file', false)
   .option('--json', 'Emit JSON', false)
   .action(generateCommand)
+
+// ─── perf (T-010 budget + CI delta) ──────────────────────
+program
+  .command('perf')
+  .description('T-010 — Performance budget evaluator + before/after CI comment (Lighthouse runtime TBD)')
+  .option('--project <path>', 'Project root (reads coverage/perf-budget.yaml)')
+  .option('--from <path>', 'Runs JSON { "runs": [{ route, metrics }] } (required for --check)')
+  .option('--before <path>', 'Runs JSON for baseline branch (required for --delta)')
+  .option('--after <path>', 'Runs JSON for PR branch (required for --delta)')
+  .option('--check', 'Evaluate runs against the budget; non-zero exit on breach', false)
+  .option('--delta', 'Render before/after diff as CI comment markdown', false)
+  .option('--json', 'Emit JSON', false)
+  .option('--markdown', 'Emit markdown (CI PR comment)', false)
+  .action(perfCommand)
 
 // ─── a11y (T-009 baseline + budget) ──────────────────────
 program
