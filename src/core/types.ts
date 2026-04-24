@@ -62,6 +62,16 @@ export interface TesterConfig {
   concurrency?: number
   /** Directory to save video recordings (default: disabled) */
   videoDir?: string
+  /** T-007 — Max number of self-healing retries per step on failure (default: 2). */
+  retryBudget?: number
+  /** T-007 — Initial settle (ms) before first retry (default: 1000). */
+  retryInitialSettleMs?: number
+  /** T-007 — Backoff multiplier applied to settle on each retry (default: 1.5). */
+  retryBackoffMultiplier?: number
+  /** T-007 — Max settle per retry; cap on exponential growth (default: 8000). */
+  retrySettleCapMs?: number
+  /** T-007 — Disable self-healing retries (CI correctness mode). */
+  noRetry?: boolean
 
   // Output
   /** Directory for reports (default: ./reports) */
@@ -129,6 +139,12 @@ export interface StepResult {
   screenshot?: string
   durationMs: number
   usedAiFallback?: boolean
+  /** T-007 — Number of self-healing retries executed for this step (0 = none). */
+  retryCount?: number
+  /** T-007 — Cumulative time from first attempt to final verdict. */
+  timeToVerdictMs?: number
+  /** T-007 — `passed`, `failed`, or `none` if no retry was attempted. */
+  retryFinalVerdict?: 'passed' | 'failed' | 'none'
 }
 
 // ─── Discovery ──────────────────────────────────────────────

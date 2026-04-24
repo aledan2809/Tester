@@ -4,6 +4,43 @@
 
 ---
 
+## 2026-04-24 — feat(tester): T-007 retry backoff extension (exponential + settle cap)
+
+- **Session:** Direct autonomous continuation. Resume prompt `Master/knowledge/Tester-Resume-Prompt-2026-04-24.md`.
+- **Scope:** Extend the inline self-healing retry (previously `sleep(1000); retry()`) at `executor.ts:149-158` into a dedicated, unit-testable helper with exponential backoff, settle cap, configurable budget, and retry metadata stamped on the `StepResult`. Zero changes to DO NOT MODIFY zones.
+
+### Files modified (3)
+- `src/core/types.ts`:
+  - `StepResult` +3 optional fields: `retryCount`, `timeToVerdictMs`, `retryFinalVerdict: 'passed' | 'failed' | 'none'`
+  - `TesterConfig` +5 retry knobs: `retryBudget`, `retryInitialSettleMs`, `retryBackoffMultiplier`, `retrySettleCapMs`, `noRetry`
+- `src/core/browser.ts`: `DEFAULT_CONFIG` augmented with retry defaults (budget=2, initialSettle=1000ms, multiplier=1.5, cap=8000ms, noRetry=false)
+- `src/executor.ts`:
+  - Extracted `retryStepWithBackoff(...)` exported helper (pure, injection-hook on `sleepFn` for test speed)
+  - Replaced inline retry at line 149-158 with call to helper; adds `stepStartedAt` capture for `timeToVerdictMs`
+
+### Files created (1)
+- `tests/executor/retry.test.ts` — 8 unit tests against a scripted mock browser (budget=0 metadata; first-retry success; budget exhaustion; settle cap; early-stop on success; `[retried×N]` description stamp; `timeToVerdictMs` on all paths; stepIndex preservation)
+
+### Behavior contract
+- Unchanged when `config.noRetry=true` OR step is optional OR `retryBudget=0`.
+- Backward-compat: existing callers that don't set retry fields see equivalent observable behavior (retry with 1000ms initial settle). Defaults soft-expand budget from 1 to 2 (more tolerance on flake); callers can opt out via `noRetry` or `retryBudget: 0`.
+
+### Deferred (T-007 §4 — flake-report CLI)
+- `tester flake-report` (reads historical JSON reports, ranks tests by `retryCount > 0` density) — deferred to its own commit. Needs report-store scan + stable output schema; out of scope for surgical executor patch.
+
+### Verification
+- `npx tsc --noEmit` → 0 errors
+- `npm run build` (tsup CJS+ESM+DTS) → success (24.52 KB dts, up from 23.65)
+- `npx vitest run` → **293/293 pass** (was 285; +8 new retry tests; 0 regressions)
+
+### Risk assessment
+- LOW. Pure additive interface on TesterConfig + StepResult. Existing consumers that don't read the new fields are unaffected. Helper is exported so downstream flake reporters can run the same decision logic on historical data.
+
+### User confirmation
+- Autonomous execution per Tester resume prompt 2026-04-24 ("NEXT (in priority order): T-007 retry backoff extension"). Ledger entry (this block) serves as the applied record.
+
+---
+
 ## 2026-04-24 — feat(tester): T-006 — `tester untested` session-awareness query
 
 - **Session:** Direct autonomous continuation (user directive 2026-04-24 option A). Resume prompt `Master/knowledge/Tester-Resume-Prompt-2026-04-24.md`.

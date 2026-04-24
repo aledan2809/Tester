@@ -36,6 +36,11 @@ const DEFAULT_CONFIG: Required<Omit<TesterConfig, 'credentials' | 'mfaHandler' |
   visualRegression: true,
   accessibility: true,
   performance: true,
+  retryBudget: 2,
+  retryInitialSettleMs: 1000,
+  retryBackoffMultiplier: 1.5,
+  retrySettleCapMs: 8000,
+  noRetry: false,
 }
 
 export class BrowserCore {

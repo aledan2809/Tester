@@ -146,15 +146,33 @@ async function executeScenario(
         break
       }
 
+      const stepStartedAt = Date.now()
       let result = await browser.executeStep(scenario.steps[i], i)
 
-      // Self-healing: retry once on failure (element might need more time to appear)
-      if (!result.success && !scenario.steps[i].optional) {
-        await sleep(1000)
-        result = await browser.executeStep(scenario.steps[i], i)
-        if (result.success) {
-          result = { ...result, description: `[retried] ${result.description}` }
-        }
+      // T-007 — Self-healing retry with exponential backoff + settle extension.
+      // Behavior:
+      //   - Skipped when step is marked optional OR config.noRetry = true.
+      //   - Budget: config.retryBudget (default 2).
+      //   - Settle: starts at retryInitialSettleMs (default 1000ms), multiplied
+      //     by retryBackoffMultiplier (default 1.5) per retry, capped at
+      //     retrySettleCapMs (default 8000ms).
+      //   - Stops as soon as a retry succeeds; reports retryCount +
+      //     retryFinalVerdict + timeToVerdictMs on the result for downstream
+      //     flake analytics.
+      if (!result.success && !scenario.steps[i].optional && !config.noRetry) {
+        result = await retryStepWithBackoff(
+          browser,
+          scenario.steps[i],
+          i,
+          result,
+          {
+            budget: config.retryBudget ?? 2,
+            initialSettleMs: config.retryInitialSettleMs ?? 1000,
+            backoffMultiplier: config.retryBackoffMultiplier ?? 1.5,
+            settleCapMs: config.retrySettleCapMs ?? 8000,
+            startedAt: stepStartedAt,
+          },
+        )
       }
 
       stepResults.push(result)
@@ -292,4 +310,69 @@ function buildSummary(
 
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+export interface RetryStepOptions {
+  budget: number
+  initialSettleMs: number
+  backoffMultiplier: number
+  settleCapMs: number
+  startedAt: number
+  /** Injection hook for tests — defaults to real sleep. */
+  sleepFn?: (ms: number) => Promise<void>
+}
+
+/**
+ * T-007 — Self-healing retry with exponential backoff + settle extension.
+ * Pure helper (exported for unit testing). Caller guarantees:
+ *   - initialResult.success === false
+ *   - step is non-optional
+ *   - retries are not disabled by config.noRetry
+ *
+ * On retry success, returns the passing result annotated with retryCount
+ * and retryFinalVerdict='passed'. On exhaustion, returns the last failing
+ * result annotated with retryFinalVerdict='failed'.
+ */
+export async function retryStepWithBackoff(
+  browser: Pick<BrowserCore, 'executeStep'>,
+  step: TestScenario['steps'][number],
+  stepIndex: number,
+  initialResult: StepResult,
+  opts: RetryStepOptions,
+): Promise<StepResult> {
+  const budget = Math.max(0, opts.budget | 0)
+  if (budget === 0) {
+    return {
+      ...initialResult,
+      retryCount: 0,
+      retryFinalVerdict: 'none',
+      timeToVerdictMs: Date.now() - opts.startedAt,
+    }
+  }
+  const multiplier = opts.backoffMultiplier > 0 ? opts.backoffMultiplier : 1.5
+  const capMs = Math.max(0, opts.settleCapMs | 0)
+  const sleepFn = opts.sleepFn || sleep
+  let settleMs = Math.max(0, opts.initialSettleMs | 0)
+  let lastResult = initialResult
+  for (let attempt = 1; attempt <= budget; attempt++) {
+    await sleepFn(settleMs)
+    const retryResult = await browser.executeStep(step, stepIndex)
+    if (retryResult.success) {
+      return {
+        ...retryResult,
+        description: `[retried×${attempt}] ${retryResult.description}`,
+        retryCount: attempt,
+        retryFinalVerdict: 'passed',
+        timeToVerdictMs: Date.now() - opts.startedAt,
+      }
+    }
+    lastResult = retryResult
+    settleMs = Math.min(Math.round(settleMs * multiplier), capMs)
+  }
+  return {
+    ...lastResult,
+    retryCount: budget,
+    retryFinalVerdict: 'failed',
+    timeToVerdictMs: Date.now() - opts.startedAt,
+  }
 }
