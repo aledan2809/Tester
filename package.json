@@ -22,6 +22,8 @@
     "lint": "tsc --noEmit",
     "server": "tsx src/server/index.ts",
     "start:server": "node dist/server/index.js",
+    "docs:build": "node scripts/build-docs.mjs",
+    "docs:serve": "node scripts/build-docs.mjs && npx --yes http-server docs-build -p 4173",
     "self-audit": "npx playwright test --config self-audit/playwright.config.ts",
     "self-audit:remote": "SELF_AUDIT_URL=https://tester.techbiz.ae npx playwright test --config self-audit/playwright.config.ts",
     "prepublishOnly": "npm run build"
@@ -64,6 +66,7 @@
     "@types/node": "^22.0.0",
     "@types/pngjs": "^6.0.5",
     "@types/uuid": "^10.0.0",
+    "marked": "^18.0.2",
     "tsup": "^8.0.0",
     "tsx": "^4.21.0",
     "typescript": "^5.9.0",
