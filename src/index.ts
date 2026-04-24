@@ -3,6 +3,32 @@
  *
  * Library barrel export. Use this to import from other projects:
  *   import { AITester } from '@aledan007/tester'
+ *
+ * ─── PUBLIC API CONTRACT (T-D2) ───────────────────────────
+ * Stability tiers — see docs/API_CONTRACT.md for full matrix:
+ *
+ *   TIER 1 (stable, semver-locked)
+ *     - CLI commands + documented flags
+ *     - `AITester`, executor entry points, reporter generators
+ *     - Core assertion runners (runAssertion, runDomAssertion, ...)
+ *     - All `type` exports below
+ *
+ *   TIER 2 (public but minor-mutable)
+ *     - T-000 lessons engine (scanner, diagnoser, classifier, promotion)
+ *     - Wave 1+2 helpers (untested, snapshot store, a11y baseline,
+ *       perf budget, scaffolder, session recorder, scoring, regression,
+ *       triage, affected mapper, pipeline-stats analyzer, done gate)
+ *     - Breaking changes require a minor bump + changelog entry.
+ *
+ *   TIER 3 (internal, may break any release)
+ *     - src/server/** HTTP surface — will move to `@aledan007/tester-
+ *       service` in the lib-vs-service split (T-D2 follow-up). Do NOT
+ *       import from `@aledan007/tester` for HTTP server usage; spawn
+ *       the bundled CLI (`npx tester`) or the HTTP binary instead.
+ *     - Anything imported from `src/lessons/scanner.ts` internals.
+ *
+ * Wave 2 additions are appended at the bottom of this file with their
+ * own comment block so the diff stays reviewable.
  */
 
 // Main class
@@ -78,3 +104,93 @@ export type {
   ElementLocation,
   LoginPlan,
 } from './core/types'
+
+// ─── Wave 1 + 2 public surface (TIER 2 — minor-mutable) ───
+// These are exported so consumers can run the same logic that the CLI
+// uses without shelling out. Breaking changes to this block require a
+// minor semver bump per API_CONTRACT.md.
+
+// T-006 untested aggregator
+export { buildUntestedReport } from './untested/loader'
+export type { UntestedItem, UntestedReport, UntestedSource } from './untested/schema'
+
+// T-007 retry
+export { retryStepWithBackoff } from './executor'
+
+// T-008 visual baseline
+export { LocalFSStore, S3Store, defaultBaselineDir, sanitizeRoute } from './snapshot/store'
+export type { BaselineMeta, BaselineStore } from './snapshot/store'
+export { compareRoute, pixelDiffPercent } from './snapshot/compare'
+export type { CompareResult } from './snapshot/compare'
+
+// T-009 a11y baseline + budget
+export {
+  storeBaseline as storeA11yBaseline,
+  loadBaseline as loadA11yBaseline,
+  diffAgainstBaseline as diffA11yAgainstBaseline,
+  summarize as summarizeA11yDiff,
+} from './a11y/baseline'
+export type { RouteScan, BaselineFile as A11yBaselineFile, DiffReport as A11yDiffReport } from './a11y/baseline'
+export { loadBudget as loadA11yBudget, checkBudget as checkA11yBudget } from './a11y/budget'
+
+// T-010 perf budget
+export {
+  loadPerfBudget,
+  evaluatePerfBudget,
+  computePerfDelta,
+  renderCiComment as renderPerfCiComment,
+} from './perf/budget'
+export type { PerfMetrics, PerfRun, PerfBudgetFile, PerfReport } from './perf/budget'
+
+// T-A1 feature scaffolder
+export { initFeature, loadFeaturesIndex } from './init/scaffolder'
+export type { InitOptions, InitResult, FeaturesIndex, FeaturesIndexEntry } from './init/scaffolder'
+
+// T-A3 session recorder
+export {
+  startSession,
+  appendEvent,
+  endSession,
+  loadSession as loadTesterSession,
+  loadLatestSession,
+  listSessions,
+} from './session/recorder'
+export type { SessionFile, SessionEvent, SessionEventKind, SessionSummary } from './session/recorder'
+
+// T-B1 TWG scoring
+export { computeTwgScore, renderTwgScoreAscii } from './scoring/twg'
+export type { TwgScoreInput, TwgScoreResult, TwgScoreOptions } from './scoring/twg'
+
+// T-B2 regressions store
+export {
+  addRegression,
+  listRegressions,
+  expireRegression,
+  isExpired as isRegressionExpired,
+} from './regression/store'
+export type { RegressionEntry, RegressionIndex } from './regression/store'
+
+// T-B3 triage
+export { triageFailure, accumulateSplit, emptySplit } from './triage/decision'
+export type { TriageDecision, TriageRoute, TriageSplit } from './triage/decision'
+
+// T-C4 affected mapper
+export { findAffectedFiles, indexTaggedFiles, walkTestFiles, parseTagsFromHeader } from './affected/mapper'
+export type { AffectedResult, AffectedOptions, TaggedFile } from './affected/mapper'
+
+// T-C5 pipeline analytics
+export {
+  analyzePipelines,
+  renderStatsMarkdown,
+  normalizeSignature as normalizePipelineSignature,
+} from './pipeline-stats/analyzer'
+export type {
+  PipelineRecord,
+  StatsReport as PipelineStatsReport,
+  PhaseBucket,
+  SignatureCluster,
+} from './pipeline-stats/analyzer'
+
+// T-D1 done gate
+export { evaluateDone, markDone, markUndone, readDoneStatus } from './done/gate'
+export type { DoneCheckResult, DoneOptions, DoneEntry } from './done/gate'
