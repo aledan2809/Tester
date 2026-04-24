@@ -29,6 +29,11 @@ export interface ViolationFingerprint {
   id: string
   impact: A11yImpact
   count: number
+  /** Optional time-boxed allowance — while this ISO date is in the future,
+   * the diff treats this violation as acceptable noise (not a regression). */
+  suppressed_until?: string
+  /** Human note attached to suppression — required when suppressed_until is set. */
+  suppressed_reason?: string
 }
 
 export interface RouteScan {
@@ -48,6 +53,10 @@ export interface DiffEntry {
   baseline: number
   current: number
   delta: number
+  /** When true, entry is within the suppressed_until window and does not fire regression. */
+  suppressed?: boolean
+  /** Populated when suppressed is true. */
+  suppressed_until?: string
 }
 
 export interface RouteDiff {
@@ -58,6 +67,8 @@ export interface RouteDiff {
   fixed: DiffEntry[]
   /** Violations at same severity/count — informational only. */
   unchanged: DiffEntry[]
+  /** Violations suppressed-until a future date — carried separately so reports can show them. */
+  suppressed: DiffEntry[]
 }
 
 export interface DiffReport {
@@ -116,10 +127,19 @@ function idx(viol: ViolationFingerprint[]): Record<string, ViolationFingerprint>
   return out
 }
 
+function isSuppressionActive(until: string | undefined, now: Date): boolean {
+  if (!until) return false
+  const t = Date.parse(until)
+  if (Number.isNaN(t)) return false
+  return t > now.getTime()
+}
+
 export function diffAgainstBaseline(
   baseline: BaselineFile,
   scans: RouteScan[],
+  opts: { now?: Date } = {},
 ): DiffReport {
+  const now = opts.now || new Date()
   const routes: RouteDiff[] = []
   let regression = false
   for (const scan of scans) {
@@ -130,13 +150,27 @@ export function diffAgainstBaseline(
     const newWorse: DiffEntry[] = []
     const fixed: DiffEntry[] = []
     const unchanged: DiffEntry[] = []
+    const suppressed: DiffEntry[] = []
     for (const id of ids) {
       const b = base[id]
       const c = cur[id]
       const impact = (c?.impact || b?.impact || 'minor') as A11yImpact
       const bCount = b?.count ?? 0
       const cCount = c?.count ?? 0
-      const entry: DiffEntry = { id, impact, baseline: bCount, current: cCount, delta: cCount - bCount }
+      const until = b?.suppressed_until || c?.suppressed_until
+      const isSuppressed = isSuppressionActive(until, now)
+      const entry: DiffEntry = {
+        id,
+        impact,
+        baseline: bCount,
+        current: cCount,
+        delta: cCount - bCount,
+        ...(isSuppressed ? { suppressed: true, suppressed_until: until } : {}),
+      }
+      if (isSuppressed) {
+        suppressed.push(entry)
+        continue
+      }
       if (bCount === 0 && cCount > 0) {
         newWorse.push(entry)
         if (IMPACT_RANK[impact] >= 3) regression = true
@@ -149,7 +183,7 @@ export function diffAgainstBaseline(
         unchanged.push(entry)
       }
     }
-    routes.push({ route: scan.route, new_or_worse: newWorse, fixed, unchanged })
+    routes.push({ route: scan.route, new_or_worse: newWorse, fixed, unchanged, suppressed })
   }
   return {
     project: baseline.project,

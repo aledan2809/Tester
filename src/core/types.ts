@@ -72,6 +72,10 @@ export interface TesterConfig {
   retrySettleCapMs?: number
   /** T-007 — Disable self-healing retries (CI correctness mode). */
   noRetry?: boolean
+  /** T-009 — Write per-route axe scan JSON to this path at the end of `tester run`. */
+  a11yScanOutputPath?: string
+  /** T-009 — Max pages to include in the per-route a11y scan (guards huge sitemaps). */
+  a11yScanMaxPages?: number
 
   // Output
   /** Directory for reports (default: ./reports) */

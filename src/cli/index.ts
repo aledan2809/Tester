@@ -94,6 +94,8 @@ program
   .option('--visual-regression', 'Enable visual regression testing', false)
   .option('--performance', 'Enable performance testing', false)
   .option('--plan <path>', 'Load test plan from JSON file (skips AI scenario generation)')
+  .option('--a11y-scan <path>', 'T-009 — Write per-route axe scan JSON to <path> (consumed by `tester a11y --check --from`)')
+  .option('--a11y-scan-max-pages <n>', 'T-009 — Max pages in a11y scan (default 50)', (v) => parseInt(v, 10))
   .action(runCommand)
 
 // ─── login ───────────────────────────────────────────────
@@ -475,12 +477,13 @@ program
 // ─── a11y (T-009 baseline + budget) ──────────────────────
 program
   .command('a11y')
-  .description('T-009 — A11y baseline store + budget enforcement (axe-core violations in / diff out)')
+  .description('T-009 — A11y baseline store + budget + diff + HTML report (axe-core violations in / diff out)')
   .option('--project <path>', 'Project root (required)')
   .option('--from <path>', 'Scan JSON file path { "scans": [{route, violations[]}] }')
   .option('--baseline', 'Store current scan as baseline (coverage/a11y-baseline.json)', false)
   .option('--check', 'Diff current scan against baseline + enforce budget', false)
   .option('--no-budget', 'Skip budget check when --check is set (diff-only)')
+  .option('--html <path>', 'On --check, also emit an HTML diff report at this path')
   .option('--json', 'Emit JSON', false)
   .action(a11yCommand)
 

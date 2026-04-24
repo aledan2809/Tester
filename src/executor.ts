@@ -79,6 +79,23 @@ export async function executeScenarios(
     } catch {}
   }
 
+  // T-009 — per-route a11y scan writer. Opt-in via config.a11yScanOutputPath.
+  // Re-visits the first N sitemap pages, runs axe on each, writes a
+  // { scans: [...] } JSON that `tester a11y --check --from` consumes.
+  if (config.a11yScanOutputPath && config.accessibility !== false) {
+    try {
+      const { runAllA11y, writeA11yScanFile } = await import('./a11y/runtime')
+      const targets = siteMap.pages.map((p) => ({ url: p.url }))
+      const maxPages = config.a11yScanMaxPages && config.a11yScanMaxPages > 0
+        ? config.a11yScanMaxPages
+        : Math.min(targets.length, 50)
+      const scans = await runAllA11y(browser, targets, { maxPages })
+      await writeA11yScanFile(config.a11yScanOutputPath, scans)
+    } catch {
+      // Graceful — the write is best-effort; run succeeds regardless.
+    }
+  }
+
   const completedAt = new Date()
   const summary = buildSummary(results, siteMap, totalA11y)
 

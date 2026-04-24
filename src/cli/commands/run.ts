@@ -30,6 +30,8 @@ interface RunOptions {
   visualRegression: boolean
   performance: boolean
   plan?: string
+  a11yScan?: string
+  a11yScanMaxPages?: number
 }
 
 export async function runCommand(url: string, options: RunOptions): Promise<void> {
@@ -59,6 +61,8 @@ export async function runCommand(url: string, options: RunOptions): Promise<void
     visualRegression: options.visualRegression || (!options.skip?.includes('visual') && !options.only),
     accessibility: options.accessibility || (!options.skip?.includes('a11y') && !options.only),
     performance: options.performance || (!options.skip?.includes('performance') && !options.only),
+    a11yScanOutputPath: options.a11yScan,
+    a11yScanMaxPages: options.a11yScanMaxPages,
   })
 
   try {

@@ -30,6 +30,7 @@ import {
   type RouteScan,
 } from '../../a11y/baseline'
 import { loadBudget, checkBudget, summarizeBudgetResults } from '../../a11y/budget'
+import { writeA11yHtmlReport } from '../../a11y/html-report'
 
 export interface A11yOptions {
   project?: string
@@ -38,6 +39,7 @@ export interface A11yOptions {
   check?: boolean
   json?: boolean
   budget?: boolean
+  html?: string
 }
 
 function readScans(fromPath: string): RouteScan[] {
@@ -111,6 +113,19 @@ export async function a11yCommand(opts: A11yOptions): Promise<void> {
     diff,
     summary,
     budget: budget ? { file: 'coverage/a11y-budget.yaml', results: budgetResults, summary: budgetSummary } : null,
+  }
+
+  if (opts.html) {
+    const htmlPath = path.resolve(opts.html)
+    await writeA11yHtmlReport({
+      project: baseline!.project,
+      diff,
+      budget: budgetResults,
+      outputPath: htmlPath,
+    })
+    if (!opts.json) {
+      process.stdout.write(`HTML report: ${htmlPath}\n`)
+    }
   }
 
   if (opts.json) {

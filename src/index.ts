@@ -150,15 +150,26 @@ export type { HtmlReportOptions as VisualHtmlReportOptions } from './snapshot/ht
 export { captureFullPage, captureUrl, captureUrlStandalone } from './snapshot/capture'
 export type { CaptureFullPageOptions, CaptureUrlOptions } from './snapshot/capture'
 
-// T-009 a11y baseline + budget
+// T-009 a11y baseline + budget + HTML + runtime writer
 export {
   storeBaseline as storeA11yBaseline,
   loadBaseline as loadA11yBaseline,
   diffAgainstBaseline as diffA11yAgainstBaseline,
   summarize as summarizeA11yDiff,
 } from './a11y/baseline'
-export type { RouteScan, BaselineFile as A11yBaselineFile, DiffReport as A11yDiffReport } from './a11y/baseline'
+export type {
+  RouteScan,
+  BaselineFile as A11yBaselineFile,
+  DiffReport as A11yDiffReport,
+  ViolationFingerprint as A11yViolationFingerprint,
+  DiffEntry as A11yDiffEntry,
+  RouteDiff as A11yRouteDiff,
+} from './a11y/baseline'
 export { loadBudget as loadA11yBudget, checkBudget as checkA11yBudget } from './a11y/budget'
+export { renderA11yHtml, writeA11yHtmlReport } from './a11y/html-report'
+export type { A11yHtmlOptions } from './a11y/html-report'
+export { runAllA11y, writeA11yScanFile } from './a11y/runtime'
+export type { RunAllA11yOptions, A11yScanFile } from './a11y/runtime'
 
 // T-010 perf budget
 export {

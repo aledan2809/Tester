@@ -41,6 +41,8 @@ const DEFAULT_CONFIG: Required<Omit<TesterConfig, 'credentials' | 'mfaHandler' |
   retryBackoffMultiplier: 1.5,
   retrySettleCapMs: 8000,
   noRetry: false,
+  a11yScanOutputPath: '',
+  a11yScanMaxPages: 0,
 }
 
 export class BrowserCore {
