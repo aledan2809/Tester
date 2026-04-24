@@ -15,6 +15,9 @@ export interface DoneCliOptions {
   skipA11y?: boolean
   skipVisual?: boolean
   json?: boolean
+  runTests?: boolean
+  runner?: 'vitest' | 'jest' | 'playwright'
+  runnerArgs?: string
 }
 
 function resolveProject(p?: string): string {
@@ -36,6 +39,9 @@ export async function doneCommand(feature: string, opts: DoneCliOptions): Promis
     failUnder: opts.failUnder,
     skipA11y: opts.skipA11y,
     skipVisual: opts.skipVisual,
+    runTests: opts.runTests,
+    runner: opts.runner,
+    runnerArgs: opts.runnerArgs ? opts.runnerArgs.split(' ').filter(Boolean) : undefined,
   })
 
   if (!report.passed) {

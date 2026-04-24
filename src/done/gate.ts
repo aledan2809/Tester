@@ -18,6 +18,7 @@
 
 import * as fs from 'node:fs'
 import * as path from 'node:path'
+import { spawnSync } from 'node:child_process'
 import * as yaml from 'js-yaml'
 import { loadCoverageMatrix, computeStats } from '../coverage/loader'
 import type { CoverageMatrix } from '../coverage/schema'
@@ -47,11 +48,179 @@ export interface DoneOptions {
   failUnder?: number
   skipA11y?: boolean
   skipVisual?: boolean
+  /** T-D1 close — when true, spawn vitest on tests/<feature>/ and read
+   *  tests_passing / tests_total from its JSON reporter. Supersedes
+   *  explicit --tests-passing / --tests-total when set. */
+  runTests?: boolean
+  /** Override runner; vitest today, jest/playwright planned. */
+  runner?: 'vitest' | 'jest' | 'playwright'
+  /** Extra args forwarded to the runner (pass-through). */
+  runnerArgs?: string[]
+}
+
+interface RunnerResult {
+  tests_passing: number
+  tests_total: number
+  ok: boolean
+  error?: string
+  exitCode?: number
+}
+
+/**
+ * T-D1 close — spawn vitest (or configured runner) on the feature's
+ * spec dir, parse the JSON reporter output, return pass/total counts.
+ * Exported so other gate-like commands can reuse. On failure to spawn
+ * or parse, returns ok:false with a descriptive error; caller treats
+ * this as the gate failing on the tests_pass predicate.
+ */
+export function spawnRunner(
+  projectRoot: string,
+  feature: string,
+  runner: 'vitest' | 'jest' | 'playwright' = 'vitest',
+  extraArgs: string[] = [],
+): RunnerResult {
+  const testsDir = path.join(projectRoot, 'tests', feature)
+  if (!fs.existsSync(testsDir)) {
+    return {
+      tests_passing: 0,
+      tests_total: 0,
+      ok: false,
+      error: `tests/${feature}/ does not exist — run \`tester init ${feature}\` first`,
+    }
+  }
+  if (runner === 'vitest') {
+    const args = ['vitest', 'run', testsDir, '--reporter=json', ...extraArgs]
+    const res = spawnSync('npx', args, { encoding: 'utf8', cwd: projectRoot })
+    // vitest writes JSON to stdout when --reporter=json; also writes progress
+    // lines when a TTY is attached. We take the first valid JSON object from
+    // stdout.
+    const text = res.stdout || ''
+    const match = text.match(/\{[\s\S]*"numTotalTests"[\s\S]*\}/)
+    if (!match) {
+      return {
+        tests_passing: 0,
+        tests_total: 0,
+        ok: false,
+        error: `vitest did not emit parseable JSON (exit ${res.status}). stderr head: ${(res.stderr || '').slice(0, 300)}`,
+        exitCode: res.status ?? undefined,
+      }
+    }
+    try {
+      const parsed = JSON.parse(match[0]) as {
+        numTotalTests?: number
+        numPassedTests?: number
+      }
+      const total = parsed.numTotalTests ?? 0
+      const passed = parsed.numPassedTests ?? 0
+      return {
+        tests_passing: passed,
+        tests_total: total,
+        ok: res.status === 0,
+        exitCode: res.status ?? undefined,
+      }
+    } catch (e) {
+      return {
+        tests_passing: 0,
+        tests_total: 0,
+        ok: false,
+        error: `vitest JSON parse error: ${(e as Error).message}`,
+        exitCode: res.status ?? undefined,
+      }
+    }
+  }
+  if (runner === 'jest') {
+    const args = ['jest', testsDir, '--json', ...extraArgs]
+    const res = spawnSync('npx', args, { encoding: 'utf8', cwd: projectRoot })
+    const text = res.stdout || ''
+    const match = text.match(/\{[\s\S]*"numTotalTests"[\s\S]*\}/)
+    if (!match) {
+      return {
+        tests_passing: 0,
+        tests_total: 0,
+        ok: false,
+        error: `jest did not emit parseable JSON (exit ${res.status})`,
+        exitCode: res.status ?? undefined,
+      }
+    }
+    try {
+      const parsed = JSON.parse(match[0]) as {
+        numTotalTests?: number
+        numPassedTests?: number
+      }
+      return {
+        tests_passing: parsed.numPassedTests ?? 0,
+        tests_total: parsed.numTotalTests ?? 0,
+        ok: res.status === 0,
+        exitCode: res.status ?? undefined,
+      }
+    } catch (e) {
+      return {
+        tests_passing: 0,
+        tests_total: 0,
+        ok: false,
+        error: `jest JSON parse error: ${(e as Error).message}`,
+      }
+    }
+  }
+  // playwright — stdout has `--reporter=json` support but the schema differs;
+  // we do the best-effort parse and fall back to exit-code-only counts.
+  const args = ['playwright', 'test', testsDir, '--reporter=json', ...extraArgs]
+  const res = spawnSync('npx', args, { encoding: 'utf8', cwd: projectRoot })
+  const text = res.stdout || ''
+  const match = text.match(/\{[\s\S]*"stats"[\s\S]*\}/)
+  if (!match) {
+    return {
+      tests_passing: 0,
+      tests_total: 0,
+      ok: res.status === 0,
+      error: res.status === 0 ? undefined : `playwright exit ${res.status}`,
+      exitCode: res.status ?? undefined,
+    }
+  }
+  try {
+    const parsed = JSON.parse(match[0]) as {
+      stats?: { expected?: number; unexpected?: number; skipped?: number; passes?: number }
+    }
+    const passed = parsed.stats?.expected ?? parsed.stats?.passes ?? 0
+    const failed = parsed.stats?.unexpected ?? 0
+    return {
+      tests_passing: passed,
+      tests_total: passed + failed,
+      ok: res.status === 0,
+      exitCode: res.status ?? undefined,
+    }
+  } catch (e) {
+    return {
+      tests_passing: 0,
+      tests_total: 0,
+      ok: false,
+      error: `playwright JSON parse error: ${(e as Error).message}`,
+    }
+  }
 }
 
 export function evaluateDone(opts: DoneOptions): DoneCheckResult {
   const failUnder = opts.failUnder ?? 0.9
   const reasons: string[] = []
+
+  // T-D1 close — if runTests flag is set, invoke the runner + override
+  // explicit --tests-passing / --tests-total that may have come from CLI.
+  let testsPassing = opts.testsPassing
+  let testsTotal = opts.testsTotal
+  if (opts.runTests) {
+    const runnerRes = spawnRunner(
+      opts.projectRoot,
+      opts.feature,
+      opts.runner || 'vitest',
+      opts.runnerArgs,
+    )
+    if (runnerRes.error) reasons.push(`runner: ${runnerRes.error}`)
+    testsPassing = runnerRes.tests_passing
+    testsTotal = runnerRes.tests_total
+    if (!runnerRes.ok && (!reasons.some((r) => r.startsWith('runner:')))) {
+      reasons.push(`runner exit code ${runnerRes.exitCode ?? '?'}`)
+    }
+  }
 
   // Coverage
   const coverageFile = path.join(opts.projectRoot, 'coverage', `${opts.feature}.yaml`)
@@ -79,10 +248,10 @@ export function evaluateDone(opts: DoneOptions): DoneCheckResult {
   // Tests pass rate
   let passRate = 0
   let testsPass = false
-  if (typeof opts.testsPassing === 'number' && typeof opts.testsTotal === 'number') {
+  if (typeof testsPassing === 'number' && typeof testsTotal === 'number') {
     const { pass_rate } = computeTwgScore({
-      tests_passing: opts.testsPassing,
-      tests_total: opts.testsTotal,
+      tests_passing: testsPassing,
+      tests_total: testsTotal,
       scenarios_covered: 0,
       scenarios_declared: 0,
     })
@@ -92,7 +261,9 @@ export function evaluateDone(opts: DoneOptions): DoneCheckResult {
       reasons.push(`tests pass_rate=${(passRate * 100).toFixed(1)}% < 100%`)
     }
   } else {
-    reasons.push(`tests_passing / tests_total not provided — caller must pipe runner results`)
+    reasons.push(
+      `tests_passing / tests_total not provided — pass --run-tests to spawn vitest OR pipe explicit counts`,
+    )
   }
 
   // A11y baseline presence

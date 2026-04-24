@@ -242,8 +242,8 @@ export type {
   SignatureCluster,
 } from './pipeline-stats/analyzer'
 
-// T-D1 done gate
-export { evaluateDone, markDone, markUndone, readDoneStatus } from './done/gate'
+// T-D1 done gate (+ runner spawn)
+export { evaluateDone, markDone, markUndone, readDoneStatus, spawnRunner } from './done/gate'
 export type { DoneCheckResult, DoneOptions, DoneEntry } from './done/gate'
 
 // T-D4 inventory aggregator
