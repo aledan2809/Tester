@@ -46,6 +46,7 @@ import {
   regressionExpireCmd,
 } from './commands/regression'
 import { triageCommand } from './commands/triage'
+import { affectedCommand } from './commands/affected'
 
 const program = new Command()
 
@@ -263,6 +264,17 @@ program
   .option('--overwrite', 'Overwrite existing generated file', false)
   .option('--json', 'Emit JSON', false)
   .action(generateCommand)
+
+// ─── affected (T-C4 phase-aware test scoping) ────────────
+program
+  .command('affected')
+  .description('T-C4 — Pick test files matching --tags (reads `// @tags ...` headers in first 20 lines)')
+  .option('--project <path>', 'Project root (default: cwd)')
+  .option('--dir <path>', 'Test directory (default: <project>/tests)')
+  .option('--tags <csv>', 'Comma-separated tag list (required)')
+  .option('--include-untagged', 'Include files that declare no tags', false)
+  .option('--json', 'Emit JSON', false)
+  .action(affectedCommand)
 
 // ─── triage (T-B3 product-vs-harness routing for TWG) ────
 program
