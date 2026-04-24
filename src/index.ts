@@ -194,3 +194,7 @@ export type {
 // T-D1 done gate
 export { evaluateDone, markDone, markUndone, readDoneStatus } from './done/gate'
 export type { DoneCheckResult, DoneOptions, DoneEntry } from './done/gate'
+
+// T-D4 inventory aggregator
+export { buildInventory, discoverProjectRoots, renderInventoryMarkdown } from './inventory/aggregator'
+export type { InventoryReport, ProjectInventoryEntry } from './inventory/aggregator'

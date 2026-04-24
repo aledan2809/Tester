@@ -49,6 +49,7 @@ import { triageCommand } from './commands/triage'
 import { affectedCommand } from './commands/affected'
 import { pipelineStatsCommand } from './commands/pipeline-stats'
 import { doneCommand, undoneCommand, statusCommand } from './commands/done'
+import { inventoryCommand } from './commands/inventory'
 
 const program = new Command()
 
@@ -266,6 +267,17 @@ program
   .option('--overwrite', 'Overwrite existing generated file', false)
   .option('--json', 'Emit JSON', false)
   .action(generateCommand)
+
+// ─── inventory (T-D4 cross-project aggregator) ───────────
+program
+  .command('inventory')
+  .description('T-D4 — Cross-project coverage aggregator (features.yaml + coverage/*.yaml + AUDIT_GAPS)')
+  .option('--roots <csv>', 'Comma-separated project roots')
+  .option('--parent-dir <path>', 'Scan direct children of this dir as project roots')
+  .option('--config <path>', 'JSON { "project_roots": [...] } file')
+  .option('--markdown', 'Emit Markdown report', false)
+  .option('--json', 'Emit JSON', false)
+  .action(inventoryCommand)
 
 // ─── done / undone / status (T-D1 composite gate) ────────
 program
