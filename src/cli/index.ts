@@ -30,6 +30,7 @@ import { untestedCommand } from './commands/untested'
 import { snapshotCommand } from './commands/snapshot'
 import { a11yCommand } from './commands/a11y'
 import { perfCommand } from './commands/perf'
+import { initCommand } from './commands/init'
 
 const program = new Command()
 
@@ -247,6 +248,17 @@ program
   .option('--overwrite', 'Overwrite existing generated file', false)
   .option('--json', 'Emit JSON', false)
   .action(generateCommand)
+
+// ─── init (T-A1 feature scaffolder) ──────────────────────
+program
+  .command('init <feature>')
+  .description('T-A1 — Scaffold coverage/<feature>.yaml + tests/<feature>/index.spec.ts + README + features.yaml index')
+  .option('--project <path>', 'Project root (default: cwd)')
+  .option('--owner <name>', 'Feature owner (default: project dir name)')
+  .option('--overwrite', 'Overwrite existing files', false)
+  .option('--no-with-login', 'Skip login helper in generated spec (default: include)')
+  .option('--json', 'Emit JSON', false)
+  .action(initCommand)
 
 // ─── perf (T-010 budget + CI delta) ──────────────────────
 program

@@ -4,6 +4,55 @@
 
 ---
 
+## 2026-04-24 — feat(tester): T-A1 `tester init <feature>` scaffolder
+
+- **Session:** Direct autonomous continuation (wave 2 kickoff per user directive 2026-04-24). Resume prompt `Master/knowledge/Tester-Resume-Prompt-2026-04-24.md`.
+- **Scope:** New CLI `tester init <feature> [--project <path>] [--owner <name>] [--overwrite] [--no-with-login]` that scaffolds a T-002-shaped coverage YAML, a vitest spec with self-check + login helper + teardown, a README, and upserts `coverage/features.yaml` index. Additive; zero changes to DO NOT MODIFY zones.
+
+### Files created (4)
+- `src/init/scaffolder.ts` — pure generators: `assertFeatureSlug`, `renderCoverageYaml`, `renderSpecFile`, `renderReadme`, `loadFeaturesIndex`, `upsertFeaturesIndex`, `initFeature`. Slug regex `^[a-z0-9][a-z0-9-]{0,59}$`. Index upsert is idempotent + sorted for deterministic diffs.
+- `src/cli/commands/init.ts` — CLI handler with `--project`, `--owner`, `--overwrite`, `--no-with-login`, `--json`, exit 2 on errors.
+- `tests/init/scaffolder.test.ts` — 17 unit tests covering slug validation, YAML/spec/README shape, features-index lifecycle (load/upsert/sort/corrupt), end-to-end scaffold, skip-on-conflict, `--overwrite`, invalid project root.
+
+### Files modified (1)
+- `src/cli/index.ts` — 2 surgical edits: import + subcommand registration (~10 lines).
+
+### Generated layout
+```
+<project>/
+  coverage/
+    features.yaml          ← index (upserted)
+    <feature>.yaml         ← T-002 matrix stub (A1 smoke / A2 auth negative / A3 crud)
+  tests/<feature>/
+    index.spec.ts          ← vitest skeleton: self-check before, teardown after, login helper, it.skip scenarios
+    README.md              ← scenarios + how-to-run + coverage-check commands
+```
+
+### Done-when gate verified
+- `node dist/cli/index.js init four-way-match --project <tmp> --owner procuchaingo2` on a blank tmp dir produces 4 files (smoke-tested in session) matching the spec.
+- Generated spec imports `@aledan007/tester/self-check`, runs `runSelfCheck()` in `beforeAll`, throws when harness-level failure fires, cleans `createdIds` in `afterAll`.
+- Rerun without `--overwrite` reports 3 skipped files (idempotent); with `--overwrite`, all 3 rewrite.
+
+### Design notes
+- Login helper is **on by default** (`withLogin: true`); `--no-with-login` opts out for public-only features (landings, marketing pages).
+- Scenarios A1/A2/A3 emit as `it.skip(...)` — users flip to `it(...)` once wired; forces an explicit choice per scenario rather than a silent pass.
+- `createdIds` array + teardown block are scaffolded as a placeholder so users can push artefact ids they create during the suite; re-runs stay deterministic.
+- Coverage YAML stub uses T-002 schema verbatim (`feature`, `owner`, `scenarios` with `id/name/category/severity/covered_by/status`) so `tester coverage --feature` + `tester untested --project` pick it up immediately.
+
+### Verification
+- `npx tsc --noEmit` → 0 errors
+- `npm run build` (tsup CJS+ESM+DTS) → success
+- `npx vitest run` → **349/349 pass** (332 → 349, +17 new, 0 regressions)
+- CLI smoke on temp dir → 4 files created in correct layout (see smoke trace above)
+
+### Risk assessment
+- LOW. Pure additive CLI + new `src/init/` module. No existing behavior altered.
+
+### User confirmation
+- Explicit user directive "continua autonom pe T-A1 acum" (session 2026-04-24 wave 2 kickoff). Ledger entry (this block) serves as the applied record.
+
+---
+
 ## 2026-04-24 — feat(tester): T-010 perf budget evaluator + CI delta comment
 
 - **Session:** Direct autonomous continuation. Commit `a62fb55`.
