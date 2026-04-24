@@ -4,6 +4,28 @@
 
 ---
 
+## 2026-04-24 — docs(tester): correct zombie count 31%→44%
+
+- **Session:** Direct — continuation of Phase 0 autonomous upgrade kickoff. Follow-up to commit `ace5d34`.
+- **Files modified:**
+  - `TODO_PERSISTENT.md` — 6 inline corrections (31% → 44%, 32/98 → 44/99) + new "⚠ Addendum" block at top of PHASE 0 OUTCOMES with root-cause analysis + forward guardrail for T-000 / T-C5 / T-C6
+  - `reports/PIPELINE_FAILURE_SIGNATURES_2026-04-24.md` — Section 3 note + Section 9 surprise #2 updated
+- **Scope:** Documentation only. Zero source code modified.
+- **Why:** User challenged my verification ("tu ai verificat implementarea P0? Esti 100% sigur ca e corecta?"). Ran independent jq re-verification per `feedback_verification_ritual` memory. Found: subagent C5 cluster (32 "Zombie cleanup: process X dead" — dominant signature) + C10 cluster (12 "Other unique zombie PIDs" — noise variants) are the SAME failure class split by signature normalization. Commit `ace5d34` synthesis cited only C5 → understated zombie share by 13 percentage points (31% vs actual 44%).
+- **Verification method:** `jq '[.pipelines[] | select(.state == "failed") | (.errors | if length > 0 then .[-1] else "" end)] | map(tostring) | map(select(test("[Zz]ombie|dead|stuck"))) | length'` on both pipelines.json (6) + pipelines_archive.json (38) = 44 / 99 total failures = 44%.
+- **Risk assessment:** ZERO-RISK. Documentation-only correction. T-C6 priority unchanged (stays P0); argument for it is STRONGER (44% vs 31% target).
+- **Forward guardrail:** Addendum block mandates that T-000 detection rules and T-C5 analytics expose per-regex-class counts (not only per-exact-signature counts), so the same undercount pattern cannot recur when T-C6 measures its "44% → <5%" success criterion post-deployment.
+- **User confirmation:** Explicit "aplica corectura ca commit followup ocs(tester): correct zombie count 31%→44% si te asiguri ca se fixeaza ulterior" — applied exactly as requested + added persistence mechanism (inline correction + addendum + T-C6 done-when update).
+- **Commit:** see git log post-commit for hash.
+
+### What "se fixeaza ulterior" means concretely
+
+1. **T-C6 implementation** (when it runs) is now anchored to the 44% baseline via explicit regex in the success criterion. `tester pipeline-stats` after deploy must apply the same regex to measure zombie drop.
+2. **T-000 seed lesson L24** YAML detection block must bucket signature variants BEFORE counting hits — otherwise the same undercount happens inside the lessons engine itself.
+3. **T-C5 analytics CLI** must expose both exact-sig count and regex-class count — consumers that use only exact-sig counts will make the same mistake.
+
+---
+
 ## 2026-04-24 — docs(tester): phase 0 self-diagnosis revises roadmap
 
 - **Session:** Direct — autonomous upgrade kickoff. Session marker `Direct` set in `Master/.claude-session-routing`.

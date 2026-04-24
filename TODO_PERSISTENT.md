@@ -69,6 +69,23 @@ With 0.1 + 0.2 + 0.3 data, revise THIS file:
 
 ## PHASE 0 OUTCOMES (2026-04-24) — Self-Diagnosis Complete
 
+### ⚠ Addendum (2026-04-24 post-commit correction — commit `ace5d34` superseded)
+
+**Correction:** Zombie cleanup failure share was initially stated as **31% (32/98)** in commit `ace5d34`. Independent jq re-verification (`test("[Zz]ombie|dead|stuck")` on both `pipelines.json` + `pipelines_archive.json`) found the real number is **44% (44/99)** — a 13-percentage-point understatement.
+
+**Root cause of miss:** Phase 0.3 subagent bucketed zombies into two clusters — C5 "Zombie cleanup: process X dead" (n=32, dominant-signature variant) and C10 "Other unique zombie PIDs" (n=12, noise variants with distinct PID + idle-time in the signature line). Synthesis in commit `ace5d34` cited only the C5 cluster count, treating C10 as unrelated noise. Correct read: C5+C10 are the same failure class, just split by signature normalization granularity. True zombie share = 44/99 = 44%.
+
+**Correction commit:** `docs(tester): correct zombie count 31%→44%` (this entry). All downstream references in this file updated inline.
+
+**Forward guardrail (implementation note for T-000 and T-C5):**
+- T-000 lesson-detection rules must collapse signature variants **before** counting hits. Regex-bucket cluster variants (e.g., all `^Zombie cleanup: process \d+` → single signature "zombie-cleanup") before reporting hit-count-driven escalation thresholds.
+- T-C5 `tester pipeline-stats` must expose both per-exact-signature counts AND per-regex-class counts. Using only exact-signature counts will repeat the exact undercount that happened here.
+- T-C6 "done when" criterion now explicitly uses the same `[Zz]ombie|dead|stuck` regex as the measurement baseline so the "44% → <5%" claim is re-measurable with identical methodology.
+
+**Impact on roadmap:** T-C6 priority unchanged (remains **P0 parallel with T-000**); T-C6 argument is STRONGER than originally stated (targets 44% not 31% of failure volume). No other revisions affected.
+
+---
+
 **Status:** Phase 0 investigations complete. Full evidence in:
 - [Reports/CODE_SURVEY_2026-04-24.md](Reports/CODE_SURVEY_2026-04-24.md) — 27 items surveyed vs 50+ source files (commit `d501c6c`)
 - [Reports/LESSONS_INVENTORY_2026-04-24.md](Reports/LESSONS_INVENTORY_2026-04-24.md) — 42 lessons across 14 files; **59% recurrence ratio**
@@ -78,7 +95,7 @@ With 0.1 + 0.2 + 0.3 data, revise THIS file:
 
 - **59% lesson recurrence ratio** — 22 of 37 resolved lessons still recur ecosystem-wide. Validates T-000 premise: **prose lessons don't change behavior**. Target post-T-000: <15%.
 - **100% of pipeline failures are in phase "auto"** (98/98) — zero in full-audit/review/deploy phases. T-C4 phase-aware scoping was guessed as P1; data says P0.
-- **31% of failures are zombie cleanup (L24)** — 32/98 failures. L24 is a DOCUMENTED lesson with a PROPOSED fix that was NEVER DEPLOYED. Canonical T-000 proof case ("lesson-as-prose doesn't prevent recurrence").
+- **44% of failures are zombie cleanup (L24)** — 44/99 failures (corrected 2026-04-24 post-commit; see Addendum below). L24 is a DOCUMENTED lesson with a PROPOSED fix that was NEVER DEPLOYED. Canonical T-000 proof case ("lesson-as-prose doesn't prevent recurrence").
 - **50% corpus blind-spot rate** — 5 of top 10 pipeline failure signatures match Phase 0.2 lessons; the other 5 are **new** (agent retry exhaustion, git deploy, JSON EOF). T-000 seed corpus grows 42 → 46.
 
 ### Verdict matrix (27 items vs current Tester codebase)
@@ -98,7 +115,7 @@ With 0.1 + 0.2 + 0.3 data, revise THIS file:
 |---|---|---|---|
 | **T-C4** phase-aware scoping | P1 | **P0 — PROMOTE** | 100% of 98 failures in phase "auto"; strongest single signal in pipeline corpus |
 | **T-C5** pipeline analytics | P1 | **P0 — PROMOTE** | Phase 0.3 report IS the prototype; 4 new lessons surfaced; couples tightly with T-000 |
-| **T-C6** zombie watchdog | — | **P0 — NEW** | L24 implementation: 31% of all failures; documented+proposed fix never shipped; 1-day effort |
+| **T-C6** zombie watchdog | — | **P0 — NEW** | L24 implementation: **44% of all failures** (was "31%" pre-correction); documented+proposed fix never shipped; 1-day effort |
 | **T-C2** test-coupling | P0 | **P1 — DEMOTE** | Zero failures in pipeline corpus match this signal; may be pre-CI (git hook) concern |
 | **T-C3** rollback-on-regression | P0 | **P2 — DEMOTE** | 1 deploy failure in 263 pipelines, 0 post-deploy regressions; premature guard |
 | **T-C1** scope-check | P0 | **P0 — HOLD** | Scope creep implicit in zombie/agent timeouts, not explicit; implement after T-C4 lands |
@@ -148,7 +165,7 @@ From Phase 0.1 survey:
 ### Critical path LOCKED (execution order)
 
 1. **Phase 0** → complete. Revised roadmap below.
-2. **T-000 (5d) + T-C6 (1d, parallel)** → T-000 is the architectural foundation; T-C6 is independent infra fix that unblocks 31% of failure volume immediately.
+2. **T-000 (5d) + T-C6 (1d, parallel)** → T-000 is the architectural foundation; T-C6 is independent infra fix that unblocks **44%** of failure volume immediately (corrected 2026-04-24; originally stated as 31%).
 3. **T-001 + T-002 + T-003 parallel (3d each)** — once T-000 lesson schema is merged, these three consume it independently.
 4. **T-004 → T-B3** (blocks T-B3).
 5. **T-C4 → T-C5 → T-C1** (pipeline-side items in data-driven order).
@@ -723,7 +740,7 @@ scenarios:
 
 ### T-C6 [P0 — NEW 2026-04-24] — Zombie cleanup watchdog (L24 deployed)
 
-**Problem:** Phase 0.3 analysis of 263 pipelines shows **zombie cleanup ("process X dead, stuck in failed") is 31% of all failures** (32/98). Lesson L24 documented this in Master `knowledge/lessons-learned.md`, proposed fix (shorter blocked-state timeout + session watchdog ping) was NEVER DEPLOYED. This is the canonical "documented-lesson-that-keeps-recurring" case — perfect validation target for T-000's behavior-change claim.
+**Problem:** Phase 0.3 analysis of 263 pipelines shows **zombie cleanup ("process X dead, stuck in failed") is 44% of all failures** (44/99, corrected 2026-04-24 post-commit — see Phase 0 Outcomes Addendum). Lesson L24 documented this in Master `knowledge/lessons-learned.md`, proposed fix (shorter blocked-state timeout + session watchdog ping) was NEVER DEPLOYED. This is the canonical "documented-lesson-that-keeps-recurring" case — perfect validation target for T-000's behavior-change claim.
 
 **Scope (MASTER mesh — Tester contributes detection + CLI):**
 
@@ -746,7 +763,7 @@ scenarios:
 - Simulating a 31-min-idle pipeline fires the `waiting_watchdog` state transition with user notification
 - `tester zombie-scan` lists known-idle pipelines matching criteria without false positives on healthy long-runs
 - After T-000 lands, `tester lessons validate` passes L24 regression test; reverting the timeout change makes it fail
-- After 1 week production runtime, zombie-class failures drop from 31% → <5% of failure volume (metric lift measurable via `tester pipeline-stats`)
+- After 1 week production runtime, zombie-class failures drop from **44% → <5%** of failure volume (metric lift measurable via `tester pipeline-stats`). **Success criterion correction (2026-04-24):** baseline is 44% (44/99 pipelines), not 31% — when implementing T-C6, re-measure zombie share with the same `[Zz]ombie|dead|stuck` regex used to derive this baseline; do NOT rely on the subagent's C5-only cluster count.
 
 **Relationship to T-000:** L24 is the SIMPLEST lesson to encode first — text match on error signature + clear remedy + trivial regression test. It proves the T-000 lifecycle (detection → prevention → diagnosis → regression-lock) works end-to-end BEFORE the more nuanced F2/F8/F10 lessons.
 
@@ -833,7 +850,7 @@ scenarios:
 |---|---|---|---|
 | Phase 0 (self-diagnosis) | **~4 h actual** | +2h | Thorough sweep of 5.3MB pipeline archive + 42 lessons corpus |
 | **T-000 Active Lessons Engine** | **~5 days** | +1d | Seed corpus 34 (not 30) lessons; governance detection rules added (L31/L40/L41/L24) |
-| **T-C6 Zombie cleanup watchdog (NEW)** | **1 day** | +1d | L24 deployment; 31% of all failures; parallel with T-000 |
+| **T-C6 Zombie cleanup watchdog (NEW)** | **1 day** | +1d | L24 deployment; **44% of all failures** (corrected 2026-04-24); parallel with T-000 |
 | Foundations (T-001..T-010) | **~13 days** | -2d | T-007..T-010 are extensions of existing code (retry, pixelmatch, axe, CDP) not greenfield |
 | CC sessions (T-A1..T-A3) | ~2 days | — | unchanged |
 | TWG (T-B1..T-B3) | ~2 days | — | unchanged |

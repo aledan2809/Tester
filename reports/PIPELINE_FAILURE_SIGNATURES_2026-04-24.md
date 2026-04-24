@@ -56,7 +56,9 @@ All failed pipelines in both corpora are in **"auto"** phase. No failures observ
 **Top 3 signatures by frequency:**
 1. **Unexpected end of JSON input** (C1): 20 (19.4% of failures)
 2. **DEV agent failed after 3 attempts** (C2 + C4): 16 (15.5%)
-3. **Zombie cleanup process dead** (C5): 32 (31% of failures)
+3. **Zombie cleanup process dead** (C5 dominant signature): 32 (31% of failures by C5 alone).
+
+> **⚠ Correction 2026-04-24 post-commit (`ace5d34` superseded):** true zombie share is **44% (44/99)** once cluster C10 ("other unique zombie PIDs", n=12) is counted in — same failure class, split only by per-PID signature granularity in Section 3 bucketing. Use C5+C10 combined = 44 for T-C6 targeting baseline + success criterion re-measurement. Baseline regex: `test("[Zz]ombie|dead|stuck")` on both `pipelines.json` + `pipelines_archive.json`.
 
 ---
 
@@ -184,7 +186,7 @@ Top 8 projects by failure count:
 
 1. **All 98 failures in "auto" phase, zero in others.** Expected if "auto" is rapid-iteration mode with no scope guards. But suggests other phases (full-audit, review) have adequate safety mechanisms OR are rarely attempted. Investigate pipeline distribution.
 
-2. **Zombie cleanup (32 failures, 31% of corpus) dominates more than agent failures.** L24 predicted this; data confirms. But remedy (shorter timeout, watchdog pings) is not yet deployed. This is a known, fixable problem—priority for T-C4.
+2. **Zombie cleanup (44 failures, 44% of corpus — corrected 2026-04-24 post-commit; see Section 3 note) dominates all other failure classes combined.** L24 predicted this; data confirms. But remedy (shorter timeout, watchdog pings) is not yet deployed. This is a known, fixable problem — priority for T-C6 (was initially attributed to T-C4 here; corrected: T-C6 is the dedicated watchdog item).
 
 3. **22% of failures are "Unexpected end of JSON input" (C1).** Spans archive → recent. Suggests systematic log-streaming bug or monitor timeout pattern. Not a business-logic issue; infrastructure risk. Check if monitor has heartbeat timeout < log write latency.
 
