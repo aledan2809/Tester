@@ -15,6 +15,13 @@ import type {
   UntestedSeverity,
   UntestedSource,
 } from './schema'
+import {
+  filesChangedSince,
+  blameFile,
+  attributeByText,
+  wasChangedSince,
+} from './git'
+import { execFileSync } from 'node:child_process'
 
 const SEVERITY_ORDER: Record<UntestedSeverity, number> = {
   critical: 4,
@@ -252,6 +259,10 @@ export function rankItems(items: UntestedItem[]): UntestedItem[] {
 
 export interface BuildReportOptions {
   sources?: UntestedSource[]
+  /** When set, only return items whose evidence file OR first-introduced line changed since this sha. */
+  since?: string
+  /** When true + since is set, attach git attribution to each item (author, sha, date, line). */
+  attribute?: boolean
 }
 
 const DEFAULT_SOURCES: UntestedSource[] = ['coverage', 'audit_gaps', 'dev_status', 'reports']
@@ -267,7 +278,58 @@ export function buildUntestedReport(
   if (sources.includes('dev_status')) all.push(...loadDevStatusUntested(projectRoot))
   if (sources.includes('reports')) all.push(...loadReportsUntested(projectRoot))
 
-  const ranked = rankItems(all)
+  let filtered = all
+  let sinceError: string | undefined
+  let blameUsed = false
+  if (opts.since) {
+    const changed = filesChangedSince(projectRoot, opts.since)
+    if (!changed.ok) {
+      sinceError = changed.error
+    } else {
+      const fileChangedCache: Record<string, boolean> = {}
+      filtered = []
+      const blameCache: Record<string, ReturnType<typeof blameFile>> = {}
+      for (const item of all) {
+        const abs = item.evidenceFile
+        if (fileChangedCache[abs] === undefined) {
+          fileChangedCache[abs] = wasChangedSince(changed, abs)
+        }
+        if (!fileChangedCache[abs]) continue // evidence file not touched since sha
+        // If coverage / reports — whole-file granularity is fine.
+        if (item.source === 'coverage' || item.source === 'reports') {
+          filtered.push(item)
+          continue
+        }
+        // For AUDIT_GAPS + DEV_STATUS, do row-level attribution via blame.
+        if (!blameCache[abs]) {
+          blameCache[abs] = blameFile(projectRoot, abs)
+          blameUsed = true
+        }
+        const attribution =
+          attributeByText(blameCache[abs], item.id) ||
+          attributeByText(blameCache[abs], item.title.slice(0, 40))
+        if (!attribution) {
+          filtered.push(item)
+          continue
+        }
+        const isNewer = isCommitAfter(projectRoot, attribution.sha, opts.since)
+        if (!isNewer) continue
+        const withAttribution: UntestedItem = {
+          ...item,
+          extra: {
+            ...(item.extra || {}),
+            git_sha: attribution.sha,
+            git_author: attribution.author,
+            git_date: attribution.date,
+            git_line: String(attribution.line),
+          },
+        }
+        filtered.push(opts.attribute ? withAttribution : item)
+      }
+    }
+  }
+
+  const ranked = rankItems(filtered)
   const by_source: Record<UntestedSource, number> = { coverage: 0, audit_gaps: 0, dev_status: 0, reports: 0 }
   const by_severity: Record<UntestedSeverity, number> = {
     critical: 0,
@@ -289,5 +351,25 @@ export function buildUntestedReport(
       by_severity,
     },
     items: ranked,
+    since: opts.since,
+    since_error: sinceError,
+    blame_used: blameUsed,
+  }
+}
+
+/**
+ * Returns true if `candidate` is a descendant of `ancestor` (i.e. `candidate`
+ * was committed after `ancestor`). Uses `git merge-base --is-ancestor`.
+ */
+function isCommitAfter(projectRoot: string, candidate: string, ancestor: string): boolean {
+  try {
+    execFileSync(
+      'git',
+      ['-C', projectRoot, 'merge-base', '--is-ancestor', ancestor, candidate],
+      { stdio: ['ignore', 'ignore', 'ignore'] },
+    )
+    return candidate !== ancestor
+  } catch {
+    return false
   }
 }

@@ -20,6 +20,8 @@ import type { UntestedItem, UntestedReport, UntestedSource } from '../../unteste
 export interface UntestedOptions {
   project?: string
   sources?: string
+  since?: string
+  attribute?: boolean
   json?: boolean
   markdown?: boolean
 }
@@ -117,7 +119,14 @@ export async function untestedCommand(opts: UntestedOptions): Promise<void> {
   }
 
   const sources = parseSources(opts.sources)
-  const report = buildUntestedReport(projectRoot, { sources })
+  const report = buildUntestedReport(projectRoot, {
+    sources,
+    since: opts.since,
+    attribute: !!opts.attribute,
+  })
+  if (report.since && report.since_error) {
+    process.stderr.write(`[untested] WARNING: --since ignored — ${report.since_error}\n`)
+  }
 
   if (opts.json) {
     process.stdout.write(JSON.stringify(report, null, 2) + '\n')

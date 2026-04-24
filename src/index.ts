@@ -110,9 +110,16 @@ export type {
 // uses without shelling out. Breaking changes to this block require a
 // minor semver bump per API_CONTRACT.md.
 
-// T-006 untested aggregator
+// T-006 untested aggregator + git-since filter
 export { buildUntestedReport } from './untested/loader'
 export type { UntestedItem, UntestedReport, UntestedSource } from './untested/schema'
+export {
+  filesChangedSince,
+  blameFile,
+  attributeByText,
+  wasChangedSince,
+} from './untested/git'
+export type { ChangedFilesResult, BlameEntry, AttributionInfo } from './untested/git'
 
 // T-007 retry
 export { retryStepWithBackoff } from './executor'

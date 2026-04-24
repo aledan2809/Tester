@@ -495,6 +495,8 @@ program
   .description('T-006 — Rank untested items from coverage YAML + AUDIT_GAPS.md + DEVELOPMENT_STATUS.md TODO + Reports/*.json')
   .option('--project <path>', 'Project root directory')
   .option('--sources <csv>', 'Comma-separated sources (coverage,audit_gaps,dev_status,reports). Default: all.')
+  .option('--since <sha>', 'Only items whose evidence file/row changed since this git sha')
+  .option('--attribute', 'With --since, attach git blame (author, sha, date, line) to each row', false)
   .option('--json', 'Emit JSON', false)
   .option('--markdown', 'Emit Markdown table', false)
   .action(untestedCommand)

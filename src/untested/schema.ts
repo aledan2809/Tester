@@ -47,4 +47,10 @@ export interface UntestedReport {
   }
   /** Items sorted by severity desc, then source preference, then id. */
   items: UntestedItem[]
+  /** Echo of the --since sha applied to this run. */
+  since?: string
+  /** Populated when the --since flag was used but git invocation failed. */
+  since_error?: string
+  /** True when git blame was invoked to attribute individual rows. */
+  blame_used?: boolean
 }
