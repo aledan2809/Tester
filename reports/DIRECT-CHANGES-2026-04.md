@@ -4,6 +4,75 @@
 
 ---
 
+## 2026-04-24 — Wave 2 batch (T-A3 → T-D4) — ten commits
+
+All wave 2 items shipped autonomously per user directive "continua autonom
+toate etapele acestei faze si cand ai finalizat anunta-ma". Ledger entry
+consolidates because each T-### was scope-tight and shipped with its own
+commit message; per NO-TOUCH CRITIC protocol (Master CLAUDE.md §2d) the
+modification trail is the git log + this summary.
+
+### Commits
+
+| T-### | Commit | Subject | Tests |
+|-------|--------|---------|-------|
+| T-A3  | `97edea4` | session-state recorder (start/log/end/last/list/show) | +11 |
+| T-B1  | `298fcd3` | coverage-aware TWG scoring (pass_rate × coverage_rate) | +9 |
+| T-B2  | `33927e6` | regression-prevention suite (sticky fix scaffolder) | +13 |
+| T-B3  | `46e24aa` | product-vs-harness triage for TWG (classifier → route) | +6 |
+| T-C4  | `febc687` | phase-aware affected test scoping (`// @tags` headers) | +12 |
+| T-C5  | `3ea7030` | pipeline failure analytics (phase buckets + signature clusters) | +10 |
+| T-D1  | `7bf4810` | composite `done`/`undone`/`status` gate | +10 |
+| T-D2  | `f091f23` | API contract doc + wave 1/2 exports freeze | 0 (docs + re-exports) |
+| T-D3  | (docs-only) | cookbook + anti-patterns + scenarios | 0 (docs only) |
+| T-D4  | `c7f0437` | cross-project inventory aggregator | +6 |
+
+### Scope-tight MVP strategy
+
+Each T-### landed as a data-in / data-out module + thin CLI wrapper.
+Heavy runtime dependencies (Puppeteer scan capture, Lighthouse, vitest
+spawn) stayed with the caller so the modules unit-test fast and don't
+couple to one runner. NO-TOUCH zones preserved throughout: assertion
+engine internals, BFS crawler, reporter format, rate limiter, template
+fallback.
+
+### Deferred follow-ups (documented per commit)
+
+- T-B2 age-based automatic regression prune (today manual only)
+- T-B3 Master-side TWG orchestrator wire (cross-repo commit)
+- T-C4 `tester run --affected --tags` wire into existing executor
+- T-C4 Master ABIP phase manifests emitting `touches: [...]`
+- T-C5 GitHub Issue auto-open on new top-3 signature patterns; week-
+  over-week trend line
+- T-D1 auto-invoke on `tester run` completion
+- T-D2 actual `@aledan007/tester-service` monorepo split
+- T-D3 hosted docs site (Vercel / VPS1); today markdown on GitHub
+- T-D4 Master dashboard tile consuming `buildInventory`; historical
+  trend JSON snapshot store
+
+### Verification (wave 2 cumulative)
+
+- `npx tsc --noEmit` → 0 errors
+- `npx vitest run` → **426/426 pass** (332 → 426, +94 tests; 43 files)
+- `npm run build` (tsup CJS+ESM+DTS) → success; `dist/index.d.ts` grows
+  from 24.52 KB → 54.96 KB (new Tier 2 public exports)
+- No existing CLI contract broken; wave 2 is purely additive.
+
+### Risk assessment
+
+LOW across the wave. Every T-### module is additive (new dirs under
+`src/`, new CLI subcommands, new public exports). No behavioral change
+to Tier 1 surfaces.
+
+### User confirmation
+
+Explicit directive "continua autonom toate etapele acestei faze si cand
+ai finalizat anunta-ma" (2026-04-24). The roadmap itself is the
+propose-confirm artefact; autonomous execution authorized in scope.
+Ledger entry serves as the applied record.
+
+---
+
 ## 2026-04-24 — feat(tester): T-A1 `tester init <feature>` scaffolder
 
 - **Session:** Direct autonomous continuation (wave 2 kickoff per user directive 2026-04-24). Resume prompt `Master/knowledge/Tester-Resume-Prompt-2026-04-24.md`.

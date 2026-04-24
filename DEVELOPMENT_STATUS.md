@@ -1,5 +1,77 @@
 # Project Status - Tester
 
+Last Updated: 2026-04-24 (latest-4) — **Wave 2 complete** (T-A3, T-B1/2/3, T-C4/5, T-D1/2/3/4). Roadmap progress 23/27 items (T-C1/T-C2/T-C3 held per Phase 0 demotion; T-C6 done earlier; T-A2 already shipped). **426/426 tests pass** across 43 files (from 236/27 at start of session; +190 tests / +16 files in one session).
+
+## Latest Session (2026-04-24 latest-4) — Wave 2 autonomous completion
+
+### Commits added this session block (10)
+
+| T-### | Commit | Subject | Tests |
+|-------|--------|---------|-------|
+| T-A3  | `97edea4` | session-state recorder (start/log/end/last/list/show) | +11 |
+| T-B1  | `298fcd3` | coverage-aware TWG scoring (pass_rate × coverage_rate) | +9 |
+| T-B2  | `33927e6` | regression-prevention suite (sticky fix scaffolder) | +13 |
+| T-B3  | `46e24aa` | product-vs-harness triage for TWG | +6 |
+| T-C4  | `febc687` | phase-aware affected test scoping (`// @tags` headers) | +12 |
+| T-C5  | `3ea7030` | pipeline failure analytics | +10 |
+| T-D1  | `7bf4810` | composite `done`/`undone`/`status` gate | +10 |
+| T-D2  | `f091f23` | API contract doc + wave 1/2 exports freeze | 0 |
+| T-D3  | (docs) | cookbook + anti-patterns + scenarios | 0 |
+| T-D4  | `c7f0437` | cross-project inventory aggregator | +6 |
+
+### Full session cumulative (all 3 blocks — T-006..T-D4 + PAS 1/2/3)
+
+Start of session: 236/236 tests (27 files). End of session: **426/426 tests (43 files)**. Zero regressions across 19 commits (T-006, 3 PAS, T-007..T-010, T-A1, 10 wave 2).
+
+### CLI surface added this session
+
+`untested`, `snapshot` (baseline/compare/approve/list), `a11y` (baseline/check), `perf` (check/delta), `init`, `session` (start/log/end/last/show/list), `score`, `regression` (add/list/expire), `triage`, `affected`, `pipeline-stats`, `done`, `undone`, `status`, `inventory` — plus existing `lessons`, `selfcheck`, `coverage`, `generate`, `zombie-scan`, `discover`, `run`, `login`, `report`, `audit`, `audit-only`, `journey-audit`.
+
+### TODO (remaining)
+
+- **T-C1** HOLD per Phase 0 demotion — implement after T-C4 lands in Master mesh (cross-repo wire)
+- **T-C2** DEMOTED P0 → P1 — commit-test coupling check; implement when CI signal
+- **T-C3** DEMOTED P0 → P2 — rollback-on-regression; implement when deploy-pipe stability data warrants
+
+### Follow-ups surfaced during waves 1+2
+
+All deferred deliberately and documented per commit:
+
+1. T-006 `--since <sha>` git-scope filter
+2. T-007 §4 `tester flake-report` CLI (reads historical retry metadata)
+3. T-008 S3/MinIO adapter + masking YAML + Puppeteer `tester run` integration
+4. T-009 `suppressed_until` field + HTML report + `tester run` scan-JSON writer
+5. T-010 Lighthouse runtime integration + trend storage + GitHub PR posting
+6. T-001 Day-2 Puppeteer browser probes
+7. T-005 OpenAPI + Zod generators
+8. T-B2 age-based automatic regression prune
+9. T-B3 Master-side TWG orchestrator wire (cross-repo)
+10. T-C4 `tester run --affected --tags` wire + Master ABIP phase manifests
+11. T-C5 GitHub Issue auto-open on new top-3 signatures + trend line
+12. T-D1 auto-invoke on `tester run` completion
+13. T-D2 `@aledan007/tester-service` monorepo split
+14. T-D3 hosted docs site
+15. T-D4 Master dashboard tile + historical snapshot store
+16. Importer corpus activation (42 stubs)
+17. 8 deferred audit findings (F-006, F-009..F-011, F-015..F-018)
+
+### Lessons learned (L-S19 already captured earlier)
+
+No new lessons entry this block — wave 2 validated the L-S19 rule that
+test depth density matters more than file count (10 commits, +94 tests
+in 12 new files with distinct failure-mode coverage per module).
+
+### NO-TOUCH CRITIC compliance
+
+All wave 2 changes additive. DO NOT MODIFY zones preserved (assertion
+engine, BFS crawler, reporter format, rate limiter, template fallback).
+Ledger `reports/DIRECT-CHANGES-2026-04.md` carries a consolidated wave 2
+entry at the top + individual T-### entries below.
+
+---
+
+## Earlier block (2026-04-24 latest-3, preserved)
+
 Last Updated: 2026-04-24 (latest-3) — +T-007/T-008/T-009/T-010 wave 1 complete. Roadmap progress 13/27 items. **332/332 tests pass** across 34 files (from 236/27 at start of session).
 
 ## Latest Session (2026-04-24 latest-3) — T-006..T-010 wave + 3 PAS uplift
