@@ -47,6 +47,7 @@ import {
 } from './commands/regression'
 import { triageCommand } from './commands/triage'
 import { affectedCommand } from './commands/affected'
+import { runAffectedCommand } from './commands/run-affected'
 import { pipelineStatsCommand } from './commands/pipeline-stats'
 import { flakeReportCommand } from './commands/flake-report'
 import { doneCommand, undoneCommand, statusCommand } from './commands/done'
@@ -344,6 +345,19 @@ program
   .option('--include-untagged', 'Include files that declare no tags', false)
   .option('--json', 'Emit JSON', false)
   .action(affectedCommand)
+
+program
+  .command('run-affected')
+  .description('T-C4 close — spawn vitest/jest/playwright with ONLY the files matching --tags')
+  .option('--project <path>', 'Project root (default: cwd)')
+  .option('--dir <path>', 'Test directory (default: <project>/tests)')
+  .option('--tags <csv>', 'Comma-separated tag list (required)')
+  .option('--include-untagged', 'Include untagged files in the spawn subset', false)
+  .option('--runner <name>', 'vitest | jest | playwright (default: vitest)')
+  .option('--runner-args <str>', 'Extra args passed through to the runner')
+  .option('--dry-run', 'Print the command + file list; do not spawn', false)
+  .option('--json', 'Emit JSON + do not spawn', false)
+  .action(runAffectedCommand)
 
 // ─── triage (T-B3 product-vs-harness routing for TWG) ────
 program
