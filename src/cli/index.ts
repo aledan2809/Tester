@@ -23,6 +23,7 @@ import {
 } from './commands/lessons'
 import { zombieScanCmd } from './commands/zombie-scan'
 import { selfCheckCommand } from './commands/selfcheck'
+import { coverageCommand } from './commands/coverage'
 
 const program = new Command()
 
@@ -209,5 +210,15 @@ program
   .description('T-001 — Run harness self-test battery (CSS validator + timing + corpus presence). Exit 0 pass, 1 warn, 2 fail')
   .option('--json', 'Emit JSON', false)
   .action(selfCheckCommand)
+
+// ─── coverage (T-002 feature coverage matrix) ────────────
+program
+  .command('coverage')
+  .description('T-002 — Feature coverage matrix. Inspect a single feature YAML or roll up a project')
+  .option('--feature <path>', 'Path to a single coverage/*.yaml file')
+  .option('--project <path>', 'Project root; loads all coverage/*.yaml files under it')
+  .option('--fail-under <ratio>', 'Exit 1 if coverage ratio below this (0..1, e.g. 0.9)', (v) => parseFloat(v))
+  .option('--json', 'Emit JSON', false)
+  .action(coverageCommand)
 
 program.parse()
