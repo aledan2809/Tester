@@ -1,0 +1,53 @@
+id: L-F8
+slug: case-sensitive-regex-vs-tailwind-uppercase
+title: "Case-sensitive regex matches innerText of element with Tailwind `uppercase` class"
+first_observed: 2026-04-24
+projects_hit:
+  - procuchaingo2
+contexts_hit:
+  - cc-session
+  - twg
+hit_count: 2
+severity: high
+tags:
+  - selector
+  - regex
+  - tailwind
+  - text-matching
+  - harness
+
+detection:
+  - type: regex_in_test_file
+    pattern: 'innerText[^\n]*\.test\(/[A-Z][A-Za-z ]+/\)(?![gimsuy]*i)'
+    message: 'Case-sensitive regex against innerText. If the element has CSS text-transform:uppercase (e.g. Tailwind `uppercase` class), the visible innerText will be UPPERCASE and the mixed-case regex will fail. Add /i flag OR assert against textContent (raw) instead of innerText (rendered).'
+  - type: regex_in_test_file
+    pattern: 'innerText[^\n]{0,80}match\(/[A-Z][A-Za-z ]+/\)(?![gimsuy]*i)'
+    message: 'Case-sensitive match() against innerText; see L-F8 for Tailwind uppercase interaction.'
+  - type: regex_in_test_file
+    pattern: '\.innerText\s*===?\s*["''][A-Z][A-Za-z ]+["'']'
+    message: 'Strict equality check against innerText. Prefer textContent for raw text OR normalize via .toLowerCase() to avoid CSS transform surprises.'
+
+prevention:
+  lint_rule: no-case-sensitive-text-match
+  auto_fix:
+    action: add_regex_flag
+    value: 'i'
+    confirm_required: true
+  block_commit_if_unfixed: false
+
+diagnosis:
+  symptom_signatures:
+    - test_failed_assertion: '.*innerText.*test.*=.*false'
+    - dom_contains: 'class="[^"]*uppercase'
+    - dom_contains: 'text-transform:\s*uppercase'
+  suggested_remediation: |
+    Tailwind `uppercase` class applies CSS text-transform. innerText reflects
+    the visually-rendered text (UPPERCASE); textContent reflects the raw DOM
+    text (mixed case). Three fixes in order of preference:
+      (a) Add /i flag:              /.test(/Formula/i)
+      (b) Use textContent:          el.textContent.includes('Formula')
+      (c) Normalize case explicitly: el.innerText.toLowerCase().includes('formula')
+    Option (b) is most robust — it's immune to CSS transforms on unrelated projects.
+
+regression_test: tests/lessons/L-F8.spec.ts
+status: active

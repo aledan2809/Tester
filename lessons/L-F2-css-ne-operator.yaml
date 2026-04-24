@@ -1,0 +1,46 @@
+id: L-F2
+slug: css-ne-operator-invalid
+title: "Invalid CSS attribute operator [attr!=value] — Puppeteer querySelector throws"
+first_observed: 2026-04-24
+projects_hit:
+  - procuchaingo2
+contexts_hit:
+  - cc-session
+hit_count: 1
+severity: medium
+tags:
+  - selector
+  - css
+  - puppeteer
+  - harness
+
+detection:
+  - type: regex_in_test_file
+    pattern: 'querySelector(?:All)?\([^)]*\[[^\]]+!=[^\]]*\]'
+    message: 'Invalid CSS operator "!=" inside attribute selector. Standard CSS has no != operator; Puppeteer throws SyntaxError. Use :not([attr=value]) or :not([attr]) instead.'
+  - type: regex_in_test_file
+    pattern: '\[(?:href|class|name|id|data-[a-z-]+)!='
+    message: 'CSS attribute selector uses != which is not valid CSS. Rewrite as :not([attr=value]).'
+
+prevention:
+  lint_rule: no-invalid-css-ne-operator
+  auto_fix:
+    action: rewrite_attribute_selector
+    value: 'replace [attr!=X] with :not([attr=X])'
+    confirm_required: true
+  block_commit_if_unfixed: true
+
+diagnosis:
+  symptom_signatures:
+    - error_message: "is not a valid selector"
+    - error_message: "SyntaxError.*querySelector"
+    - console_error: "Failed to execute 'querySelector'"
+  suggested_remediation: |
+    CSS does not support the != attribute operator. Rewrite the selector:
+      WRONG: document.querySelector('a[href!="/login"]')
+      RIGHT: document.querySelector('a:not([href="/login"])')
+    Alternatively, query broader and filter in JS:
+      [...document.querySelectorAll('a')].filter(a => a.href !== '/login')
+
+regression_test: tests/lessons/L-F2.spec.ts
+status: active

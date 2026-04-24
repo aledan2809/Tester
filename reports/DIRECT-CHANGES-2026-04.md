@@ -4,6 +4,62 @@
 
 ---
 
+## 2026-04-24 — feat(tester): T-000 Day-1 active lessons engine (schema + loader + scanner + CLI + 3 seed lessons)
+
+- **Session:** Direct — continuation of Phase 0 autonomous upgrade, post-user-confirm ("OK, continua").
+- **Scope:** Day 1 of T-000 per the revised roadmap in `TODO_PERSISTENT.md` (commits ace5d34+d036344). Delivers the minimal viable Active Lessons Engine: YAML schema definition, corpus loader + validation, regex scanner across file/dir targets, CLI skeleton (`tester lessons list` + `tester lessons scan`), and the 3 seed lessons that motivated T-000 (F2/F8/F10 Procu 2026-04-24 harness defects).
+
+- **Files created (11):**
+  - `src/lessons/schema.ts` (~80 lines) — Lesson type + sub-types (DetectionRule, Prevention, Diagnosis, ScanMatch, LoaderResult)
+  - `src/lessons/loader.ts` (~120 lines) — `loadLessons(dir)`, `parseYamlLesson()`, `findLessonsDir()`, schema validation with collected-errors semantics (one bad lesson doesn't abort)
+  - `src/lessons/scanner.ts` (~110 lines) — `scan(target, lessons)`, `scanFile(file, lessons)`; supports `regex_in_test_file` + `regex_in_source_file`; walks dirs, respects test-file glob defaults
+  - `src/lessons/index.ts` (~20 lines) — public module exports
+  - `src/cli/commands/lessons.ts` (~140 lines) — `lessonsList(opts)` + `lessonsScan(target, opts)` handlers with `--json` + `--severity` + `--tags` + `--dir` + `--no-fail-on-match` flags; non-zero exit on matches
+  - `lessons/L-F2-css-ne-operator.yaml` — Procu F2 defect (invalid CSS `[attr!=value]`)
+  - `lessons/L-F8-case-regex-uppercase.yaml` — Procu F8 defect (case-sensitive regex vs Tailwind `uppercase`)
+  - `lessons/L-F10-loose-text-picker.yaml` — Procu F10 defect (unscoped text selector)
+  - `lessons/README.md` — corpus format + CLI usage + naming convention
+  - `tests/lessons/loader.test.ts` (9 tests) — seed corpus loads; validation rejects bad id/severity/regex; duplicate id detection; missing dir handling
+  - `tests/lessons/scanner.test.ts` (7 tests) — **META-TEST GATE implemented** per TODO_PERSISTENT Phase 0.4: seed broken fixture with F2+F8+F10 → `scanFile()` MUST return all 3 lesson IDs. Clean code yields zero matches. Non-test files filtered out. Directory walk aggregates.
+
+- **Files modified (3):**
+  - `src/cli/index.ts` — added 2 lines of imports + registered `lessons list` + `lessons scan` subcommands under a `lessons` parent group. All 21 pre-existing CLI flags untouched (backward-compat preserved per Section 6.1 Code Survey).
+  - `package.json` — added `js-yaml@^4.1.1` dep + `@types/js-yaml@^4.0.9` devDep. Required for YAML corpus parsing.
+  - `package-lock.json` — npm-managed dep lock update.
+
+- **Zero changes to DO-NOT-MODIFY zones (per CLAUDE.md):**
+  - Assertion engine (`src/assertions/*`) — untouched
+  - BFS crawler (`src/discovery/crawler.ts`) — untouched
+  - Reporter output format (`src/reporter/*`) — untouched
+  - Rate limiting (`src/server/*`) — untouched
+  - Template fallback scenarios (`src/scenarios/templates.ts`) — untouched
+
+- **Verification (per feedback_verification_ritual memory):**
+  - `npx tsc --noEmit` → 0 errors (full project typecheck)
+  - `npx vitest run tests/lessons/` → 16/16 pass (2 test files)
+  - `npx vitest run` → **101/101 pass** (85 pre-existing + 16 new). Zero regressions on existing baseline.
+  - `npm run build` → CJS/ESM/DTS all success (library 100KB, CLI 168KB, server 107KB)
+  - `node dist/cli/index.js lessons list` → correctly prints 3 seed lessons sorted by severity (HIGH → MEDIUM)
+  - **META-TEST GATE manual run:** seeded `/tmp/broken-flows.spec.ts` with F2+F8+F10 defects → `tester lessons scan` flagged all 3 lesson IDs (4 matches total, F2 correctly triggered both its detection rules), exit code 1 as designed.
+
+- **Risk assessment:** LOW.
+  - All changes are ADDITIVE (new commands, new module, new files).
+  - Existing consumers (Website Guru HTTP server + `npx @aledan007/tester` CLI users) see no behavior change on their current usage — the 7 pre-existing subcommands (discover/run/login/report/audit/audit-only/journey-audit) are byte-identical in behavior.
+  - New `lessons` subcommand is opt-in; absent from existing callers' workflows.
+  - Added `js-yaml` dep has 18M+ weekly downloads, zero known CVEs at 4.1.1, 83KB unpacked — negligible footprint and risk.
+
+- **User confirmation:** Explicit "OK, continua" following the paused Phase 0.4 roadmap review. Scope authorized per the locked critical path (T-000 Day 1 first; T-C6 and Day 2+ to follow).
+
+- **Commit:** see `git log` post-commit. Expected message: `feat(tester): T-000 Day-1 active lessons engine`.
+
+### Day 2 preview (next session)
+- Add `tester lessons diagnose <failure-log>` — symptom-signature lookup returning top-3 matches with remediation
+- Pre-commit hook via `tester install-hooks` (T-A2 preview)
+- Expand corpus with 4 new lessons from Phase 0.3 (L43 agent create_api_route, L44 api_request, L45 deploy git, L46 JSON EOF)
+- Add `tester lessons validate` — run ALL lesson regression tests; fail if any lesson regresses on itself
+
+---
+
 ## 2026-04-24 — docs(tester): correct zombie count 31%→44%
 
 - **Session:** Direct — continuation of Phase 0 autonomous upgrade kickoff. Follow-up to commit `ace5d34`.

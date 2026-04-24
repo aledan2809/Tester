@@ -11,6 +11,7 @@ import { reportCommand } from './commands/report'
 import { auditCommand } from './commands/audit'
 import { auditOnlyCommand } from './commands/audit-only'
 import { journeyAuditCliAction } from './commands/journey-audit'
+import { lessonsList, lessonsScan } from './commands/lessons'
 
 const program = new Command()
 
@@ -109,5 +110,27 @@ program
   .option('--headed', 'Show the browser window', false)
   .option('-o, --output <dir>', 'Output directory root', './journey-audit-results')
   .action(journeyAuditCliAction)
+
+// ─── lessons (T-000 Active Lessons Engine) ──────────────
+const lessonsCmd = program
+  .command('lessons')
+  .description('T-000 Active Lessons Engine — structured detection/prevention/diagnosis corpus')
+
+lessonsCmd
+  .command('list')
+  .description('List all active lessons in corpus')
+  .option('--severity <level>', 'Filter by severity (info|low|medium|high|critical)')
+  .option('--tags <csv>', 'Filter by tags (comma-separated, any-match)')
+  .option('--dir <path>', 'Override lessons directory')
+  .option('--json', 'Emit JSON', false)
+  .action(lessonsList)
+
+lessonsCmd
+  .command('scan <path>')
+  .description('Scan a file or directory for matches against the lesson corpus (exits 1 on any match)')
+  .option('--dir <path>', 'Override lessons directory')
+  .option('--json', 'Emit JSON', false)
+  .option('--no-fail-on-match', 'Do not exit with code 1 when matches are found')
+  .action((target, opts) => lessonsScan(target, opts))
 
 program.parse()

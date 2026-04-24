@@ -1,0 +1,53 @@
+id: L-F10
+slug: loose-text-picker-unscoped
+title: "Loose text selector without scope — matches unrelated onboarding / cookie banner elements"
+first_observed: 2026-04-24
+projects_hit:
+  - procuchaingo2
+contexts_hit:
+  - cc-session
+  - twg
+hit_count: 2
+severity: high
+tags:
+  - selector
+  - text-matching
+  - fragility
+  - harness
+
+detection:
+  - type: regex_in_test_file
+    pattern: 'page\.(?:getByText|locator)\([^)]*/[^/)]+/[igmsuy]*\)(?!\.(?:first|nth|filter|locator|within))'
+    message: 'Unscoped text selector — page-wide regex picker can match onboarding buttons, cookie banners, tooltips, footer links, etc. Scope to a container via .within(container) or page.locator(container).getByText(...), OR append .filter({has: ...}) to narrow.'
+  - type: regex_in_test_file
+    pattern: '(?:document|page)\.(?:evaluate|\$\$eval)[^)]{0,200}innerText[^\n)]{0,80}(?:includes|test|match|startsWith|indexOf)'
+    message: 'Global innerText/textContent search without scoping container — high risk of matching unrelated UI elements. Anchor to a test-id or role before text matching.'
+  - type: regex_in_test_file
+    pattern: 'querySelector(?:All)?\([^)]*\)[^;]*\.(?:filter|find)\([^)]*\.(?:textContent|innerText)[^)]{0,80}(?:includes|match|test)'
+    message: 'Broad DOM query + textContent filter — scope to a stable container (header / sidebar / modal) before filtering.'
+
+prevention:
+  lint_rule: no-unscoped-text-selector
+  auto_fix:
+    action: suggest_scoped_alternative
+    value: 'wrap selector in page.locator(<container-testid>).getByText(...)'
+    confirm_required: true
+  block_commit_if_unfixed: false
+
+diagnosis:
+  symptom_signatures:
+    - error_message: 'strict mode violation.*resolved to [2-9]\d* elements'
+    - error_message: 'multiple elements.*locator resolved to'
+    - test_failed_assertion: 'clicked wrong element|unexpected navigation'
+  suggested_remediation: |
+    Playwright strict mode (and Puppeteer's multi-match ambiguity) surface this
+    as "resolved to N elements". Remediation pattern:
+      WRONG:  await page.getByText(/Add vendor/).click()
+              // also matches "Add vendor guide" in onboarding banner
+      RIGHT:  await page.locator('[data-testid=vendor-list]').getByText(/Add vendor/).click()
+              // scoped to the vendor-list container
+    If no stable container testid exists, add one in source (see T-003
+    stable-selector enforcer) and commit the data-testid alongside the test.
+
+regression_test: tests/lessons/L-F10.spec.ts
+status: active
