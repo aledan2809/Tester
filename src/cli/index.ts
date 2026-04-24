@@ -11,7 +11,7 @@ import { reportCommand } from './commands/report'
 import { auditCommand } from './commands/audit'
 import { auditOnlyCommand } from './commands/audit-only'
 import { journeyAuditCliAction } from './commands/journey-audit'
-import { lessonsList, lessonsScan } from './commands/lessons'
+import { lessonsList, lessonsScan, lessonsDiagnose, lessonsStats } from './commands/lessons'
 
 const program = new Command()
 
@@ -131,6 +131,23 @@ lessonsCmd
   .option('--dir <path>', 'Override lessons directory')
   .option('--json', 'Emit JSON', false)
   .option('--no-fail-on-match', 'Do not exit with code 1 when matches are found')
+  .option('--no-record-stats', 'Do not record hit counts to .tester/lessons-stats.json')
+  .option('--context <ctx>', 'Context tag for hit recording (default: cli-scan)')
   .action((target, opts) => lessonsScan(target, opts))
+
+lessonsCmd
+  .command('diagnose <log-file>')
+  .description('Match a failure log against lesson diagnosis signatures — returns top-N remediation hints')
+  .option('--dir <path>', 'Override lessons directory')
+  .option('--top-n <n>', 'Return top N matches (default 3)', (v) => parseInt(v, 10), 3)
+  .option('--json', 'Emit JSON', false)
+  .action((logPath, opts) => lessonsDiagnose(logPath, opts))
+
+lessonsCmd
+  .command('stats')
+  .description('Show per-lesson hit counts (populated by scan + diagnose)')
+  .option('--dir <path>', 'Override lessons directory')
+  .option('--json', 'Emit JSON', false)
+  .action(lessonsStats)
 
 program.parse()

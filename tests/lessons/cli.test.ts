@@ -49,9 +49,13 @@ describe('CLI — lessons list', () => {
     const r = runCli(['lessons', 'list', '--json'])
     expect(r.exit).toBe(0)
     const parsed = JSON.parse(r.stdout)
-    expect(parsed.count).toBe(3)
-    expect(parsed.lessons).toHaveLength(3)
+    expect(parsed.count).toBeGreaterThanOrEqual(3)
+    expect(parsed.lessons.length).toBe(parsed.count)
     expect(parsed.lessons.every((l: unknown) => (l as { id: string }).id.startsWith('L-'))).toBe(true)
+    const ids = new Set(parsed.lessons.map((l: { id: string }) => l.id))
+    expect(ids.has('L-F2')).toBe(true)
+    expect(ids.has('L-F8')).toBe(true)
+    expect(ids.has('L-F10')).toBe(true)
   })
 
   it('gap #1: --severity WRONG errors with exit 2 + stderr message', () => {
@@ -60,12 +64,15 @@ describe('CLI — lessons list', () => {
     expect(r.stderr).toMatch(/--severity must be one of/i)
   })
 
-  it('--severity high filters to 2 lessons', () => {
+  it('--severity high filters correctly (all returned lessons are severity=high)', () => {
     const r = runCli(['lessons', 'list', '--severity', 'high', '--json'])
     expect(r.exit).toBe(0)
     const parsed = JSON.parse(r.stdout)
-    expect(parsed.count).toBe(2)
+    expect(parsed.count).toBeGreaterThanOrEqual(2)
     expect(parsed.lessons.every((l: { severity: string }) => l.severity === 'high')).toBe(true)
+    const ids = new Set(parsed.lessons.map((l: { id: string }) => l.id))
+    expect(ids.has('L-F8')).toBe(true)
+    expect(ids.has('L-F10')).toBe(true)
   })
 })
 
@@ -73,7 +80,7 @@ describe('CLI — lessons scan', () => {
   it('exits 1 on broken fixture with matches', () => {
     const file = writeFixture(`await page.getByText(/Add vendor/).click()`)
     try {
-      const r = runCli(['lessons', 'scan', file])
+      const r = runCli(['lessons', 'scan', '--no-record-stats', file])
       expect(r.exit).toBe(1)
       expect(r.stdout).toMatch(/L-F10/)
     } finally {
@@ -84,7 +91,7 @@ describe('CLI — lessons scan', () => {
   it('exits 0 on clean fixture', () => {
     const file = writeFixture(`await page.locator('[data-testid=nav]').getByText('Home').click()`)
     try {
-      const r = runCli(['lessons', 'scan', file])
+      const r = runCli(['lessons', 'scan', '--no-record-stats', file])
       expect(r.exit).toBe(0)
       expect(r.stdout).toMatch(/No matches/)
     } finally {
@@ -95,7 +102,7 @@ describe('CLI — lessons scan', () => {
   it('--no-fail-on-match exits 0 even when matches present', () => {
     const file = writeFixture(`await page.getByText(/Add vendor/).click()`)
     try {
-      const r = runCli(['lessons', 'scan', '--no-fail-on-match', file])
+      const r = runCli(['lessons', 'scan', '--no-fail-on-match', '--no-record-stats', file])
       expect(r.exit).toBe(0)
     } finally {
       fs.rmSync(path.dirname(file), { recursive: true, force: true })
@@ -118,7 +125,7 @@ describe('CLI — lessons scan', () => {
   it('--json emits parseable JSON on both match and no-match paths', () => {
     const clean = writeFixture(`const x = 1`)
     try {
-      const r = runCli(['lessons', 'scan', '--json', clean])
+      const r = runCli(['lessons', 'scan', '--json', '--no-record-stats', clean])
       expect(r.exit).toBe(0)
       const parsed = JSON.parse(r.stdout)
       expect(parsed.matches_count).toBe(0)
@@ -129,7 +136,7 @@ describe('CLI — lessons scan', () => {
 
     const broken = writeFixture(`document.querySelectorAll('a[href!="/x"]')`)
     try {
-      const r = runCli(['lessons', 'scan', '--json', broken])
+      const r = runCli(['lessons', 'scan', '--json', '--no-record-stats', broken])
       expect(r.exit).toBe(1)
       const parsed = JSON.parse(r.stdout)
       expect(parsed.matches_count).toBeGreaterThan(0)

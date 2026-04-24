@@ -1,0 +1,66 @@
+id: L-42
+slug: require-domain-admin-2-layer-contract
+title: "requireAdmin() is super-admin-only — multi-tenant apps need requireDomainAdmin(domainId)"
+first_observed: 2026-04-20
+projects_hit:
+  - Tutor
+  - eCabinet
+  - PRO
+contexts_hit:
+  - cc-session
+  - pipeline
+hit_count: 1
+severity: high
+tags:
+  - auth
+  - multi-tenant
+  - permission
+  - product
+
+detection:
+  # Matches either direction across up to ~40 lines (1000 chars): requireAdmin near
+  # a domain/org/tenant identifier. Uses [\s\S] to cross newlines.
+  # Known limitation (fix in T-003 / Day-3 AST): false-positive when the file
+  # already contains requireDomainAdmin. Escape hatch: `// lessons:skip L-42`.
+  - type: regex_in_source_file
+    pattern: 'requireAdmin\(\)[\s\S]{0,1000}(?:domainId|orgId|tenantId|organizationId)|(?:domainId|orgId|tenantId|organizationId)[\s\S]{0,1000}requireAdmin\(\)'
+    message: 'requireAdmin() near a domain/org/tenant identifier. Super-admin check alone lets admins of OTHER tenants access this scoped resource. Ensure `await requireDomainAdmin(session, domainId)` is present — if it IS present, add `// lessons:skip L-42` to suppress.'
+    file_glob: '(api|routes|handlers|controllers|app|pages).*\.(m?js|[jt]sx?)$'
+
+prevention:
+  lint_rule: require-domain-admin-on-tenant-routes
+  auto_fix:
+    action: inject_domain_check
+    value: 'add `await requireDomainAdmin(session, domainId)` after requireAdmin() on tenant-scoped routes'
+    confirm_required: true
+  block_commit_if_unfixed: false
+
+diagnosis:
+  symptom_signatures:
+    - test_failed_assertion: '403.*(?:permission|forbidden).*(?:domain|org|tenant)'
+    - error_message: 'User .* is not admin of domain .* but passed requireAdmin'
+    - error_message: 'Cross-tenant access.*admin.*granted'
+  suggested_remediation: |
+    Two-layer contract required for any domain-scoped resource in a
+    multi-tenant app:
+      Layer 1 (BACKEND): `await requireDomainAdmin(session, domainId)`
+        - Validates user is admin of THIS specific domain/org/tenant
+        - Separate from superAdmin check (which is global)
+      Layer 2 (UI):  conditional render of admin controls based on
+                     `user.adminOf.includes(currentDomainId)`, NOT on
+                     `user.isSuperAdmin`
+
+    Pattern seen in Tutor (2026-04-20, Anto permission bug):
+      // WRONG
+      await requireAdmin()
+      const domain = await db.domain.findUnique({ where: { id: params.domainId } })
+      // Anto = admin of OTHER domain, passes requireAdmin, can edit Anto's-not-his domain
+
+      // RIGHT
+      await requireDomainAdmin(session, params.domainId)
+
+    Also: UI must mirror this — if a user has adminOf = [domainA] but browses
+    domainB, don't show edit buttons.
+
+regression_test: tests/lessons/L-42.spec.ts
+status: active

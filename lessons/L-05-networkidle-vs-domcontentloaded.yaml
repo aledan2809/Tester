@@ -1,0 +1,67 @@
+id: L-05
+slug: networkidle-vs-domcontentloaded-auth-redirect
+title: "Use networkidle2 for auth flows — domcontentloaded fires before redirect chain settles"
+first_observed: 2026-04-18
+projects_hit:
+  - procuchaingo2
+  - TradeInvest
+  - eCabinet
+contexts_hit:
+  - cc-session
+  - twg
+  - pipeline
+hit_count: 3
+severity: critical
+tags:
+  - timing
+  - puppeteer
+  - playwright
+  - auth
+  - harness
+
+detection:
+  - type: regex_in_test_file
+    pattern: '(?:waitForNavigation|waitForLoadState|goto)\([^)]*["''](?:domcontentloaded|load)["''][^)]*\)[^;\n]{0,200}(?:login|signin|sign-in|auth|oauth|callback)'
+    message: 'domcontentloaded fires BEFORE the post-login redirect chain completes. Auth flows (login → redirect → set cookies → redirect → dashboard) need networkidle0/networkidle2 to settle. Using domcontentloaded causes intermittent empty-DOM test failures.'
+  - type: regex_in_test_file
+    pattern: 'login[^;\n]{0,200}waitUntil[^;\n]{0,80}["''](?:domcontentloaded|load)["'']'
+    message: 'Login followed by waitUntil:domcontentloaded. Switch to networkidle2 (or networkidle0 for strict no-pending-requests gate).'
+
+prevention:
+  lint_rule: prefer-networkidle-for-auth
+  auto_fix:
+    action: replace_waituntil
+    value: 'domcontentloaded → networkidle2 for auth-adjacent navigation'
+    confirm_required: true
+  block_commit_if_unfixed: false
+
+diagnosis:
+  symptom_signatures:
+    - test_failed_assertion: 'expect.*(?:Dashboard|Home|Welcome|logout).*toBeVisible.*timeout'
+    - error_message: 'Timeout.*waiting for.*selector.*(?:dashboard|user-menu|avatar)'
+    - error_message: 'Navigation.*timeout.*30000.*exceeded'
+    - dom_contains: 'login|sign.in|sign.up'
+  suggested_remediation: |
+    Post-login redirect chains on Next.js + NextAuth / custom OAuth typically:
+      1. POST /auth/login → 302 to /auth/callback
+      2. /auth/callback sets session cookies → 302 to /
+      3. / → 302 (or client-side SPA nav) to /dashboard
+    domcontentloaded fires at step 1 while HTML is parsed. networkidle2
+    waits until 2 or fewer pending requests for 500ms, which typically
+    lets the full chain complete.
+
+    Fix patterns:
+      // Puppeteer
+      await Promise.all([
+        page.waitForNavigation({ waitUntil: 'networkidle2' }),
+        page.click('#login-submit'),
+      ])
+
+      // Playwright
+      await page.waitForLoadState('networkidle')  // after login action
+
+    Only fall back to explicit `waitForSelector('[data-testid=user-menu]')`
+    if networkidle is unreliable on your target.
+
+regression_test: tests/lessons/L-05.spec.ts
+status: active

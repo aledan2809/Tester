@@ -1,0 +1,63 @@
+id: L-24
+slug: pipeline-zombie-cleanup-dominant-failure
+title: "Pipeline processes stuck in failed state > 30min — zombie cleanup dominates 44% of pipeline failures"
+first_observed: 2026-04-14
+projects_hit:
+  - Master
+  - MarketingAutomation
+  - eCabinet
+  - PRO
+  - TradeInvest
+contexts_hit:
+  - pipeline
+hit_count: 44
+severity: critical
+tags:
+  - infra
+  - pipeline
+  - orchestration
+  - watchdog
+  - governance
+
+detection:
+  # Detection surfaces pipeline state files that show stuck "failed" state with stale updatedAt
+  - type: regex_in_source_file
+    pattern: 'blockedStateTimeout(?:Min|Ms)?\s*[:=]\s*(?:480|\d{4,})'
+    message: 'Pipeline blocked-state timeout configured > 30min (value seen: large number suggests 8h/480min). L24 mandates <=30 min + watchdog user ping. Shorten timeout or the 44%-of-failures zombie class recurs.'
+    file_glob: '(mesh/.*watcher|orchestrator).*\.(m?js|[jt]sx?)$'
+  - type: regex_in_source_file
+    pattern: 'setTimeout\([^,]+,\s*(?:8\s*\*\s*60\s*\*\s*60\s*\*\s*1000|28800000|480\s*\*\s*60\s*\*\s*1000)'
+    message: 'setTimeout hardcoded to 8 hours. L24 requires session watchdog with <=30 min blocked-state alerting.'
+
+prevention:
+  lint_rule: no-multi-hour-pipeline-timeout
+  auto_fix:
+    action: propose_shorter_timeout
+    value: 'reduce to 30 * 60 * 1000 (30 min) + add user-facing waiting_watchdog state'
+    confirm_required: true
+  block_commit_if_unfixed: false
+
+diagnosis:
+  symptom_signatures:
+    - error_message: 'Zombie cleanup: process \d+ dead, stuck in failed'
+    - error_message: 'Heartbeat timeout: log stale for \d+min'
+    - error_message: 'Handler timeout after \d+ min in state'
+    - console_error: 'pipeline .* stuck .* for \d+min'
+  suggested_remediation: |
+    Baseline (Phase 0.3, 2026-04-24): zombie cleanup = 44% of pipeline
+    failures (44/99 pipelines). Fix is T-C6 watchdog per TODO_PERSISTENT.
+
+    Concrete change set:
+      1. mesh/engine/watcher.js: PIPELINE_BLOCKED_TIMEOUT_MIN env var, default 30
+      2. Add `waiting_watchdog` state machine node between `dev` and `failed`
+      3. When blocked > timeout, emit user notification via PushNotification /
+         RemoteTrigger: "pipeline X blocked Nmin — investigate or kill?"
+      4. `tester zombie-scan` CLI surfaces candidate-zombie pipelines without
+         killing; human confirms kill.
+
+    Success criterion (re-measured via identical regex after ship):
+      `test("[Zz]ombie|dead|stuck")` on both pipelines.json files
+      Target: drop from 44% to <5% of failure volume within 1 week runtime.
+
+regression_test: tests/lessons/L-24.spec.ts
+status: active
