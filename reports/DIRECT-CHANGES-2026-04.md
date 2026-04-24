@@ -4,6 +4,97 @@
 
 ---
 
+## 2026-04-24 — feat(tester): T-010 perf budget evaluator + CI delta comment
+
+- **Session:** Direct autonomous continuation. Commit `a62fb55`.
+- **Scope:** Data-driven perf budget evaluator + before/after PR-comment markdown. Zero Puppeteer / Lighthouse runtime imports (metric capture stays with existing `capturePerformanceMetrics`). Scope-tight: budget parse + enforcement + rendering.
+
+### Files created (3)
+- `src/perf/budget.ts` — `loadPerfBudget` (YAML), `evaluatePerfBudget`, `computePerfDelta`, `renderCiComment`. Metric keys: fcp_ms / lcp_ms / tti_ms / cls / transfer_bytes. Missing keys skip (no false-fail on unspecified metrics).
+- `src/cli/commands/perf.ts` — `tester perf --check | --delta` with `--from | --before/--after`, `--json`, `--markdown`. Exit 1 on any breach.
+- `tests/perf/budget.test.ts` — 12 tests (2 load, 5 evaluate, 2 delta, 3 markdown)
+
+### Files modified (1)
+- `src/cli/index.ts` — registered subcommand
+
+### Deferred
+- Lighthouse runtime integration (writes runs.json for `--check` chaining)
+- Historical trend storage + 30-day regression visualization
+- GitHub PR comment posting via Octokit
+
+### Verification
+- `npx tsc --noEmit` → 0 errors
+- `npx vitest run` → **332/332 pass** (320 → 332, +12 new)
+- Build green
+
+### Risk assessment
+- LOW. Pure additive CLI command. No behavioral change to existing assertions/performance.ts.
+
+---
+
+## 2026-04-24 — feat(tester): T-009 a11y baseline + per-route budget enforcement
+
+- **Session:** Direct autonomous continuation. Commit `c66b98d`.
+- **Scope:** Baseline store + diff + per-route YAML budget for axe-core violations. Zero Puppeteer imports (caller produces scan JSON).
+
+### Files created (4)
+- `src/a11y/baseline.ts` — `storeBaseline`, `loadBaseline`, `diffAgainstBaseline`, `summarize`. Regression = new critical/serious OR worsened count for crit/serious severity.
+- `src/a11y/budget.ts` — `loadBudget` (YAML), `checkBudget`, `summarizeBudgetResults`. Per-route override → defaults → Infinity (passes when unspecified).
+- `src/cli/commands/a11y.ts` — `tester a11y --baseline | --check` with `--from <scan.json>`, `--project`, `--no-budget`, `--json`.
+- `tests/a11y/baseline.test.ts` — 13 tests (3 store/load, 6 diff, 4 budget)
+
+### Files modified (1)
+- `src/cli/index.ts` — registered subcommand
+
+### Deferred
+- `suppressed_until` field (time-boxed tolerance for known issues)
+- HTML report with diff chart + code pointers
+- `tester run` integration writing scan JSON for `--check` chaining
+
+### Verification
+- `npx tsc --noEmit` → 0 errors
+- `npx vitest run` → **320/320 pass** (307 → 320, +13 new)
+- Build green
+
+### Risk assessment
+- LOW. Pure additive CLI command. `runA11yScan(page)` signature unchanged — callers feed its return value into a wrapper that writes scan JSON.
+
+---
+
+## 2026-04-24 — feat(tester): T-008 visual baseline MVP — LocalFSStore + compare + CLI
+
+- **Session:** Direct autonomous continuation. Commit `f5a3bf3`.
+- **Scope:** Baseline storage abstraction for visual regression. LocalFSStore ships; S3Store is a clear-fail stub pending cloud adapter commit. `runVisualAssertion` is unchanged — this is a parallel compare API so T-008 integration with `tester run` is non-breaking.
+
+### Files created (4)
+- `src/snapshot/store.ts` — `BaselineStore` interface, `LocalFSStore` (with sha256 meta JSON), `S3Store` stub (throws), `sanitizeRoute` helper (120-char cap + 8-char hash suffix on collisions; falls back to "root").
+- `src/snapshot/compare.ts` — `pixelDiffPercent` (pure buffers) + `compareRoute` with `CompareResult` (noBaseline / capturedBaseline / error / passed / diffPercent).
+- `src/cli/commands/snapshot.ts` — `tester snapshot --baseline | --compare | --approve | --list` with `--project`, `--route`, `--png`, `--max-diff`, `--capture-if-missing`, `--json`.
+- `tests/snapshot/store.test.ts` — 14 tests with synthetic PNGs via pngjs (no external fixtures)
+
+### Files modified (1)
+- `src/cli/index.ts` — registered subcommand
+
+### Layout
+- `<baseDir>/<project>/<safeRoute>.png` + `.meta.json` (captured_at, route, viewport, hash)
+- Default baseDir: `<cwd>/.tester/baselines`
+
+### Deferred
+- S3/MinIO adapter (stubbed with fail-fast throw)
+- YAML masking regex for dynamic regions (timestamps, random IDs)
+- Puppeteer integration in `tester run` final audit step
+- HTML diff report with image delta rendering
+
+### Verification
+- `npx tsc --noEmit` → 0 errors
+- `npx vitest run` → **307/307 pass** (293 → 307, +14 new)
+- Build green
+
+### Risk assessment
+- LOW. New modules; existing `runVisualAssertion` untouched. `CompareResult` shape is stable for downstream report generators.
+
+---
+
 ## 2026-04-24 — feat(tester): T-007 retry backoff extension (exponential + settle cap)
 
 - **Session:** Direct autonomous continuation. Resume prompt `Master/knowledge/Tester-Resume-Prompt-2026-04-24.md`.

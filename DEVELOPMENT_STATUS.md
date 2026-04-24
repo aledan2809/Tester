@@ -1,5 +1,79 @@
 # Project Status - Tester
 
+Last Updated: 2026-04-24 (latest-3) — +T-007/T-008/T-009/T-010 wave 1 complete. Roadmap progress 13/27 items. **332/332 tests pass** across 34 files (from 236/27 at start of session).
+
+## Latest Session (2026-04-24 latest-3) — T-006..T-010 wave + 3 PAS uplift
+
+### Commits (9 on top of 2026-04-24 latest baseline)
+
+| Commit | Subject | Tests added |
+|---|---|---|
+| `280bc4a` | feat(tester): T-006 `tester untested` session-awareness query | +18 |
+| `e80dec6` | test(tester): CLI integration (selfcheck+coverage+classify+generate) | +15 |
+| `5697a18` | test(tester): regression coverage for 10 audit fixes F-001..F-014 | +12 |
+| `0b16a09` | test(tester): classifier error paths (invalid-key, rate-limit, RO FS) | +4 |
+| `b69755c` | docs(tester): 2026-04-24 session delta (T-006 + 3 PAS) | — |
+| `ee5cbec` | feat(tester): T-007 retry backoff extension (exponential + settle cap) | +8 |
+| `f5a3bf3` | feat(tester): T-008 visual baseline MVP — LocalFSStore + compare + CLI | +14 |
+| `c66b98d` | feat(tester): T-009 a11y baseline + per-route budget enforcement | +13 |
+| `a62fb55` | feat(tester): T-010 perf budget evaluator + CI delta comment | +12 |
+
+**Baseline:** 236/236 → **332/332** (+96 tests, +7 files, zero regressions).
+
+### What shipped (beyond the T-006 + 3 PAS block captured earlier)
+
+**T-007 retry backoff** — extracts the inline `sleep(1000); retry()` at `executor.ts:149-158` into exported `retryStepWithBackoff` helper. TesterConfig +5 knobs (retryBudget/retryInitialSettleMs/retryBackoffMultiplier/retrySettleCapMs/noRetry); StepResult +3 metadata fields (retryCount/timeToVerdictMs/retryFinalVerdict). Backward-compat preserved (existing callers see equivalent behavior; defaults soft-expand budget 1→2).
+
+**T-008 visual baseline MVP** — `BaselineStore` interface + `LocalFSStore` with sha256 meta JSON, `S3Store` stub (fail-fast throw), `compareRoute` API, `tester snapshot --baseline|--compare|--approve|--list` CLI. Layout: `<baseDir>/<project>/<safeRoute>.png` + `.meta.json`. S3 adapter, masking YAML, Puppeteer integration deferred.
+
+**T-009 a11y baseline + budget** — `coverage/a11y-baseline.json` store + diff (regression = new crit/serious), `coverage/a11y-budget.yaml` per-route budget with defaults fallback, `tester a11y --baseline|--check --from <scan.json>` CLI. Decoupled from axe-core (caller feeds scan output).
+
+**T-010 perf budget** — `coverage/perf-budget.yaml` parser + evaluator, before/after delta + CI comment markdown rendering, `tester perf --check|--delta` CLI. Metric keys: fcp_ms/lcp_ms/tti_ms/cls/transfer_bytes. Lighthouse runtime deferred.
+
+### Lessons learned (L-S19 already captured)
+
+**L-S19 — Test-file count ≠ test quality.** (Still load-bearing after wave 1.) Wave 1 added +96 tests across 7 files — what mattered wasn't the file count but the test distribution (CLI integration + audit-fix patterns + classifier error paths + behavior-level executor retry + store+diff regression + budget evaluator). Each commit ships a distinct failure-mode guard.
+
+### TODO (next session — resume point)
+
+**Wave 2** (per resume prompt, after T-006..T-010):
+- T-A1 `tester init <feature>` (~0.5d)
+- T-A3 session-state recorder (~1d)
+- T-B1 coverage-aware scoring (~0.5d)
+- T-B2 regression-prevention suite (~1d)
+- T-B3 product-vs-harness triage via T-004 (~0.5d; depends on T-004 ✓)
+- T-C4 phase-aware test scoping (~2d, P0-promoted)
+- T-C5 pipeline failure analytics (~1.5d, P0-promoted)
+- T-C6 zombie watchdog (DONE via prior commit `f43aef7` + Master `32a5e56`)
+- T-C1 scope-check HOLD after C4
+- T-D1..T-D4 (~5d) — done gate, lib split, docs, dashboard
+
+**Follow-ups surfaced during wave 1** (all deferred deliberately):
+- T-006 `--since <sha>` git-scope filter
+- T-007 §4 `tester flake-report` CLI (reads historical retry metadata)
+- T-008 S3/MinIO adapter + masking YAML + Puppeteer `tester run` integration
+- T-009 `suppressed_until` field + HTML report + `tester run` scan-JSON writer
+- T-010 Lighthouse runtime integration + historical trend storage + GitHub PR posting
+- T-001 Day-2 Puppeteer browser probes
+- T-005 OpenAPI + Zod generators
+- Importer corpus activation (42 stubs)
+- 8 deferred audit findings (F-006, F-009..F-011, F-015..F-018)
+
+### NO-TOUCH CRITIC compliance
+
+All wave 1 changes additive. DO NOT MODIFY zones preserved throughout:
+- Assertion engine internals (dom, network, visual, a11y, performance — only external wrapper/budget modules added alongside)
+- BFS crawler discovery algorithm
+- Reporter HTML/JSON format
+- HTTP API rate limiter
+- Template fallback scenarios
+
+Ledger: `reports/DIRECT-CHANGES-2026-04.md` updated with entries for each T-### commit per protocol.
+
+---
+
+## Earlier session (2026-04-24 latest-2, preserved)
+
 Last Updated: 2026-04-24 (latest-2) — +T-006 `tester untested` + 3-PAS quality uplift (CLI integration, audit-fix regression patterns, classifier error paths). Roadmap progress 9/27 items. **285/285 tests pass** across 30 files (from 236/27).
 
 ## Latest Session (2026-04-24 latest-2) — T-006 ship + 3 PAS quality uplift
