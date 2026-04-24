@@ -34,7 +34,7 @@
     { "name": "Settings › Providers", "href": "/settings/providers" },
     { "name": "Settings › Experimental", "href": "/settings/experimental" }
   ],
-  "onboardingMarkers": "Set CTRADER_|(Link|Connect|Configure) your (broker|account|cTrader|wallet|provider)|Activate.*account",
+  "onboardingMarkers": "Set CTRADER_|Link your|Connect|Configure|Activate.*account",
   "emptyStateMarkers": "No .*yet|No .*found|empty|Niciun|Nu exista",
   "errorMarkers": "error|failed|eroare",
   "viewport": { "width": 1440, "height": 900 },
