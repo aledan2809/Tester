@@ -44,3 +44,11 @@ ANTHROPIC_API_KEY=...
 TESTER_API_SECRET=...
 TESTER_PORT=3012
 ```
+
+
+## Governance Reference
+See: `Master/knowledge/MASTER_SYSTEM.md` §1-§5. This project follows Master governance; do not duplicate rules.
+NO-TOUCH CRITIC: see `AUDIT_GAPS.md` at project root for propose-confirm-apply protocol (Master `CLAUDE.md` §2d).
+
+## Standing work ethic (L01 — mandatory, see `knowledge/lessons-learned.md`)
+Every Tester work session MUST operate at **best-of-best** quality: close spec items fully (no "scope-tight MVP"), use `WebSearch` / `WebFetch` / Agent subagents for research, write behavior tests (not source-pattern grep), ship real integrations (not data-in/data-out shortcuts), do cross-repo work when the spec requires it, install packages when needed, report honest status ratios, ask when ambiguous. See L01 for the full rule + violation detection protocol.
