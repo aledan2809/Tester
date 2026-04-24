@@ -19,6 +19,7 @@ import {
   lessonsValidate,
   lessonsInstallHooks,
   lessonsImport,
+  lessonsPromote,
 } from './commands/lessons'
 
 const program = new Command()
@@ -160,11 +161,21 @@ lessonsCmd
 
 lessonsCmd
   .command('validate')
-  .description('Verify every active lesson has its regression_test file present; exit 1 on any missing/failed')
+  .description('Verify every active lesson has its regression_test (file check, or --run to spawn vitest)')
   .option('--dir <path>', 'Override lessons directory')
   .option('--repo-root <path>', 'Repository root for resolving regression_test paths')
+  .option('--run', 'Actually spawn vitest on each regression test (Day-4 CI mode)', false)
   .option('--json', 'Emit JSON', false)
   .action(lessonsValidate)
+
+lessonsCmd
+  .command('promote')
+  .description('Dry-run hit-count promotion/mute plan (hit>=N bumps severity; hit=0 for >Nmo mutes)')
+  .option('--dir <path>', 'Override lessons directory')
+  .option('--promote-threshold <n>', 'Hit count to trigger severity bump (default 5)', (v) => parseInt(v, 10))
+  .option('--mute-months <n>', 'Months without hits to trigger mute (default 6)', (v) => parseInt(v, 10))
+  .option('--json', 'Emit JSON', false)
+  .action(lessonsPromote)
 
 lessonsCmd
   .command('install-hooks')

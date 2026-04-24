@@ -1,15 +1,15 @@
 /**
- * T-000 Day-3 — Lesson validator.
+ * T-000 Day-3/4 — Lesson validator.
  *
- * Validates that each active lesson's `regression_test` passes. Currently
- * checks file existence; in Day-4 CI mode, spawns vitest on each regression
- * test with pass/fail accounting.
+ * Day-3: file existence check for each lesson's regression_test.
+ * Day-4: optionally spawn vitest on each test (opts.run = true).
  *
  * Why: lessons are only useful if the detection/diagnosis logic is itself
- * regression-tested. `tester lessons validate` fails CI if any lesson has
- * regressed on its own fixtures — the ultimate "Tester tests itself" check.
+ * regression-tested. `tester lessons validate --run` fails CI if any lesson
+ * has regressed on its own fixtures — the ultimate "Tester tests itself" check.
  */
 
+import { spawnSync } from 'node:child_process'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import type { Lesson } from './schema'
@@ -32,7 +32,25 @@ export interface ValidationSummary {
   results: ValidationResult[]
 }
 
-export function validateLessonFiles(lessons: Lesson[], repoRoot: string): ValidationSummary {
+export interface ValidateOptions {
+  run?: boolean
+  vitestBin?: string
+}
+
+function runVitestOn(testFile: string, cwd: string, vitestBin?: string): { ok: boolean; detail: string } {
+  const cmd = vitestBin || 'npx'
+  const args = vitestBin ? ['run', testFile] : ['vitest', 'run', testFile, '--reporter', 'dot']
+  const result = spawnSync(cmd, args, { cwd, encoding: 'utf8', timeout: 120_000 })
+  if (result.status === 0) return { ok: true, detail: 'pass' }
+  const err = (result.stderr || result.stdout || '').slice(-500).trim()
+  return { ok: false, detail: `vitest exit=${result.status}; ${err}` }
+}
+
+export function validateLessonFiles(
+  lessons: Lesson[],
+  repoRoot: string,
+  opts: ValidateOptions = {},
+): ValidationSummary {
   const results: ValidationResult[] = []
   let pass = 0,
     fail = 0,
@@ -91,11 +109,29 @@ export function validateLessonFiles(lessons: Lesson[], repoRoot: string): Valida
       continue
     }
 
+    const relPath = path.relative(repoRoot, found)
+
+    if (opts.run) {
+      const { ok, detail } = runVitestOn(relPath, repoRoot, opts.vitestBin)
+      if (!ok) {
+        results.push({
+          lesson_id: lesson.id,
+          title: lesson.title,
+          severity: lesson.severity,
+          regression_test: relPath,
+          status: 'fail',
+          reason: detail,
+        })
+        fail++
+        continue
+      }
+    }
+
     results.push({
       lesson_id: lesson.id,
       title: lesson.title,
       severity: lesson.severity,
-      regression_test: path.relative(repoRoot, found),
+      regression_test: relPath,
       status: 'pass',
     })
     pass++

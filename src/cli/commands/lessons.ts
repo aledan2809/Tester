@@ -14,10 +14,11 @@ import * as path from 'node:path'
 import { loadLessons, findLessonsDir } from '../../lessons/loader'
 import { scan } from '../../lessons/scanner'
 import { diagnoseFile } from '../../lessons/diagnoser'
-import { recordHits, statsSummary } from '../../lessons/stats'
+import { recordHits, statsSummary, loadStats } from '../../lessons/stats'
 import { validateLessonFiles } from '../../lessons/validator'
 import { installHooks, uninstallHooks } from '../../lessons/hooks'
 import { importFromFile } from '../../lessons/importer'
+import { computePromotionPlan } from '../../lessons/promotion'
 import type { Lesson, LessonSeverity, ScanMatch } from '../../lessons/schema'
 
 const fsExistsSync = fs.existsSync
@@ -52,6 +53,7 @@ interface ValidateOptions {
   json?: boolean
   dir?: string
   repoRoot?: string
+  run?: boolean
 }
 
 interface InstallHooksOptions {
@@ -64,6 +66,13 @@ interface InstallHooksOptions {
 interface ImportOptions {
   out?: string
   json?: boolean
+}
+
+interface PromoteOptions {
+  dir?: string
+  json?: boolean
+  promoteThreshold?: number
+  muteMonths?: number
 }
 
 const SEVERITY_ORDER: Record<LessonSeverity, number> = {
@@ -282,7 +291,7 @@ export async function lessonsStats(opts: StatsOptions): Promise<void> {
 export async function lessonsValidate(opts: ValidateOptions): Promise<void> {
   const { lessons, dir } = resolveCorpus(opts.dir)
   const repoRoot = opts.repoRoot ? path.resolve(opts.repoRoot) : path.dirname(path.resolve(dir))
-  const summary = validateLessonFiles(lessons, repoRoot)
+  const summary = validateLessonFiles(lessons, repoRoot, { run: opts.run })
 
   if (opts.json) {
     process.stdout.write(JSON.stringify({ corpus: dir, repo_root: repoRoot, ...summary }, null, 2) + '\n')
@@ -351,6 +360,50 @@ export async function lessonsImport(from: string, opts: ImportOptions): Promise<
     }
     process.stdout.write(`Pass --out <dir> to write stubs to disk. Review each + fill detection regex.\n`)
   }
+}
+
+export async function lessonsPromote(opts: PromoteOptions): Promise<void> {
+  const { lessons, dir } = resolveCorpus(opts.dir)
+  const stats = loadStats(dir)
+  const plan = computePromotionPlan(lessons, stats, {
+    promote_threshold: opts.promoteThreshold ?? 5,
+    mute_months: opts.muteMonths ?? 6,
+  })
+
+  if (opts.json) {
+    process.stdout.write(JSON.stringify({ corpus: dir, ...plan }, null, 2) + '\n')
+    return
+  }
+
+  process.stdout.write(`Corpus: ${dir}\n`)
+  process.stdout.write(
+    `Promotion plan (dry-run — stats-driven): ${plan.promotions.length} promote / ${plan.mutes.length} mute / ${plan.no_change} no-change\n\n`,
+  )
+
+  if (plan.promotions.length === 0 && plan.mutes.length === 0) {
+    process.stdout.write('No changes proposed. Corpus is stable with current hit counts.\n')
+    return
+  }
+
+  if (plan.promotions.length) {
+    process.stdout.write('Promotions (severity bumps):\n')
+    for (const p of plan.promotions) {
+      process.stdout.write(
+        `  ↑ ${p.lesson_id.padEnd(10)} ${p.current_severity} → ${p.proposed_severity} (${p.reason})\n`,
+      )
+    }
+    process.stdout.write('\n')
+  }
+  if (plan.mutes.length) {
+    process.stdout.write('Mutes (auto-demote to status=muted):\n')
+    for (const p of plan.mutes) {
+      process.stdout.write(`  ↓ ${p.lesson_id.padEnd(10)} ${p.current_status} → ${p.proposed_status} (${p.reason})\n`)
+    }
+    process.stdout.write('\n')
+  }
+  process.stdout.write(
+    'NOTE: dry-run only. To apply, manually edit YAML files or wait for --apply support (post-Day-4).\n',
+  )
 }
 
 export async function lessonsInstallHooks(opts: InstallHooksOptions): Promise<void> {
