@@ -48,6 +48,7 @@ import {
 import { triageCommand } from './commands/triage'
 import { affectedCommand } from './commands/affected'
 import { pipelineStatsCommand } from './commands/pipeline-stats'
+import { doneCommand, undoneCommand, statusCommand } from './commands/done'
 
 const program = new Command()
 
@@ -265,6 +266,34 @@ program
   .option('--overwrite', 'Overwrite existing generated file', false)
   .option('--json', 'Emit JSON', false)
   .action(generateCommand)
+
+// ─── done / undone / status (T-D1 composite gate) ────────
+program
+  .command('done <feature>')
+  .description('T-D1 — Composite gate: coverage + tests + a11y + visual baselines; seals features.yaml on pass')
+  .option('--project <path>', 'Project root (default: cwd)')
+  .option('--tests-passing <n>', 'Tests passing count', (v) => parseInt(v, 10))
+  .option('--tests-total <n>', 'Tests total count', (v) => parseInt(v, 10))
+  .option('--commit <sha>', 'Commit that closes the feature (stored in features.yaml)')
+  .option('--fail-under <ratio>', 'Min coverage ratio (default 0.9)', (v) => parseFloat(v))
+  .option('--skip-a11y', 'Skip a11y baseline presence check', false)
+  .option('--skip-visual', 'Skip visual baseline presence check', false)
+  .option('--json', 'Emit JSON', false)
+  .action((feat, opts) => doneCommand(feat, opts))
+
+program
+  .command('undone <feature>')
+  .description('T-D1 — Reopen a previously-done feature (regression-triggered)')
+  .option('--project <path>', 'Project root (default: cwd)')
+  .option('--json', 'Emit JSON', false)
+  .action((feat, opts) => undoneCommand(feat, opts))
+
+program
+  .command('status')
+  .description('T-D1 — Show done/open state per feature from features.yaml')
+  .option('--project <path>', 'Project root (default: cwd)')
+  .option('--json', 'Emit JSON', false)
+  .action(statusCommand)
 
 // ─── pipeline-stats (T-C5 failure analytics) ─────────────
 program
