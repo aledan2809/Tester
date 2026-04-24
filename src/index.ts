@@ -249,3 +249,11 @@ export type { DoneCheckResult, DoneOptions, DoneEntry } from './done/gate'
 // T-D4 inventory aggregator
 export { buildInventory, discoverProjectRoots, renderInventoryMarkdown } from './inventory/aggregator'
 export type { InventoryReport, ProjectInventoryEntry } from './inventory/aggregator'
+
+// Wave 3: T-C1 scope-check + T-C2 coupling + T-C3 smoke
+export { checkScope, hasAllowWideScope } from './scope-check/guard'
+export type { ScopeCheckInput, ScopeCheckResult } from './scope-check/guard'
+export { checkCoupling } from './scope-check/coupling'
+export type { CouplingCheckInput, CouplingCheckResult } from './scope-check/coupling'
+export { runSmoke, formatSmokeMarkdown } from './smoke/runner'
+export type { SmokeInput, SmokeResult } from './smoke/runner'

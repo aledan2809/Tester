@@ -48,6 +48,8 @@ import {
 import { triageCommand } from './commands/triage'
 import { affectedCommand } from './commands/affected'
 import { runAffectedCommand } from './commands/run-affected'
+import { scopeCheckCommand, couplingCommand } from './commands/scope-check'
+import { smokeCommand } from './commands/smoke'
 import { pipelineStatsCommand } from './commands/pipeline-stats'
 import { flakeReportCommand } from './commands/flake-report'
 import { doneCommand, undoneCommand, statusCommand } from './commands/done'
@@ -547,5 +549,38 @@ program
   .option('--json', 'Emit JSON', false)
   .option('--markdown', 'Emit Markdown table', false)
   .action(untestedCommand)
+
+// ─── scope-check (T-C1 pre-commit guard) ──────────────────
+program
+  .command('scope-check')
+  .description('T-C1 — git diff --stat <sha>..HEAD → breach report + exit 1 on violation')
+  .option('--project <path>', 'Repo path (default: cwd)')
+  .option('--since <sha>', 'Compare against this sha (required)')
+  .option('--task <text>', 'Task description (scanned for allow-wide-scope tokens)')
+  .option('--file-threshold <n>', 'Max files changed (default 10)', (v) => parseInt(v, 10))
+  .option('--line-threshold <n>', 'Max lines changed (default 500)', (v) => parseInt(v, 10))
+  .option('--json', 'Emit JSON', false)
+  .action(scopeCheckCommand)
+
+// ─── check-test-coupling (T-C2) ───────────────────────────
+program
+  .command('check-test-coupling')
+  .description('T-C2 — fail when source files changed without a test-file companion (commit message `Test-Coverage: existing` overrides)')
+  .option('--project <path>', 'Repo path (default: cwd)')
+  .option('--since <sha>', 'Compare against this sha (required)')
+  .option('--warn-only', 'Report but exit 0', false)
+  .option('--json', 'Emit JSON', false)
+  .action(couplingCommand)
+
+// ─── smoke (T-C3 post-deploy) ─────────────────────────────
+program
+  .command('smoke <url>')
+  .description('T-C3 — post-deploy smoke test: HTTP 200 on root + optional health paths + optional regressions vitest')
+  .option('--health-paths <csv>', 'Comma-separated paths to also check (e.g. /api/health)')
+  .option('--regressions-dir <path>', 'Run vitest on this dir as part of smoke')
+  .option('--timeout-ms <ms>', 'Per-request timeout (default 10000)', (v) => parseInt(v, 10))
+  .option('--markdown', 'Emit markdown report', false)
+  .option('--json', 'Emit JSON', false)
+  .action((url, opts) => smokeCommand(url, opts))
 
 program.parse()
