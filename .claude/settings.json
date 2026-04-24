@@ -1,0 +1,10 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|NotebookEdit",
+        "command": "\"C:/Program Files/Git/bin/bash.exe\" \"C:/Projects/Master/scripts/governance-check.sh\""
+      }
+    ]
+  }
+}

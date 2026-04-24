@@ -26,12 +26,12 @@ export function stopSpinner(finalMessage?: string): void {
   }
 }
 
-export function log(message: string): void {
-  console.log(`[tester] ${message}`)
+export function writeLine(message: string = ''): void {
+  process.stdout.write(`${message}\n`)
 }
 
-export function writeLine(message: string = ''): void {
-  console.log(message)
+export function log(message: string): void {
+  console.log(`[tester] ${message}`)
 }
 
 export function logSuccess(message: string): void {

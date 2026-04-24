@@ -1,0 +1,75 @@
+{
+  "discardedFlows": [],
+  "generatedAt": "2026-04-11T14:20:36.202Z",
+  "strategy": "minimal",
+  "validFlows": [
+    {
+      "domAssertion": "main, body > .app-loaded, #__next, #root",
+      "id": "home",
+      "metadata": {
+        "strategy": "minimal",
+        "timestamp": 1775917236201
+      },
+      "name": "Visit home page",
+      "priority": "critical",
+      "requiresAuth": false,
+      "steps": [
+        {
+          "action": "goto",
+          "url": "http://localhost:3012/"
+        }
+      ]
+    },
+    {
+      "domAssertion": "main, body > .app-loaded, #__next, #root",
+      "id": "login",
+      "metadata": {
+        "strategy": "minimal",
+        "timestamp": 1775917236201
+      },
+      "name": "Visit login page",
+      "priority": "critical",
+      "requiresAuth": false,
+      "steps": [
+        {
+          "action": "goto",
+          "url": "http://localhost:3012/login"
+        }
+      ]
+    },
+    {
+      "domAssertion": "main, body > .app-loaded, #__next, #root",
+      "id": "register",
+      "metadata": {
+        "strategy": "minimal",
+        "timestamp": 1775917236201
+      },
+      "name": "Visit register page",
+      "priority": "normal",
+      "requiresAuth": false,
+      "steps": [
+        {
+          "action": "goto",
+          "url": "http://localhost:3012/register"
+        }
+      ]
+    },
+    {
+      "domAssertion": "#user-profile, .auth-status, [data-authenticated]",
+      "id": "dashboard",
+      "metadata": {
+        "strategy": "minimal",
+        "timestamp": 1775917236201
+      },
+      "name": "Visit dashboard (auth)",
+      "priority": "normal",
+      "requiresAuth": true,
+      "steps": [
+        {
+          "action": "goto",
+          "url": "http://localhost:3012/dashboard"
+        }
+      ]
+    }
+  ]
+}
