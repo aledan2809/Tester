@@ -17,6 +17,9 @@ import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { LocalFSStore, defaultBaselineDir } from '../../snapshot/store'
 import { compareRoute } from '../../snapshot/compare'
+import { loadMaskConfig, masksForRoute } from '../../snapshot/masking'
+import { writeHtmlReport } from '../../snapshot/html-report'
+import { captureUrlStandalone } from '../../snapshot/capture'
 
 export interface SnapshotOptions {
   project?: string
@@ -30,6 +33,14 @@ export interface SnapshotOptions {
   maxDiff?: number
   captureIfMissing?: boolean
   json?: boolean
+  /** URL to capture via Puppeteer when --png is not supplied. */
+  url?: string
+  /** Optional HTML report output path (for --compare). */
+  html?: string
+  /** Path to snapshot-masks.yaml; defaults to <project>/coverage/snapshot-masks.yaml when --project points at a dir. */
+  maskConfig?: string
+  /** Project root for mask-config resolution when the project arg is a bare name. */
+  projectRoot?: string
 }
 
 function requireStr(name: string, val: string | undefined): string {
@@ -65,13 +76,20 @@ export async function snapshotCommand(opts: SnapshotOptions): Promise<void> {
   }
 
   const route = requireStr('route', opts.route)
-  const pngPath = requireStr('png', opts.png)
-  const full = path.resolve(pngPath)
-  if (!fs.existsSync(full)) {
-    process.stderr.write(`[snapshot] ERROR: PNG not found: ${full}\n`)
-    process.exit(2)
+
+  // Capture-from-URL mode: if --url is set and --png is not, launch Puppeteer.
+  let pngBuf: Buffer
+  if (!opts.png && opts.url) {
+    pngBuf = await captureUrlStandalone(opts.url)
+  } else {
+    const pngPath = requireStr('png', opts.png)
+    const full = path.resolve(pngPath)
+    if (!fs.existsSync(full)) {
+      process.stderr.write(`[snapshot] ERROR: PNG not found: ${full}\n`)
+      process.exit(2)
+    }
+    pngBuf = fs.readFileSync(full)
   }
-  const pngBuf = fs.readFileSync(full)
 
   if (opts.baseline || opts.approve) {
     const meta = await store.put(project, route, pngBuf)
@@ -98,10 +116,56 @@ export async function snapshotCommand(opts: SnapshotOptions): Promise<void> {
   }
 
   // --compare
+  // Resolve mask config: explicit --mask-config > <project-root>/coverage/snapshot-masks.yaml
+  let masks: ReturnType<typeof masksForRoute> = []
+  const maskConfigPath = opts.maskConfig
+    ? path.resolve(opts.maskConfig)
+    : opts.projectRoot
+      ? path.join(path.resolve(opts.projectRoot), 'coverage', 'snapshot-masks.yaml')
+      : null
+  if (maskConfigPath && fs.existsSync(maskConfigPath)) {
+    const cfg = opts.projectRoot
+      ? loadMaskConfig(path.resolve(opts.projectRoot))
+      : null
+    // If --mask-config provided explicitly, load that file directly.
+    if (opts.maskConfig) {
+      try {
+        const yamlMod = (await import('js-yaml')) as typeof import('js-yaml')
+        const parsed = yamlMod.load(fs.readFileSync(maskConfigPath, 'utf8')) as {
+          defaults?: unknown
+          routes?: Record<string, unknown>
+        }
+        if (parsed && typeof parsed === 'object') {
+          masks = masksForRoute(parsed as Parameters<typeof masksForRoute>[0], route)
+        }
+      } catch {
+        process.stderr.write(`[snapshot] WARNING: failed to parse ${maskConfigPath}\n`)
+      }
+    } else if (cfg) {
+      masks = masksForRoute(cfg, route)
+    }
+  }
+
+  const wantHtml = !!opts.html
   const result = await compareRoute(store, project, route, pngBuf, {
     maxDiffPercent: opts.maxDiff ?? 1,
     captureIfMissing: !!opts.captureIfMissing,
+    masks,
+    returnDiffPng: wantHtml,
   })
+
+  if (wantHtml) {
+    const outPath = path.resolve(opts.html!)
+    await writeHtmlReport({
+      project,
+      baselineStore: store,
+      results: [result],
+      outputPath: outPath,
+    })
+    if (!opts.json) {
+      process.stdout.write(`HTML report: ${outPath}\n`)
+    }
+  }
   if (opts.json) {
     process.stdout.write(JSON.stringify(result, null, 2) + '\n')
   } else {

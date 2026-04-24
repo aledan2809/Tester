@@ -127,10 +127,28 @@ export { aggregateFlakes, renderFlakeMarkdown } from './flake/reporter'
 export type { FlakeReport, FlakeStepStats, FlakeStepKey } from './flake/reporter'
 
 // T-008 visual baseline
-export { LocalFSStore, S3Store, defaultBaselineDir, sanitizeRoute } from './snapshot/store'
-export type { BaselineMeta, BaselineStore } from './snapshot/store'
-export { compareRoute, pixelDiffPercent } from './snapshot/compare'
-export type { CompareResult } from './snapshot/compare'
+export {
+  LocalFSStore,
+  S3Store,
+  defaultBaselineDir,
+  sanitizeRoute,
+  asS3StoreClient,
+} from './snapshot/store'
+export type {
+  BaselineMeta,
+  BaselineStore,
+  S3StoreClient,
+  AwsSdkLikeS3,
+  AwsSdkLikeCommandCtors,
+} from './snapshot/store'
+export { compareRoute, pixelDiffPercent, pixelDiffWithImage } from './snapshot/compare'
+export type { CompareResult, CompareOptions } from './snapshot/compare'
+export { loadMaskConfig, masksForRoute, applyMasks, defaultMaskConfigPath } from './snapshot/masking'
+export type { Mask, MaskConfigFile } from './snapshot/masking'
+export { writeHtmlReport } from './snapshot/html-report'
+export type { HtmlReportOptions as VisualHtmlReportOptions } from './snapshot/html-report'
+export { captureFullPage, captureUrl, captureUrlStandalone } from './snapshot/capture'
+export type { CaptureFullPageOptions, CaptureUrlOptions } from './snapshot/capture'
 
 // T-009 a11y baseline + budget
 export {

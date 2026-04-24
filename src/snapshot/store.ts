@@ -126,23 +126,162 @@ export class LocalFSStore implements BaselineStore {
  * S3 adapter stub. Throws on any call so server-mode consumers fail fast
  * until the follow-up cloud commit lands (T-008 follow-up: S3/MinIO).
  */
+export interface S3StoreClient {
+  putObject: (params: {
+    Key: string
+    Body: Buffer
+    ContentType?: string
+    Metadata?: Record<string, string>
+  }) => Promise<void>
+  getObject: (params: { Key: string }) => Promise<{ Body: Buffer | Uint8Array } | null>
+  listObjects: (params: { Prefix: string }) => Promise<{ Keys: string[] }>
+  deleteObject: (params: { Key: string }) => Promise<void>
+}
+
 export class S3Store implements BaselineStore {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  constructor(public readonly bucket: string, public readonly prefix: string) {}
-  async put(): Promise<BaselineMeta> {
-    throw new Error('S3Store: not yet implemented. Use LocalFSStore until cloud adapter lands.')
+  constructor(
+    public readonly client: S3StoreClient,
+    public readonly bucket: string,
+    public readonly prefix: string = 'baselines',
+  ) {}
+
+  private key(project: string, route: string, ext: string): string {
+    return `${this.prefix}/${project}/${sanitizeRoute(route)}${ext}`
   }
-  async get(): Promise<Buffer | null> {
-    throw new Error('S3Store: not yet implemented.')
-  }
-  async list(): Promise<string[]> {
-    throw new Error('S3Store: not yet implemented.')
-  }
-  async remove(): Promise<boolean> {
-    throw new Error('S3Store: not yet implemented.')
-  }
+
   pathFor(project: string, route: string): string {
-    return `s3://${this.bucket}/${this.prefix}/${project}/${sanitizeRoute(route)}.png`
+    return `s3://${this.bucket}/${this.key(project, route, '.png')}`
+  }
+
+  async put(
+    project: string,
+    route: string,
+    png: Buffer,
+    viewport?: { width: number; height: number },
+  ): Promise<BaselineMeta> {
+    const hash = crypto.createHash('sha256').update(png).digest('hex')
+    const meta: BaselineMeta = {
+      capturedAt: new Date().toISOString(),
+      route,
+      viewport,
+      hash,
+    }
+    await this.client.putObject({
+      Key: this.key(project, route, '.png'),
+      Body: png,
+      ContentType: 'image/png',
+      Metadata: {
+        route,
+        captured_at: meta.capturedAt,
+        hash,
+        ...(viewport
+          ? { viewport_w: String(viewport.width), viewport_h: String(viewport.height) }
+          : {}),
+      },
+    })
+    await this.client.putObject({
+      Key: this.key(project, route, '.meta.json'),
+      Body: Buffer.from(JSON.stringify(meta, null, 2), 'utf8'),
+      ContentType: 'application/json',
+    })
+    return meta
+  }
+
+  async get(project: string, route: string): Promise<Buffer | null> {
+    const res = await this.client.getObject({ Key: this.key(project, route, '.png') })
+    if (!res) return null
+    return Buffer.isBuffer(res.Body) ? res.Body : Buffer.from(res.Body)
+  }
+
+  async list(project: string): Promise<string[]> {
+    const { Keys } = await this.client.listObjects({
+      Prefix: `${this.prefix}/${project}/`,
+    })
+    const routes: string[] = []
+    for (const k of Keys) {
+      if (!k.endsWith('.meta.json')) continue
+      try {
+        const res = await this.client.getObject({ Key: k })
+        if (!res) continue
+        const buf = Buffer.isBuffer(res.Body) ? res.Body : Buffer.from(res.Body)
+        const parsed = JSON.parse(buf.toString('utf8')) as BaselineMeta
+        if (parsed.route) routes.push(parsed.route)
+      } catch {
+        // corrupt meta entry; skip
+      }
+    }
+    return routes
+  }
+
+  async remove(project: string, route: string): Promise<boolean> {
+    let removed = false
+    try {
+      await this.client.deleteObject({ Key: this.key(project, route, '.png') })
+      removed = true
+    } catch {
+      // Idempotent: missing-key deletes are not failures.
+    }
+    try {
+      await this.client.deleteObject({ Key: this.key(project, route, '.meta.json') })
+    } catch {
+      // same
+    }
+    return removed
+  }
+}
+
+export interface AwsSdkLikeS3 {
+  send: (
+    command: unknown,
+  ) => Promise<{ Body?: unknown; Contents?: Array<{ Key?: string }> }>
+}
+export interface AwsSdkLikeCommandCtors {
+  PutObjectCommand: new (input: unknown) => unknown
+  GetObjectCommand: new (input: unknown) => unknown
+  ListObjectsV2Command: new (input: unknown) => unknown
+  DeleteObjectCommand: new (input: unknown) => unknown
+}
+
+/**
+ * Wrap a `@aws-sdk/client-s3`-shaped S3 client into `S3StoreClient`.
+ * Tester has zero hard AWS dep; consumers supply the SDK + constructors.
+ */
+export function asS3StoreClient(
+  sdk: AwsSdkLikeS3,
+  ctors: AwsSdkLikeCommandCtors,
+  bucket: string,
+): S3StoreClient {
+  return {
+    putObject: async ({ Key, Body, ContentType, Metadata }) => {
+      await sdk.send(
+        new ctors.PutObjectCommand({ Bucket: bucket, Key, Body, ContentType, Metadata }),
+      )
+    },
+    getObject: async ({ Key }) => {
+      try {
+        const res = await sdk.send(new ctors.GetObjectCommand({ Bucket: bucket, Key }))
+        if (!res || res.Body === undefined) return null
+        const body = res.Body as { transformToByteArray?: () => Promise<Uint8Array> }
+        if (typeof body.transformToByteArray === 'function') {
+          return { Body: await body.transformToByteArray() }
+        }
+        return { Body: Buffer.from(res.Body as Uint8Array) }
+      } catch (e) {
+        const code =
+          (e as { name?: string; Code?: string }).name ||
+          (e as { Code?: string }).Code
+        if (code === 'NoSuchKey' || code === 'NotFound') return null
+        throw e
+      }
+    },
+    listObjects: async ({ Prefix }) => {
+      const res = await sdk.send(new ctors.ListObjectsV2Command({ Bucket: bucket, Prefix }))
+      const keys = (res.Contents || []).map((c) => c.Key || '').filter(Boolean)
+      return { Keys: keys }
+    },
+    deleteObject: async ({ Key }) => {
+      await sdk.send(new ctors.DeleteObjectCommand({ Bucket: bucket, Key }))
+    },
   }
 }
 

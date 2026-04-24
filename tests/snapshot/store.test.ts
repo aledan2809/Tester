@@ -95,14 +95,163 @@ describe('T-008 LocalFSStore — put/get/list/remove roundtrip', () => {
   })
 })
 
-describe('T-008 S3Store stub — clear fail-fast on premature use', () => {
-  it('throws on put/get/list/remove (not yet implemented)', async () => {
-    const s3 = new S3Store('my-bucket', 'baselines')
-    await expect(s3.put()).rejects.toThrow(/not yet implemented/i)
-    await expect(s3.get()).rejects.toThrow(/not yet implemented/i)
-    await expect(s3.list()).rejects.toThrow(/not yet implemented/i)
-    await expect(s3.remove()).rejects.toThrow(/not yet implemented/i)
-    expect(s3.pathFor('demo', '/home')).toMatch(/^s3:\/\/my-bucket\/baselines\/demo\//)
+describe('T-008 S3Store — in-memory client roundtrip', () => {
+  // Minimal in-memory client implementing the S3StoreClient interface.
+  type Stored = { Body: Buffer; ContentType?: string; Metadata?: Record<string, string> }
+  function makeMemoryClient() {
+    const bag: Record<string, Stored> = {}
+    return {
+      bag,
+      putObject: async (p: { Key: string; Body: Buffer; ContentType?: string; Metadata?: Record<string, string> }) => {
+        bag[p.Key] = { Body: p.Body, ContentType: p.ContentType, Metadata: p.Metadata }
+      },
+      getObject: async ({ Key }: { Key: string }) => {
+        const v = bag[Key]
+        return v ? { Body: v.Body } : null
+      },
+      listObjects: async ({ Prefix }: { Prefix: string }) => {
+        return { Keys: Object.keys(bag).filter((k) => k.startsWith(Prefix)) }
+      },
+      deleteObject: async ({ Key }: { Key: string }) => {
+        delete bag[Key]
+      },
+    }
+  }
+
+  it('put/get/list/remove roundtrip against the in-memory client', async () => {
+    const mem = makeMemoryClient()
+    const store = new S3Store(mem, 'unit-bucket')
+    const png = await (async () => {
+      const { PNG } = await import('pngjs')
+      const img = new PNG({ width: 4, height: 4 })
+      return PNG.sync.write(img)
+    })()
+    const meta = await store.put('demo', '/home', png, { width: 1280, height: 720 })
+    expect(meta.hash).toMatch(/^[0-9a-f]{64}$/)
+
+    // Put writes BOTH .png and .meta.json to the S3-like bag.
+    const keys = Object.keys(mem.bag)
+    expect(keys.some((k) => k.endsWith('home.png'))).toBe(true)
+    expect(keys.some((k) => k.endsWith('home.meta.json'))).toBe(true)
+    const pngEntry = Object.entries(mem.bag).find(([k]) => k.endsWith('home.png'))!
+    expect(pngEntry[1].ContentType).toBe('image/png')
+    expect(pngEntry[1].Metadata?.hash).toBe(meta.hash)
+
+    const got = await store.get('demo', '/home')
+    expect(got).not.toBeNull()
+    expect(Buffer.compare(got!, png)).toBe(0)
+
+    expect(await store.list('demo')).toEqual(['/home'])
+
+    expect(await store.remove('demo', '/home')).toBe(true)
+    expect(await store.get('demo', '/home')).toBeNull()
+  })
+
+  it('pathFor returns s3:// URI', () => {
+    const mem = makeMemoryClient()
+    const store = new S3Store(mem, 'unit-bucket', 'base')
+    expect(store.pathFor('demo', '/home')).toMatch(/^s3:\/\/unit-bucket\/base\/demo\//)
+  })
+
+  it('remove is idempotent on missing key (no throw)', async () => {
+    const mem = makeMemoryClient()
+    const store = new S3Store(mem, 'unit-bucket')
+    expect(await store.remove('demo', '/ghost')).toBe(true)
+  })
+})
+
+describe('T-008 asS3StoreClient — wraps AWS SDK-shaped client', () => {
+  it('routes put/get/list/delete through the SDK.send + command ctors', async () => {
+    const sent: Array<{ name: string; input: Record<string, unknown> }> = []
+    class FakeCmd {
+      constructor(public readonly name: string, public readonly input: Record<string, unknown>) {}
+    }
+    const sdk = {
+      send: async (cmd: unknown) => {
+        const c = cmd as FakeCmd
+        sent.push({ name: c.name, input: c.input })
+        if (c.name === 'Get') {
+          if (c.input.Key === 'prefix/demo/home.png') {
+            return {
+              Body: {
+                transformToByteArray: async () => new Uint8Array([1, 2, 3]),
+              } as unknown as Uint8Array,
+            }
+          }
+          return { Body: undefined }
+        }
+        if (c.name === 'List') {
+          return { Contents: [{ Key: 'prefix/demo/home.png' }, { Key: 'prefix/demo/home.meta.json' }] }
+        }
+        return {}
+      },
+    }
+    const ctors = {
+      PutObjectCommand: class extends FakeCmd {
+        constructor(i: Record<string, unknown>) {
+          super('Put', i)
+        }
+      },
+      GetObjectCommand: class extends FakeCmd {
+        constructor(i: Record<string, unknown>) {
+          super('Get', i)
+        }
+      },
+      ListObjectsV2Command: class extends FakeCmd {
+        constructor(i: Record<string, unknown>) {
+          super('List', i)
+        }
+      },
+      DeleteObjectCommand: class extends FakeCmd {
+        constructor(i: Record<string, unknown>) {
+          super('Delete', i)
+        }
+      },
+    }
+    // Imported lazily to avoid colliding with the earlier S3Store import;
+    // we only need the helper here.
+    const { asS3StoreClient } = await import('../../src/snapshot/store')
+    const client = asS3StoreClient(sdk, ctors, 'my-bucket')
+
+    await client.putObject({ Key: 'k', Body: Buffer.from('x'), ContentType: 'text/plain' })
+    const got = await client.getObject({ Key: 'prefix/demo/home.png' })
+    expect(got?.Body).toBeDefined()
+    const missing = await client.getObject({ Key: 'does-not-exist' })
+    expect(missing).toBeNull()
+    const list = await client.listObjects({ Prefix: 'prefix/demo/' })
+    expect(list.Keys.length).toBe(2)
+    await client.deleteObject({ Key: 'k' })
+
+    const names = sent.map((s) => s.name)
+    expect(names).toContain('Put')
+    expect(names).toContain('Get')
+    expect(names).toContain('List')
+    expect(names).toContain('Delete')
+    // Every command receives Bucket: my-bucket.
+    for (const s of sent) {
+      expect(s.input.Bucket).toBe('my-bucket')
+    }
+  })
+
+  it('getObject surfaces null for NoSuchKey / NotFound', async () => {
+    class FakeCmd {
+      constructor(public readonly input: Record<string, unknown>) {}
+    }
+    const err404 = Object.assign(new Error('Not found'), { name: 'NoSuchKey' })
+    const sdk = {
+      send: async () => {
+        throw err404
+      },
+    }
+    const ctors = {
+      PutObjectCommand: FakeCmd,
+      GetObjectCommand: FakeCmd,
+      ListObjectsV2Command: FakeCmd,
+      DeleteObjectCommand: FakeCmd,
+    }
+    const { asS3StoreClient } = await import('../../src/snapshot/store')
+    const client = asS3StoreClient(sdk, ctors, 'b')
+    expect(await client.getObject({ Key: 'missing' })).toBeNull()
   })
 })
 

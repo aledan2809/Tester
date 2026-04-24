@@ -498,6 +498,10 @@ program
   .option('--list', 'List recorded routes for --project', false)
   .option('--max-diff <pct>', 'Max diff % before --compare fails (default 1.0)', (v) => parseFloat(v))
   .option('--capture-if-missing', 'On --compare, seed baseline if none exists (bootstrap)', false)
+  .option('--url <url>', 'Capture PNG from a live URL via Puppeteer (alternative to --png)')
+  .option('--html <path>', 'On --compare, also emit an HTML diff report at this path')
+  .option('--mask-config <path>', 'Explicit snapshot-masks.yaml (overrides project default)')
+  .option('--project-root <path>', 'Project root used for mask-config auto-discovery')
   .option('--json', 'Emit JSON', false)
   .action(snapshotCommand)
 
