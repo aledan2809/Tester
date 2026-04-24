@@ -123,6 +123,8 @@ export type { ChangedFilesResult, BlameEntry, AttributionInfo } from './untested
 
 // T-007 retry
 export { retryStepWithBackoff } from './executor'
+export { aggregateFlakes, renderFlakeMarkdown } from './flake/reporter'
+export type { FlakeReport, FlakeStepStats, FlakeStepKey } from './flake/reporter'
 
 // T-008 visual baseline
 export { LocalFSStore, S3Store, defaultBaselineDir, sanitizeRoute } from './snapshot/store'

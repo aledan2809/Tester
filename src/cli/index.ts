@@ -48,6 +48,7 @@ import {
 import { triageCommand } from './commands/triage'
 import { affectedCommand } from './commands/affected'
 import { pipelineStatsCommand } from './commands/pipeline-stats'
+import { flakeReportCommand } from './commands/flake-report'
 import { doneCommand, undoneCommand, statusCommand } from './commands/done'
 import { inventoryCommand } from './commands/inventory'
 
@@ -306,6 +307,17 @@ program
   .option('--project <path>', 'Project root (default: cwd)')
   .option('--json', 'Emit JSON', false)
   .action(statusCommand)
+
+// ─── flake-report (T-007 §4 retry-density analytics) ─────
+program
+  .command('flake-report')
+  .description('T-007 §4 — Aggregate retry metadata across historical report JSONs; flags hard-fix candidates')
+  .option('--dir <path>', 'Reports directory (default: ./reports)')
+  .option('--since <iso>', 'Only scan reports whose startedAt >= this ISO timestamp')
+  .option('--top-n <n>', 'Number of top flaky steps to show (default 20)', (v) => parseInt(v, 10))
+  .option('--markdown', 'Emit Markdown', false)
+  .option('--json', 'Emit JSON', false)
+  .action(flakeReportCommand)
 
 // ─── pipeline-stats (T-C5 failure analytics) ─────────────
 program
