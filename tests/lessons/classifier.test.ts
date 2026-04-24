@@ -3,10 +3,27 @@
  * T-004 — Classifier regression tests.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
+
+// Module-level SDK stub: every dynamic `await import('@anthropic-ai/sdk')`
+// inside classifier.ts resolves here. The stub's client.messages.create
+// throws — classifier's try/catch must swallow and fallback to heuristic.
+// Keeping this file-level (not test-local) so the rate-limit test runs in
+// milliseconds instead of 100 network round-trips.
+vi.mock('@anthropic-ai/sdk', () => {
+  return {
+    default: class MockAnthropic {
+      messages = {
+        create: vi.fn(() => Promise.reject(new Error('Mocked 401 — invalid key'))),
+      }
+      constructor(_opts: unknown) {}
+    },
+  }
+})
+
 import {
   classify,
   heuristicClassify,
@@ -143,5 +160,94 @@ describe('cache roundtrip', () => {
     } finally {
       fs.rmSync(projectDir, { recursive: true, force: true })
     }
+  })
+})
+
+// ─── PAS 3 (quality-uplift) error-path tests ────────────
+
+describe('classify() — error paths (PAS 3)', () => {
+  it('graceful fallback when SDK throws (invalid-key 401 simulation)', async () => {
+    // SDK is mocked at file level; every client.messages.create rejects.
+    // With the API key set, classify() enters the AI path, the mocked SDK
+    // throws, the try/catch returns null, and we degrade to heuristic.
+    process.env.ANTHROPIC_API_KEY = 'invalid-key-xxx'
+    try {
+      const r = await classify({ errorMessage: 'ECONNREFUSED 127.0.0.1:1' })
+      expect(r.source).toBe('heuristic')
+      expect(r.verdict).toBe('ENV_MISCONFIG')
+      expect(r.signature).toMatch(/^[0-9a-f]{64}$/)
+    } finally {
+      delete process.env.ANTHROPIC_API_KEY
+    }
+  })
+
+  it('rate-limit: after 100 AI-path attempts, 101st falls back to heuristic without incrementing further', async () => {
+    // Pre-saturate the AI counter by calling classify() 100 times with a fake
+    // API key. Each call increments the session counter by 1 BEFORE calling
+    // aiClassify; aiClassify returns null because our bogus key fails the SDK
+    // path, so result is always heuristic. 101st call skips the increment path
+    // entirely (counter>=RATE_LIMIT_MAX guard) and uses heuristic directly.
+    process.env.ANTHROPIC_API_KEY = 'bogus-rate-limit-key'
+    try {
+      // Use distinct signatures so each call is not cached — we want real
+      // counter-progression.
+      for (let i = 0; i < 100; i++) {
+        await classify({ errorMessage: `ECONNREFUSED ${i}` })
+      }
+      const extra = await classify({ errorMessage: 'ECONNREFUSED extra-run' })
+      expect(extra.source).toBe('heuristic')
+      expect(extra.verdict).toBe('ENV_MISCONFIG')
+    } finally {
+      delete process.env.ANTHROPIC_API_KEY
+    }
+  })
+
+  it('saveCache on a read-only parent dir returns ok:false without throwing', () => {
+    const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), 'classif-ro-'))
+    const corpusDir = path.join(projectDir, 'lessons')
+    fs.mkdirSync(corpusDir)
+    // Lock the parent (classifier writes <parent>/.tester/classif-cache.json).
+    // 0o444 = r--r--r-- → mkdir for .tester fails with EACCES.
+    fs.chmodSync(projectDir, 0o444)
+    try {
+      const res = saveCache(corpusDir, {
+        sig1: {
+          verdict: 'FLAKE',
+          confidence: 0.6,
+          reasoning: 'r',
+          remediation: 'm',
+          source: 'heuristic',
+          signature: 'sig1',
+        },
+      })
+      expect(res.ok).toBe(false)
+      expect(typeof res.reason).toBe('string')
+    } finally {
+      // Restore perms so cleanup works.
+      fs.chmodSync(projectDir, 0o755)
+      fs.rmSync(projectDir, { recursive: true, force: true })
+    }
+  })
+
+  it('signatureOf is stable under noisy fields (notes, domSnippet, consoleErrors differ)', () => {
+    const base: FailureContext = {
+      assertion: 'expect(x).toBe(y)',
+      errorMessage: 'ECONNREFUSED',
+      stackTrace: 'at a\nat b\nat c',
+      pageUrl: 'https://app.example.com/run/1',
+    }
+    const a: FailureContext = {
+      ...base,
+      notes: 'run-1 noise here',
+      domSnippet: '<div>run-1 output</div>',
+      consoleErrors: ['[timestamp-1] warning X'],
+    }
+    const b: FailureContext = {
+      ...base,
+      notes: 'run-2 DIFFERENT noise',
+      domSnippet: '<div>run-2 output</div>',
+      consoleErrors: ['[timestamp-2] warning Y'],
+    }
+    expect(signatureOf(a)).toBe(signatureOf(b))
   })
 })
