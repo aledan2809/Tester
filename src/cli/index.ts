@@ -27,6 +27,7 @@ import { selfCheckCommand } from './commands/selfcheck'
 import { coverageCommand } from './commands/coverage'
 import { generateCommand } from './commands/generate'
 import { untestedCommand } from './commands/untested'
+import { snapshotCommand } from './commands/snapshot'
 
 const program = new Command()
 
@@ -244,6 +245,23 @@ program
   .option('--overwrite', 'Overwrite existing generated file', false)
   .option('--json', 'Emit JSON', false)
   .action(generateCommand)
+
+// ─── snapshot (T-008 visual baseline MVP) ────────────────
+program
+  .command('snapshot')
+  .description('T-008 — Visual regression baseline storage + pixel-diff compare (local FS; S3 adapter TBD)')
+  .option('--project <name>', 'Project name namespacing the baseline (required)')
+  .option('--route <path>', 'Route identifier (URL or path; required for baseline/compare/approve)')
+  .option('--png <path>', 'Path to a PNG file (required for baseline/compare/approve)')
+  .option('--baseline-dir <path>', 'Override baseline directory (default: <cwd>/.tester/baselines)')
+  .option('--baseline', 'Capture + store baseline for this route', false)
+  .option('--compare', 'Compare --png against the stored baseline', false)
+  .option('--approve', 'Accept the current --png as the new baseline (alias of --baseline)', false)
+  .option('--list', 'List recorded routes for --project', false)
+  .option('--max-diff <pct>', 'Max diff % before --compare fails (default 1.0)', (v) => parseFloat(v))
+  .option('--capture-if-missing', 'On --compare, seed baseline if none exists (bootstrap)', false)
+  .option('--json', 'Emit JSON', false)
+  .action(snapshotCommand)
 
 // ─── untested (T-006 session-awareness query) ────────────
 program
