@@ -22,6 +22,8 @@ export interface DetectionRule {
   message: string
   flag_required?: string
   file_glob?: string
+  /** Optional AST-based post-filter; id maps to a checker in ast-linter.ts. */
+  ast_check?: string
 }
 
 export interface AutoFix {

@@ -19,6 +19,7 @@ import { validateLessonFiles } from '../../lessons/validator'
 import { installHooks, uninstallHooks } from '../../lessons/hooks'
 import { importFromFile } from '../../lessons/importer'
 import { computePromotionPlan } from '../../lessons/promotion'
+import { refineMatches, buildAstChecksFromLessons } from '../../lessons/ast-linter'
 import type { Lesson, LessonSeverity, ScanMatch } from '../../lessons/schema'
 
 const fsExistsSync = fs.existsSync
@@ -161,7 +162,19 @@ export async function lessonsScan(target: string, opts: ScanOptions): Promise<vo
     process.stderr.write(`[lessons] ERROR: scan target does not exist: ${resolvedTarget}\n`)
     process.exit(2)
   }
-  const matches = scan(resolvedTarget, lessons)
+  let matches = scan(resolvedTarget, lessons)
+
+  // T-003 (roadmap) — AST refinement pass. Lessons with `ast_check:` on a
+  // detection rule get their matches post-filtered via ts-morph. Closes L-42
+  // regex false-positive when file contains BOTH requireAdmin + requireDomainAdmin.
+  try {
+    const astMap = buildAstChecksFromLessons(lessons as Array<{ id: string; detection: Array<{ ast_check?: string }> }>)
+    if (Object.keys(astMap).length > 0) {
+      matches = refineMatches(matches, { astChecksPerLesson: astMap })
+    }
+  } catch (e) {
+    process.stderr.write(`[lessons] AST refinement failed (non-blocking): ${(e as Error).message}\n`)
+  }
 
   if (opts.recordStats !== false && matches.length > 0) {
     const uniqueIds = Array.from(new Set(matches.map((m) => m.lesson_id)))
