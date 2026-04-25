@@ -1,0 +1,42 @@
+{
+  "98b1fcb194d0a93c4d777afe70cd65855005332ed2f18243986bb3530338e65c": {
+    "verdict": "HARNESS_BUG",
+    "confidence": 0.7,
+    "reasoning": "Harness-level defect: invalid selector, strict-mode violation, or innerText regex fragility.",
+    "remediation": "Fix test harness (validate selector, add /i flag, scope to container). Do NOT mark as product bug.",
+    "source": "heuristic",
+    "signature": "98b1fcb194d0a93c4d777afe70cd65855005332ed2f18243986bb3530338e65c"
+  },
+  "a3315145242866d5afd784c385807af8bc15728b371dd29679f98a484b647b48": {
+    "verdict": "ENV_MISCONFIG",
+    "confidence": 0.7,
+    "reasoning": "Network/DNS/env-variable error pattern detected — infrastructure/config issue.",
+    "remediation": "Check env vars, DNS resolution, service reachability before re-running.",
+    "source": "heuristic",
+    "signature": "a3315145242866d5afd784c385807af8bc15728b371dd29679f98a484b647b48"
+  },
+  "888e0bd54fdb8a9c119abc019813e40925cdd0feabf34d70c01a7360a9b86765": {
+    "verdict": "HARNESS_BUG",
+    "confidence": 0.7,
+    "reasoning": "Harness-level defect: invalid selector, strict-mode violation, or innerText regex fragility.",
+    "remediation": "Fix test harness (validate selector, add /i flag, scope to container). Do NOT mark as product bug.",
+    "source": "heuristic",
+    "signature": "888e0bd54fdb8a9c119abc019813e40925cdd0feabf34d70c01a7360a9b86765"
+  },
+  "dcdc60a005c6fd720a4f7a6b4b3876e83444a58113d4bd5c35ed7c0156e87c66": {
+    "verdict": "FLAKE",
+    "confidence": 0.6,
+    "reasoning": "Timeout / race-condition keywords suggest intermittent flake.",
+    "remediation": "Retry with longer settle (networkidle2) or per-step timeout extension.",
+    "source": "heuristic",
+    "signature": "dcdc60a005c6fd720a4f7a6b4b3876e83444a58113d4bd5c35ed7c0156e87c66"
+  },
+  "decfe11619a8745ec64d72463e6d2ee4fc4f7c518297966ffeda8b9410c8c9ed": {
+    "verdict": "PRODUCT_BUG",
+    "confidence": 0.4,
+    "reasoning": "No strong signal for harness/env/flake — assume product defect pending deeper review.",
+    "remediation": "Reproduce manually; if pattern matches a known harness issue, reclassify via lessons diagnose.",
+    "source": "heuristic",
+    "signature": "decfe11619a8745ec64d72463e6d2ee4fc4f7c518297966ffeda8b9410c8c9ed"
+  }
+}
