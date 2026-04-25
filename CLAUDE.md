@@ -52,3 +52,8 @@ NO-TOUCH CRITIC: see `AUDIT_GAPS.md` at project root for propose-confirm-apply p
 
 ## Standing work ethic (L01 — mandatory, see `knowledge/lessons-learned.md`)
 Every Tester work session MUST operate at **best-of-best** quality: close spec items fully (no "scope-tight MVP"), use `WebSearch` / `WebFetch` / Agent subagents for research, write behavior tests (not source-pattern grep), ship real integrations (not data-in/data-out shortcuts), do cross-repo work when the spec requires it, install packages when needed, report honest status ratios, ask when ambiguous. See L01 for the full rule + violation detection protocol.
+
+## User collaboration rules (L02 — mandatory, see `knowledge/lessons-learned.md`)
+1. **Communicate in Romanian + plain language + everyday analogies.** Technical references (paths, commits, commands) include a one-line translation. Conversation defaults to RO + non-tehnic; reserve dense technical prose for artifacts (commit messages, ledger).
+2. **Preserve uncommitted code; merge best parts.** When 2+ uncommitted variants of the same module exist, read each, compare against strategy, pick the best from each + adapt into one coherent version with zero overlap + zero dropped functionality. Never silently pick or discard.
+3. **Ask when something is wrong; otherwise autonomous best-of-best.** Think through rules 1+2 first. Strategy conflict / missing inputs / multiple reasonable paths / unmerged variants → ask in user-friendly terms with options. Clear path → ship best-of-best without asking. Never minimal/MVP, never silent on ambiguity.

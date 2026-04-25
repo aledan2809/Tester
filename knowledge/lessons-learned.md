@@ -30,3 +30,67 @@
 **Scope of applicability.** All Tester work — waves, follow-ups, bug fixes, feature additions. Also applies when this principle propagates to sibling projects where Claude contributes.
 
 ---
+
+## L02 — 2026-04-25 — User collaboration rules (STANDING RULE)
+
+**Symptom.** User flagged that ongoing dialogue was too technical to follow comfortably + that Claude shipped surface-level work in places where deeper synthesis was warranted + that approval gating was uneven (some asks went to user that should have been thought through, some decisions went silent that should have surfaced).
+
+**Root cause.** Claude defaulted to engineer-to-engineer prose dense with file paths, exit codes, and acronyms. Claude treated "uncommitted variants" as orphan WIP rather than possibly-valuable parallel attempts. Approval discipline was inconsistent — sometimes overcautious, sometimes over-autonomous.
+
+**Fix.** User issued three explicit rules (2026-04-25). Permanent project rules from this point forward.
+
+### Rule 1 — Romanian, plain language, analogies
+
+Default communication is **Romanian** + **non-technical**, with everyday-life analogies. Reserve the technical vocabulary (file paths, commit hashes, function signatures) for places where the user needs to act on them; otherwise rephrase in human terms.
+
+Examples of the translation:
+  - "spawnSync git diff --stat HEAD~1..HEAD" → "verific cât de mult s-a schimbat codul față de ultimul commit, ca atunci când compari frigiderul de azi cu cel de săptămâna trecută"
+  - "test pass_rate=100% AND coverage_ratio>=0.9" → "toate testele trec ȘI ai acoperit cel puțin 9 din 10 scenarii planificate — ca o listă de verificare la mutarea casei: ai bifat tot, dar și să fi gândit la ce trebuia bifat"
+  - "behavior test replaces source-pattern grep" → "verific că logica face ce trebuie când îi dai date diferite (test real), nu doar că e scrisă cu cuvintele potrivite (grep peste cod)"
+
+When code references must appear (file:line, commit, command), include them but accompanied by a one-line plain explanation. Never write a wall of acronyms without a translation layer.
+
+### Rule 2 — Preserve uncommitted code; merge best parts
+
+When the working directory has 2+ uncommitted variants of the same module / feature / file, do **not** silently pick one or trash the others. Instead:
+
+  1. Read each variant fully + identify what it does that the others don't.
+  2. Compare each against the project strategy (CLAUDE.md, knowledge/, current task).
+  3. Pick the best part from each variant.
+  4. Merge into a single coherent version that has zero overlap and zero dropped functionality.
+
+Analogy: it's like inheriting two recipes for the same dish from grandma. You don't pick one and throw the other away. You taste both, figure out what each does well (one has the better dough, the other has the better filling), then write a final recipe that uses each piece where it shines. The user expects you to ask "do you remember where Grandma got this version?" before discarding any version.
+
+When merging is impossible (variants conflict at a fundamental design level), surface that as a Rule 3 ask — never silently choose.
+
+### Rule 3 — Ask when something is wrong; otherwise best-of-best autonomous
+
+Approval-gating decision flow before any action:
+  1. Think through Rules 1 + 2 first.
+  2. If something is wrong / ambiguous / risky → ask the user.
+  3. If the path is clear, do the work in best-of-best mode (per L01) — never minimal/MVP.
+
+What "wrong" means here:
+  - Strategy conflict (project says X, current task implies not-X)
+  - Missing inputs that can't be inferred (credentials, target URL, scope boundary)
+  - Two reasonable design paths with materially different downstream implications
+  - Discovered uncommitted variants that don't merge cleanly via Rule 2
+
+When asking, frame the choice in user-friendly terms (Rule 1) + present concrete options. Don't dump the engineering choice on the user without translation.
+
+What "clear path" means: the strategy is consistent, inputs are present, the L01 best-of-best ratchet identifies a single right answer. In that case, ship without asking — silence is consent for the obvious move.
+
+**Prevention (MANDATORY for every Tester work session, every future wave):**
+
+1. **Default communication = RO + analogy.** Switch back to dense technical prose only when the user explicitly asks for "raport tehnic" or when the channel is purely artifact-oriented (commit messages, ledger entries, test code). Conversation = RO + analogy.
+2. **Working-directory hygiene.** Before any commit, run `git status` + `git diff` to inventory uncommitted variants. If multiple versions of the same logical artifact exist, apply Rule 2 (merge best parts) instead of `git checkout -- file.ts` or `rm`.
+3. **Approval framing template.** When asking, use:
+     "Am descoperit X. Pot face fie A (avantaj: ...; risc: ...) fie B (...). Tu ce preferi?"
+   Never: "Should I proceed with X?" without options + analogy.
+4. **Status reporting in RO.** End-of-session summaries default to RO + analogy. Tables / metrics OK to keep in numerical form (testează N=539, scor=78/100).
+
+**Violation detection.** Future-session Claude should self-audit before sending any reply: (a) is the message readable by a non-engineer? (b) did I inventory uncommitted code before deciding what to keep? (c) did I either ask explicitly OR have a clear best-of-best answer? If any answer is "no", revise before sending.
+
+**Scope of applicability.** All Tester work + the cross-repo work where Tester is the lead caller (website-guru when running for Tester's audit needs, Master mesh when running for Tester roadmap items). When acting in another project's name as the primary actor, those projects' communication norms supersede.
+
+---
