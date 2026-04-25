@@ -4,6 +4,26 @@
 
 ---
 
+## 2026-04-25 — Created `AUDIT_GAPS.md` ledger (Master deep-audit Phase 4 follow-up)
+
+**Context**: Master Optimise auditor flagged Tester with `NO_TOUCH_NO_LEDGER` (CRITICAL) — NO-TOUCH CRITIC project missing the required `AUDIT_GAPS.md` per CLAUDE.md §2d. Created ledger as new file (zero touches on Tester source code).
+
+**Protocol step**: Direct mode, propose-confirm-apply with user confirmation in Master deep-audit session.
+
+### Files created
+- `Tester/AUDIT_GAPS.md` (new file) — header, instrucțiune permanentă session start, OPEN gaps, eliminated gaps history, update log
+
+### OPEN gaps recorded
+- **G-001 [P1] [Triage Pending]** — triage rapoartelor recente din `Reports/` (CODE_SURVEY, LESSONS_INVENTORY, PIPELINE_FAILURE_SIGNATURES, AUDIT_E2E, STRATEGY_VS_IMPLEMENTATION) în G-XXX entries cu prioritate. Deferat la sesiune Tester-only dedicată ca să respecte regula NO-TOUCH "un proiect per sesiune".
+
+### Tester source code touched
+**None.** Singura modificare e crearea ledger-ului meta + această entry de log.
+
+### Smoke check
+N/A — meta-document, no code/runtime change.
+
+---
+
 ## 2026-04-25 — Final cleanup: stale checkboxes + 3 INTEGRATION-REQUIRED items closed
 
 Closes everything that remained open in Tester `TODO_PERSISTENT.md` after the 2026-04-24 session, per user directive: "nu vreau sa fie amanate, ci rezolvate acum toate care au ramas nefinalizate din proiectul Tester exclusiv".
@@ -770,5 +790,41 @@ LOW. All changes ADDITIVE or defensive. No existing CLI contract changed. Pre-ex
 - Validator (l.71): removed `!cfg.login` clause
 - Credentials block (l.135-142): gated on `needsAuth = !!cfg.login`
 - Login flow (l.157-205): wrapped in `if (cfg.login) { … }`
+
+---
+
+## 2026-04-25 — G-CU-001 Computer-Use fallback for journey-audit (IM Faza B #5)
+
+**Context**: IM (Improve Master) Faza B item #5 — wire Master's Computer Use helper (Faza A P2.10) into Tester's journey-audit so Playwright/CSS selector failures (dynamic modal, lazy-loaded login, occluded elements) can fall back to Claude Vision instead of crashing the whole run.
+
+**Protocol step**: Direct mode, propose-confirm-apply with user confirmation in Master IM Faza B session. Hybrid approach: bulk apply on NEW files (additive, env-flag-gated → byte-identical pre-existing behavior); explicit propose-confirm on `sidebar-walk.spec.ts` EDIT (live spec consumed by all journey-audit consumers).
+
+### Files added (NEW)
+- `journey-audit/lib/ai-computer.ts` (~300 lines TS) — Anthropic Computer Use tool-loop driver, vendored from `Master/mesh/engine/ai-computer.js`. Cross-repo sync TODO when Master ships upstream changes.
+- `journey-audit/lib/computer-use-fallback.ts` (~150 lines TS) — Playwright wrapper. Single export `tryComputerUseStep(page, intent, options)`. Maps normalized actions to `page.mouse` / `page.keyboard`.
+- `tests/journey-audit-computer-use-fallback.test.ts` (~250 lines, 11 vitest cases) — offline smoke. Stubs `fetch` + Page-like object. Covers: pure helpers, graceful auth failure, end_turn termination, screenshot-intercept + click-loop dispatch, Playwright wrapper integration.
+
+### Files modified (EDIT)
+- `journey-audit/tests/sidebar-walk.spec.ts` (+18/-3 lines) — login submit click (line 94-97) wrapped in try/catch; on Promise.all rejection AND `TESTER_COMPUTER_USE_FALLBACK=1`, dynamic-import the fallback wrapper and invoke `tryComputerUseStep(page, "Click the login Submit / Sign In button", { maxTurns: 6 })`. Throws original `loginErr` if fallback also fails. Default flag off → byte-identical existing behavior.
+
+### Documentation updates
+- `AUDIT_GAPS.md` — G-CU-001 entry added + marked Eliminated. Update Log row appended.
+- `Reports/DIRECT-CHANGES-2026-04.md` (this file) — current entry.
+- `CLAUDE.md` — Journey Audit section extended with Computer-Use fallback note + env flag.
+
+### Smoke status
+- 11/11 vitest pass offline (`npx vitest run tests/journey-audit-computer-use-fallback.test.ts`)
+- TS clean (`npx tsc --noEmit` produces no Tester-side errors on the new/modified files)
+
+### Live validation
+- **DEFERRED** — requires Anthropic credit + a Sonnet 4.5+ model + a real journey-audit run on an app with flaky login UI. The flag is off by default in production; turning it on costs ~$0.05-0.15 per fallback attempt (maxTurns: 6).
+
+### Commit
+- pending (single commit per protocol once all 7 files staged + scope-verify green)
+
+### Diff summary
+- Files: 3 new + 1 modified = 4 (plus 3 docs files in same commit)
+- Lines added: ~700 (helper + wrapper + smoke + spec edit + docs)
+- Risk: 🟢 LOW — flag-gated, additive, fallback throws original error on failure
 
 ---

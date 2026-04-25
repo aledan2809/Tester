@@ -26,6 +26,22 @@ npm start          # HTTP server
 - Each consumer project owns its `.journey-audit.json` at repo root (decentralized source of truth)
 - Backed by Puppeteer (same engine as the core tester — no Playwright runtime dep needed)
 
+### Computer-Use fallback (G-CU-001, 2026-04-25, opt-in)
+- When Playwright/CSS selectors fail (dynamic modal, lazy-loaded login,
+  occluded element), the spec can fall back to Claude Computer Use
+  (Anthropic Sonnet 4.5+ vision-loop, beta `computer-use-2025-01-24`).
+- Files: `journey-audit/lib/ai-computer.ts` (vendored driver) +
+  `journey-audit/lib/computer-use-fallback.ts` (Playwright wrapper).
+- Env flag: `TESTER_COMPUTER_USE_FALLBACK=1` (default off → byte-identical
+  pre-existing behavior on all consumers).
+- Cost: ~$0.05-0.15 per fallback attempt (Sonnet vision tokens, maxTurns: 6 cap).
+- Currently wired only on the login submit click in
+  `journey-audit/tests/sidebar-walk.spec.ts`. Other failure points can
+  adopt the same pattern incrementally (try/catch + dynamic-import +
+  `tryComputerUseStep(page, intent)`).
+- See AUDIT_GAPS.md G-CU-001 for full risk profile + live-validation
+  status (DEFERRED — needs Anthropic credit).
+
 ## AI Architecture
 - `src/scenarios/generator.ts` — Claude generates test scenarios from page elements
 - `src/core/element-finder.ts` — Claude Vision locates UI elements from screenshots

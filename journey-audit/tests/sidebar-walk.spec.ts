@@ -91,10 +91,28 @@ test(`[${CFG.name}] user journey — every nav link walked + screenshots`, async
   await page.goto(CFG.login.path);
   await page.fill(CFG.login.emailSelector, EMAIL);
   await page.fill(CFG.login.passwordSelector, PASSWORD);
-  await Promise.all([
-    page.waitForURL(new RegExp(CFG.login.successUrlPattern), { timeout: 15000 }),
-    page.click(CFG.login.submitSelector),
-  ]);
+  try {
+    await Promise.all([
+      page.waitForURL(new RegExp(CFG.login.successUrlPattern), { timeout: 15000 }),
+      page.click(CFG.login.submitSelector),
+    ]);
+  } catch (loginErr) {
+    // CSS selector or wait failed. If Computer-Use fallback is enabled,
+    // hand the click to Claude Vision before giving up.
+    if (process.env.TESTER_COMPUTER_USE_FALLBACK === "1") {
+      const msg = loginErr instanceof Error ? loginErr.message.slice(0, 100) : "unknown";
+      console.log(`[journey-audit] login click failed (${msg}); trying Computer-Use fallback...`);
+      const { tryComputerUseStep } = await import("../lib/computer-use-fallback");
+      const fb = await tryComputerUseStep(page, "Click the login Submit / Sign In button to authenticate", { maxTurns: 6 });
+      if (!fb.success) {
+        console.log(`[journey-audit] Computer-Use fallback failed: ${fb.error}`);
+        throw loginErr;
+      }
+      await page.waitForURL(new RegExp(CFG.login.successUrlPattern), { timeout: 15000 });
+    } else {
+      throw loginErr;
+    }
+  }
 
   const bar = "═".repeat(63);
   console.log(`\n${bar}`);
