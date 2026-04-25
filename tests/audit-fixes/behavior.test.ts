@@ -370,43 +370,234 @@ describe.skipIf(!WG_PRESENT)('F-014 TesterClient result dedup — behavior', () 
   })
 })
 
-// ─── F-004/F-007/F-008 — INTEGRATION-REQUIRED (honest L01 gap) ────────────
-describe('F-004/F-007/F-008 — integration-required gaps', () => {
-  it.skip(
-    'F-004 browser-agent --no-sandbox arg assembly',
-    () => {
-      // REFACTOR-NEEDED: the --no-sandbox conditional lives inside
-      // BrowserAgent.launch() closure in website-guru/src/lib/browser-agent/
-      // agent.ts around line 60-90. To unit-test cleanly, extract the
-      // arg-assembly into a pure `computeBrowserArgs(envFlags)` fn and
-      // export it. Source-pattern guard exists in regression-patterns.test.ts
-      // (F-004 row). Full behavior test unblocks after the extraction commit.
-      expect(true).toBe(true)
-    },
-  )
-  it.skip(
-    'F-007 rate-limit route handler',
-    () => {
-      // INTEGRATION-REQUIRED: rate-limit state is module-scoped inside the
-      // Next.js route handler at src/app/api/admin/fix-requests/[id]/execute/
-      // route.ts. Testing requires either (a) booting a real Next.js dev
-      // server (too heavy for unit scope), or (b) extracting the rate-limit
-      // map + check fn into a pure util and testing it there. Source-pattern
-      // guard exists (F-007 row). Unblocks after the extraction commit.
-      expect(true).toBe(true)
-    },
-  )
-  it.skip(
-    'F-008 dispatcher per-task expiry',
-    () => {
-      // INTEGRATION-REQUIRED: dispatcher.ts exports a class that imports
-      // Prisma + browser-agent + handlers, so instantiating it for a unit
-      // test triggers a heavy module graph. Two clean paths: (a) extract the
-      // per-task-loop body into a pure fn that takes (tasks, credProvider)
-      // and test that; or (b) run website-guru in test mode (docker compose
-      // + seed DB + hit the dispatcher directly). Source-pattern guard
-      // exists (F-008 row).
-      expect(true).toBe(true)
-    },
-  )
+// ─── F-004/F-007/F-008 — REAL behavior tests post-refactor (2026-04-25) ────
+// Each fix's testable atom was extracted into a sibling pure module so
+// behavior tests cover the actual logic (not source-pattern grep).
+//   - F-004 → website-guru/src/lib/browser-agent/browser-args.ts
+//   - F-007 → website-guru/src/lib/rate-limit/fix-request-limiter.ts
+//   - F-008 → website-guru/src/lib/fix-engine/cred-expiry.ts
+
+describe.skipIf(!WG_PRESENT)('F-004 computeBrowserArgs — behavior', () => {
+  it('returns sandbox-enabled (no --no-sandbox) on bare VPS / local env', async () => {
+    const mod = (await import(
+      /* @vite-ignore */ path.join(WG_ROOT, 'src/lib/browser-agent/browser-args.ts')
+    )) as { computeBrowserArgs: (i?: { env?: Record<string, string> }) => { args: string[]; useSandbox: boolean; reason: string } }
+    const r = mod.computeBrowserArgs({ env: {} })
+    expect(r.useSandbox).toBe(true)
+    expect(r.reason).toBe('default-vps-or-local')
+    expect(r.args).not.toContain('--no-sandbox')
+    expect(r.args).not.toContain('--disable-setuid-sandbox')
+    expect(r.args).toContain('--disable-dev-shm-usage')
+    expect(r.args.some((a) => a.startsWith('--window-size='))).toBe(true)
+  })
+
+  it('forces --no-sandbox on serverless markers', async () => {
+    const mod = (await import(
+      /* @vite-ignore */ path.join(WG_ROOT, 'src/lib/browser-agent/browser-args.ts')
+    )) as { computeBrowserArgs: (i?: { env?: Record<string, string> }) => { args: string[]; useSandbox: boolean; reason: string } }
+    for (const k of ['VERCEL', 'NETLIFY', 'LAMBDA_TASK_ROOT', 'AWS_LAMBDA_FUNCTION_NAME']) {
+      const r = mod.computeBrowserArgs({ env: { [k]: '1' } })
+      expect(r.useSandbox).toBe(false)
+      expect(r.reason).toBe('serverless-marker')
+      expect(r.args).toContain('--no-sandbox')
+      expect(r.args).toContain('--disable-setuid-sandbox')
+    }
+  })
+
+  it('honors explicit BROWSER_USE_SANDBOX=true override even on serverless', async () => {
+    const mod = (await import(
+      /* @vite-ignore */ path.join(WG_ROOT, 'src/lib/browser-agent/browser-args.ts')
+    )) as { computeBrowserArgs: (i?: { env?: Record<string, string> }) => { args: string[]; useSandbox: boolean; reason: string } }
+    const r = mod.computeBrowserArgs({ env: { VERCEL: '1', BROWSER_USE_SANDBOX: 'true' } })
+    expect(r.useSandbox).toBe(true)
+    expect(r.reason).toBe('env-force-true')
+    expect(r.args).not.toContain('--no-sandbox')
+  })
+
+  it('honors explicit BROWSER_USE_SANDBOX=false override on bare env', async () => {
+    const mod = (await import(
+      /* @vite-ignore */ path.join(WG_ROOT, 'src/lib/browser-agent/browser-args.ts')
+    )) as { computeBrowserArgs: (i?: { env?: Record<string, string> }) => { args: string[]; useSandbox: boolean; reason: string } }
+    const r = mod.computeBrowserArgs({ env: { BROWSER_USE_SANDBOX: 'false' } })
+    expect(r.useSandbox).toBe(false)
+    expect(r.reason).toBe('env-force-false')
+    expect(r.args).toContain('--no-sandbox')
+  })
+
+  it('respects viewport size in --window-size argument', async () => {
+    const mod = (await import(
+      /* @vite-ignore */ path.join(WG_ROOT, 'src/lib/browser-agent/browser-args.ts')
+    )) as { computeBrowserArgs: (i?: { env?: Record<string, string>; viewportWidth?: number; viewportHeight?: number }) => { args: string[]; useSandbox: boolean; reason: string } }
+    const r = mod.computeBrowserArgs({
+      env: {},
+      viewportWidth: 1920,
+      viewportHeight: 1080,
+    })
+    expect(r.args).toContain('--window-size=1920,1080')
+  })
+})
+
+describe.skipIf(!WG_PRESENT)('F-007 fix-request-limiter — behavior', () => {
+  it('first call passes; second call within cooldown returns 429 with Retry-After', async () => {
+    const mod = (await import(
+      /* @vite-ignore */ path.join(WG_ROOT, 'src/lib/rate-limit/fix-request-limiter.ts')
+    )) as typeof import('../../../website-guru/src/lib/rate-limit/fix-request-limiter')
+    let t = 1_000_000
+    const limiter = mod.createFixRequestLimiter({ now: () => t })
+    const first = limiter.check('fix-1')
+    expect(first.ok).toBe(true)
+    limiter.begin('fix-1')
+
+    // Same fix-id within cooldown
+    t += 5_000
+    const second = limiter.check('fix-1')
+    expect(second.ok).toBe(false)
+    if (!second.ok) {
+      expect(second.status).toBe(429)
+      expect(second.retryAfterSec).toBeGreaterThan(0)
+      expect(second.message).toMatch(/rate-limited/i)
+      expect(second.reason).toBe('cooldown')
+    }
+
+    // After cooldown lapses, allowed again
+    t += 60_000
+    expect(limiter.check('fix-1').ok).toBe(true)
+  })
+
+  it('returns 429/concurrent when global limit hit', async () => {
+    const mod = (await import(
+      /* @vite-ignore */ path.join(WG_ROOT, 'src/lib/rate-limit/fix-request-limiter.ts')
+    )) as typeof import('../../../website-guru/src/lib/rate-limit/fix-request-limiter')
+    const limiter = mod.createFixRequestLimiter({ globalConcurrentLimit: 2 })
+    expect(limiter.check('a').ok).toBe(true)
+    limiter.begin('a')
+    expect(limiter.check('b').ok).toBe(true)
+    limiter.begin('b')
+    const r = limiter.check('c')
+    expect(r.ok).toBe(false)
+    if (!r.ok) {
+      expect(r.reason).toBe('concurrent')
+      expect(r.message).toMatch(/concurrent/i)
+    }
+    limiter.end()
+    expect(limiter.check('c').ok).toBe(true)
+  })
+
+  it('prunes the per-fix map after pruneEveryN checks (size stays bounded)', async () => {
+    const mod = (await import(
+      /* @vite-ignore */ path.join(WG_ROOT, 'src/lib/rate-limit/fix-request-limiter.ts')
+    )) as typeof import('../../../website-guru/src/lib/rate-limit/fix-request-limiter')
+    let t = 0
+    const limiter = mod.createFixRequestLimiter({
+      now: () => t,
+      pruneEveryN: 5,
+      perFixCooldownMs: 60_000,
+      perFixMapMax: 3,
+    })
+    // Add 3 entries in fast succession.
+    limiter.check('a'); limiter.begin('a')
+    limiter.check('b'); limiter.begin('b')
+    limiter.check('c'); limiter.begin('c')
+    expect(limiter.size()).toBe(3)
+    // Advance past 2× cooldown so they're stale, then run pruneEveryN checks
+    // to trigger the opportunistic prune.
+    t += 200_000
+    for (let i = 0; i < 6; i++) limiter.check(`probe-${i}`)
+    // After prune, all original stale entries are gone (only fresh probes remain,
+    // and the map is capped at perFixMapMax=3).
+    expect(limiter.size()).toBeLessThanOrEqual(3)
+  })
+
+  it('end() decrements concurrent slot but never below 0', async () => {
+    const mod = (await import(
+      /* @vite-ignore */ path.join(WG_ROOT, 'src/lib/rate-limit/fix-request-limiter.ts')
+    )) as typeof import('../../../website-guru/src/lib/rate-limit/fix-request-limiter')
+    const limiter = mod.createFixRequestLimiter({ globalConcurrentLimit: 2 })
+    limiter.end()
+    limiter.end() // multiple end() calls without begin() are safe
+    expect(limiter.check('x').ok).toBe(true)
+  })
+})
+
+describe.skipIf(!WG_PRESENT)('F-008 cred-expiry — behavior', () => {
+  it('returns ok:true when cred has no expiresAt', async () => {
+    const mod = (await import(
+      /* @vite-ignore */ path.join(WG_ROOT, 'src/lib/fix-engine/cred-expiry.ts')
+    )) as typeof import('../../../website-guru/src/lib/fix-engine/cred-expiry')
+    const r = mod.checkCredentialExpiry({
+      cred: {},
+      completed: 0,
+      totalTasks: 5,
+      skipped: 0,
+    })
+    expect(r.ok).toBe(true)
+  })
+
+  it('returns ok:true when cred is still valid', async () => {
+    const mod = (await import(
+      /* @vite-ignore */ path.join(WG_ROOT, 'src/lib/fix-engine/cred-expiry.ts')
+    )) as typeof import('../../../website-guru/src/lib/fix-engine/cred-expiry')
+    const future = new Date('2999-12-31')
+    const r = mod.checkCredentialExpiry({
+      cred: { expiresAt: future },
+      completed: 1,
+      totalTasks: 3,
+      skipped: 0,
+      now: () => new Date('2026-04-25'),
+    })
+    expect(r.ok).toBe(true)
+  })
+
+  it('emits "Completed N/M" reason + audit shape on expiry mid-batch', async () => {
+    const mod = (await import(
+      /* @vite-ignore */ path.join(WG_ROOT, 'src/lib/fix-engine/cred-expiry.ts')
+    )) as typeof import('../../../website-guru/src/lib/fix-engine/cred-expiry')
+    const expired = new Date('2026-04-20T00:00:00Z')
+    const r = mod.checkCredentialExpiry({
+      cred: { expiresAt: expired },
+      completed: 1,
+      totalTasks: 3,
+      skipped: 0,
+      failed: 0,
+      now: () => new Date('2026-04-25T12:00:00Z'),
+    })
+    expect(r.ok).toBe(false)
+    expect(r.reason).toMatch(/Completed 1\/3 tasks/)
+    expect(r.reason).toMatch(/2 remaining/)
+    expect(r.reason).toMatch(/Re-submit with fresh credentials/)
+    expect(r.audit?.completed).toBe(1)
+    expect(r.audit?.remaining).toBe(2)
+    expect(r.audit?.expiresAt).toBe('2026-04-20T00:00:00.000Z')
+  })
+
+  it('handles 0 completed (cred expired before batch even started)', async () => {
+    const mod = (await import(
+      /* @vite-ignore */ path.join(WG_ROOT, 'src/lib/fix-engine/cred-expiry.ts')
+    )) as typeof import('../../../website-guru/src/lib/fix-engine/cred-expiry')
+    const r = mod.checkCredentialExpiry({
+      cred: { expiresAt: new Date('2020-01-01') },
+      completed: 0,
+      totalTasks: 5,
+      skipped: 0,
+      now: () => new Date('2026-04-25'),
+    })
+    expect(r.ok).toBe(false)
+    expect(r.reason).toMatch(/Completed 0\/5 tasks/)
+  })
+
+  it('counts skipped tasks against the remaining tally', async () => {
+    const mod = (await import(
+      /* @vite-ignore */ path.join(WG_ROOT, 'src/lib/fix-engine/cred-expiry.ts')
+    )) as typeof import('../../../website-guru/src/lib/fix-engine/cred-expiry')
+    const r = mod.checkCredentialExpiry({
+      cred: { expiresAt: new Date('2020-01-01') },
+      completed: 1,
+      totalTasks: 4,
+      skipped: 2, // 1 done + 2 skipped → 1 remaining
+      now: () => new Date('2026-04-25'),
+    })
+    expect(r.ok).toBe(false)
+    expect(r.audit?.remaining).toBe(1)
+    expect(r.reason).toMatch(/1 remaining/)
+  })
 })

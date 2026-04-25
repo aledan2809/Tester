@@ -1,5 +1,24 @@
 # Project Status - Tester
 
+Last Updated: 2026-04-25 — **Tester TODO_PERSISTENT zero open + zero `it.skip` in audit-fix tests.** Cross-repo refactor in website-guru extracted F-004 / F-007 / F-008 atoms into sibling pure modules; Tester behavior tests now drive them with 14 real assertions (was 3 stubs). **539/539 tests pass, ZERO skipped** (was 528 with 3 skipped at end of 2026-04-24). Roadmap: 27/27 main items + 60/60 PAS 2 audit-fix items real-behavior-verified.
+
+## 2026-04-25 cleanup session
+
+Per user directive ("nu vreau sa fie amanate, ci rezolvate acum toate care au ramas nefinalizate din proiectul Tester exclusiv"):
+  - 6 stale Phase 0 checkboxes in `TODO_PERSISTENT.md` flipped `[x]` with applied-via-commit refs.
+  - 3 INTEGRATION-REQUIRED items closed via website-guru refactor (commit `f4728ba`):
+    - F-004 → `src/lib/browser-agent/browser-args.ts` (computeBrowserArgs)
+    - F-007 → `src/lib/rate-limit/fix-request-limiter.ts` (createFixRequestLimiter + defaultFixRequestLimiter)
+    - F-008 → `src/lib/fix-engine/cred-expiry.ts` (checkCredentialExpiry)
+  - Tester behavior tests in `tests/audit-fixes/behavior.test.ts` replaced 3 `it.skip` stubs with 14 real cross-repo behavior tests.
+  - Source-pattern tests in `regression-patterns.test.ts` retargeted at the new sibling files.
+
+All zero-regression. Production behavior in website-guru unchanged (1:1 extraction with delegating imports).
+
+---
+
+## Earlier (2026-04-24 latest-5, preserved)
+
 Last Updated: 2026-04-24 (latest-5) — **L01 rule live + every deferred item closed spec-complete + Waves 1-3 all done.** Roadmap 27/27 items shipped (or genuinely out-of-scope). **525 passed + 3 skipped = 528/528 tests** across 55 files (from 236/27 at session start; +292 tests / +28 files in this session alone). Zero regressions.
 
 ## L01 rule enforced (user directive 2026-04-24)

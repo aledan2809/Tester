@@ -92,15 +92,25 @@ describe.skipIf(!WG_PRESENT)('audit-fixes — website-guru (F-003..F-008, F-014)
     expect(src).toMatch(/F-003/)
   })
 
-  it('F-004 conditional --no-sandbox — VERCEL/NETLIFY/LAMBDA env markers + no unconditional push', () => {
-    const src = readSource('src/lib/browser-agent/agent.ts', WG_ROOT)
-    expect(src).toMatch(/F-004/)
-    // Gate on serverless markers
-    expect(src).toMatch(/process\.env\.VERCEL/)
-    expect(src).toMatch(/process\.env\.NETLIFY/)
+  it('F-004 conditional --no-sandbox — extracted to browser-args.ts (post-2026-04-25)', () => {
+    // After the F-004 hardening commit, the conditional moved to a sibling
+    // pure module so behavior tests can drive it. agent.ts now imports +
+    // delegates; browser-args.ts owns the env detection.
+    const agent = readSource('src/lib/browser-agent/agent.ts', WG_ROOT)
+    expect(agent).toMatch(/F-004/)
+    expect(agent).toMatch(/computeBrowserArgs/)
     // Unconditional args.push('--no-sandbox') must not appear as top-level default
-    const hasUnconditionalSandbox = /^\s*args\.push\(['"]--no-sandbox['"]\)/m.test(src)
+    const hasUnconditionalSandbox = /^\s*args\.push\(['"]--no-sandbox['"]\)/m.test(agent)
     expect(hasUnconditionalSandbox).toBe(false)
+
+    const args = readSource('src/lib/browser-agent/browser-args.ts', WG_ROOT)
+    expect(args).toMatch(/'VERCEL'/)
+    expect(args).toMatch(/'NETLIFY'/)
+    expect(args).toMatch(/'LAMBDA_TASK_ROOT'/)
+    expect(args).toMatch(/'AWS_LAMBDA_FUNCTION_NAME'/)
+    expect(args).toMatch(/SERVERLESS_ENV_KEYS/)
+    expect(args).toMatch(/--no-sandbox/)
+    expect(args).toMatch(/BROWSER_USE_SANDBOX/)
   })
 
   it('F-005 crypto v2 — per-field v2: prefix + IV unique per field', () => {
@@ -111,25 +121,37 @@ describe.skipIf(!WG_PRESENT)('audit-fixes — website-guru (F-003..F-008, F-014)
     expect(src).toMatch(/legacy/i)
   })
 
-  it('F-007 rate limit — bounded state (prune) + RATE_LIMITED response', () => {
-    const src = readSource(
+  it('F-007 rate limit — extracted to fix-request-limiter.ts (post-2026-04-25)', () => {
+    const route = readSource(
       'src/app/api/admin/fix-requests/[id]/execute/route.ts',
       WG_ROOT,
     )
-    expect(src).toMatch(/F-007/)
-    expect(src).toMatch(/RATE_LIMITED/)
-    // Map-size pruning must be present (rate-limit map bounded fix 4e1d671)
-    const hasPrune = /(\.size\s*>|map\.size\s*>|prune|\bdelete\b)/.test(src)
-    expect(hasPrune).toBe(true)
+    expect(route).toMatch(/F-007/)
+    expect(route).toMatch(/RATE_LIMITED/)
+    expect(route).toMatch(/defaultFixRequestLimiter/)
+
+    const limiter = readSource('src/lib/rate-limit/fix-request-limiter.ts', WG_ROOT)
+    expect(limiter).toMatch(/F-007/)
+    expect(limiter).toMatch(/createFixRequestLimiter/)
+    expect(limiter).toMatch(/perFixCooldownMs/)
+    expect(limiter).toMatch(/globalConcurrentLimit/)
+    // Bounded map: prune + max cap
+    expect(limiter).toMatch(/perFixMapMax/)
+    expect(limiter).toMatch(/prune/)
   })
 
-  it('F-008 per-task credential expiry — mid-batch expiry check throws with "Completed N/M"', () => {
-    const src = readSource('src/lib/fix-engine/dispatcher.ts', WG_ROOT)
-    expect(src).toMatch(/F-008/)
-    // Canonical error signature
-    expect(src).toMatch(/Completed \$\{completed\}\/\$\{/)
-    // expiresAt check inside task loop (not only at start)
-    expect(src).toMatch(/cred\.expiresAt/)
+  it('F-008 per-task credential expiry — extracted to cred-expiry.ts (post-2026-04-25)', () => {
+    const dispatcher = readSource('src/lib/fix-engine/dispatcher.ts', WG_ROOT)
+    expect(dispatcher).toMatch(/F-008/)
+    expect(dispatcher).toMatch(/checkCredentialExpiry/)
+    expect(dispatcher).toMatch(/credentials_expired_mid_batch/)
+
+    const expiry = readSource('src/lib/fix-engine/cred-expiry.ts', WG_ROOT)
+    expect(expiry).toMatch(/F-008/)
+    // Canonical error signature on the new module
+    expect(expiry).toMatch(/Completed \$\{input\.completed\}\/\$\{input\.totalTasks\}/)
+    expect(expiry).toMatch(/expiresAt/)
+    expect(expiry).toMatch(/Re-submit with fresh credentials/)
   })
 
   it('F-014 dedup — cache keyed URL + tier; bypassCache flag short-circuits', () => {
