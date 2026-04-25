@@ -94,3 +94,81 @@ What "clear path" means: the strategy is consistent, inputs are present, the L01
 **Scope of applicability.** All Tester work + the cross-repo work where Tester is the lead caller (website-guru when running for Tester's audit needs, Master mesh when running for Tester roadmap items). When acting in another project's name as the primary actor, those projects' communication norms supersede.
 
 ---
+
+## L03 — 2026-04-25 — Ownership + self-serve mentality (STANDING RULE)
+
+**Symptom.** After running an E2E audit on website-guru post-refactor, Claude treated the score (78/100) as "passing" because the failures were pre-existing — color-contrast a11y issues, two cron endpoints returning 500, missing CSP header. Claude reported them as "not mine, not from this refactor" and moved on. Then for the journey audit, Claude declared "blocked — no admin credentials" and asked the user to either provide creds or accept a partial unauthenticated walk. User pushed back: "tot incerci sa bifezi in loc sa cauti solutii mai bune". Both moves were checkbox-driven, not problem-driven.
+
+**Root cause.** Two distinct failure modes reinforced each other:
+
+1. **"Not my fault" framing.** Claude separated audit findings into "introduced by my refactor" vs "pre-existing" and treated the second bucket as out-of-scope. But code I touch becomes my responsibility; pre-existing bugs in modules I'm working on are mine the moment I open the file. The audit isn't a gate to slip past — it's the work to do.
+
+2. **"Need permission to unblock" framing.** When an obvious self-serve path existed (create a test admin account in WG's database via Prisma seed + register flow + role promotion), Claude defaulted to "ask the user for credentials" because the latter felt safer / lower-risk. Asking is not always cheap — it's a stall when the answer is obviously "build it yourself", and it offloads my work to the user.
+
+**Fix.** User issued explicit directive (2026-04-25): change the mentality. Best-of-best means **solving** the problem, not **bypassing** it. Three concrete principles:
+
+### Principle 1 — Code I'm in is mine, regardless of who broke it
+
+When working in a codebase / directory / module:
+  - Pre-existing bugs surfaced by tooling I run = mine to fix.
+  - Issues "from earlier sessions" = mine; if I touched the codebase before, even pre-existing today is mine.
+  - Audit reports / lint output / test failures discovered while I'm in the file = mine.
+  - "Not introduced by my current diff" is a useful triage label, not a license to ignore.
+
+When a blanket fix is impractical (e.g., audit returns 500 findings; codebase needs week-long refactor), still:
+  - Fix the top-N (severity-weighted) before declaring done.
+  - Document the rest with structured items (AUDIT_GAPS.md) and a fix plan, not as "pre-existing → ignored".
+  - Surface the residual to the user with a count + plan, never silent.
+
+### Principle 2 — If a blocker has a self-serve unblock, take it
+
+Before asking the user to remove a blocker, exhaust self-serve options:
+  - Missing test credentials → can I create a test account? (Prisma seed, register-then-role-promote, dev-only env override, etc.)
+  - Endpoint returns 500 in audit → can I read the route handler and figure out why? (Probably yes — the source is right there.)
+  - Missing config / header / setting → can I write the config? (Next.js, nginx, package.json all support direct edits.)
+  - Audit tool fails on auth → can I build a test fixture instead of waiting?
+  - "Need API key" → check Master/credentials/ first; if absent, propose a free-tier alternative or a mock; only escalate if neither works.
+
+Ask only when:
+  - The unblock requires a destructive cross-cutting decision (drop a database, force-push to main, send email to real users).
+  - The unblock requires real credentials that genuinely don't exist anywhere (paid third-party API for production, real customer PII).
+  - Two materially different design paths with downstream implications need a steering decision.
+  - A self-serve path exists but the user has stated they want to make this call (rare; usually surfaces in CLAUDE.md).
+
+### Principle 3 — "Done" means 100%, not "above the threshold"
+
+When an audit / test / inspection produces a numeric score, treat the gap to 100% as required work, not optional polish. Specifically:
+  - Audit score 78/100 → close the 22-point gap; don't accept "passing".
+  - Coverage 90% → close the 10%; don't accept "above threshold".
+  - "Top issues fixed" → if there are 22 issues total, fix 22, not "the top 5".
+  - When 100% is genuinely impractical (third-party tooling false positives, intentional design tradeoff), document each individual exception with the reason, not as a bucket.
+
+The user's analogy: "WG trebuie sa ajunga la 100%". Apply this to every score-bearing gate.
+
+**Prevention (MANDATORY):**
+
+1. **Audit-result triage.** When a tool produces findings, do NOT split into "mine vs pre-existing". Split into:
+   - **Fix now** (clear root cause, in-scope file, actionable).
+   - **Fix in this session** (needs investigation but solvable here).
+   - **Document with plan** (large-scope refactor; structured AUDIT_GAPS entry with steps + ETA).
+   Then resolve "Fix now" + "Fix in this session" before declaring the work done.
+
+2. **Self-serve checklist before asking.** Before any "ask user for X" message, run through:
+   - Can I create / generate / seed X myself? (db record, env var, config file, etc.)
+   - Is X documented somewhere I haven't checked? (Master/credentials/, .env.example, README.md)
+   - Is there a free / mock / dev-mode alternative to X?
+   - Would proceeding without X actually cripple the work, or just narrow scope I can self-narrow?
+   If all four return "no clear unblock", THEN ask. If any returns "yes", do it.
+
+3. **Score gates default to 100%.** When a tool emits a score (audit, coverage, lighthouse, etc.), the default target is 100%. Anything less requires either (a) all findings fixed individually, or (b) explicit per-finding documentation in AUDIT_GAPS.md / equivalent. Aggregate "top-5 fixed" is not acceptable absent user approval to defer the rest.
+
+**Violation detection.** Future-session Claude self-audit before reporting work as done:
+  - Did I run an audit / lint / test that surfaced findings?
+  - For each finding: did I fix it OR document it in a structured ledger with a plan? (Silence = violation.)
+  - Did I ask the user for any inputs? For each ask: was self-serve genuinely impossible, OR did I dodge work?
+
+**Scope of applicability.** All Tester work + cross-repo work where Tester is the lead caller. Does NOT override NO-TOUCH CRITIC zones (Master/credentials/, Master/mesh/state/) — there, "self-serve" means "write a proposal in propose-confirm-apply, ask, then execute under user approval". But the proposal must be complete, not "should I look into this?".
+
+**Reference incident.** 2026-04-25, post-website-guru-refactor E2E audit. Claude reported 78/100 with pre-existing findings ignored + asked for admin creds instead of seeding a test admin via Prisma. User flagged both. Both were checkbox-driven, not problem-driven. L03 supersedes that pattern from this point forward.
+
+---

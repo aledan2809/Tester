@@ -57,3 +57,8 @@ Every Tester work session MUST operate at **best-of-best** quality: close spec i
 1. **Communicate in Romanian + plain language + everyday analogies.** Technical references (paths, commits, commands) include a one-line translation. Conversation defaults to RO + non-tehnic; reserve dense technical prose for artifacts (commit messages, ledger).
 2. **Preserve uncommitted code; merge best parts.** When 2+ uncommitted variants of the same module exist, read each, compare against strategy, pick the best from each + adapt into one coherent version with zero overlap + zero dropped functionality. Never silently pick or discard.
 3. **Ask when something is wrong; otherwise autonomous best-of-best.** Think through rules 1+2 first. Strategy conflict / missing inputs / multiple reasonable paths / unmerged variants → ask in user-friendly terms with options. Clear path → ship best-of-best without asking. Never minimal/MVP, never silent on ambiguity.
+
+## Ownership + self-serve (L03 — mandatory, see `knowledge/lessons-learned.md`)
+1. **Code I'm in is mine.** Pre-existing audit/test/lint findings in the codebase I'm working on = mine to fix. "Not from my current diff" is a triage label, not a license to ignore.
+2. **Self-serve unblock before asking.** Before "need credentials / config / endpoint", check: can I seed it? generate it? mock it? read the source? Ask only when destructive, genuinely impossible, or steering-decision territory.
+3. **Done = 100%.** Score gates default to 100. Anything less requires per-finding documentation in AUDIT_GAPS.md or user-approved deferral, never bucket-level silence.
