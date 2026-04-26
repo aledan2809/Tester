@@ -115,7 +115,16 @@ Modificări la Tester pot cascada în orice consumator în mod silent dacă nu s
 
 ## Eliminated gaps (history)
 
-*Gol inițial — vor fi adăugate după ce gaps OPEN sunt rezolvate, cu data + commit hash.*
+### G-JOURNEY-002 — Configurable login successUrlTimeout in journey-audit
+
+- **Status**: Eliminated (2026-04-27)
+- **Symptom**: `journey-audit/tests/sidebar-walk.spec.ts` had a hardcoded 15s `waitForURL` timeout after login click. Apps with multiple sequential post-login fetches before redirect (e.g., 4pro-eat: SSO cookie set + identity verify + onboarding-state hydrate) hit the timeout sporadically and the audit failed before walking nav links.
+- **Fix**: Added optional `login.successUrlTimeout?: number` field to `JourneyConfig`; both `waitForURL` calls (initial attempt at line 96, Computer-Use retry at line 111) now read `CFG.login.successUrlTimeout ?? 30000`. Default raised from 15s → 30s; existing configs without the field receive the new default silently. Companion change in `4pro-eat/.journey-audit.json` sets explicit `"successUrlTimeout": 30000`.
+- **Files**: `journey-audit/tests/sidebar-walk.spec.ts` (3 surgical edits — interface + 2 timeout call-sites). Companion: `4pro-eat/.journey-audit.json` (+1 line).
+- **Verification**: `npx tsc --noEmit` clean, `npm test` 550/550 pass.
+- **Commit**: TBD (added on this session).
+
+---
 
 ---
 
@@ -125,3 +134,4 @@ Modificări la Tester pot cascada în orice consumator în mod silent dacă nu s
 |------|--------|
 | 2026-04-25 | Creat ledger inițial (Master deep-audit Phase 4 follow-up). G-001 OPEN: triage rapoarte audit existente. |
 | 2026-04-25 | Added + Resolved **G-CU-001** — Computer-Use fallback for journey-audit Playwright failures. 4 files added (ai-computer + fallback + smoke + spec edit), 11/11 vitest, TS clean. Default flag off; live validation deferred (no Anthropic credit). |
+| 2026-04-27 | Resolved **G-JOURNEY-002** — Configurable `successUrlTimeout` for journey-audit login (default 15s → 30s, optional field per-config). 3 surgical edits in spec + companion config update on 4pro-eat. TS clean, vitest 550/550. |

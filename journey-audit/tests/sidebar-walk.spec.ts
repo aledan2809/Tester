@@ -27,6 +27,7 @@ interface JourneyConfig {
     passwordSelector: string;
     submitSelector: string;
     successUrlPattern: string;
+    successUrlTimeout?: number;
   };
   credentials: {
     emailEnv: string;
@@ -93,7 +94,7 @@ test(`[${CFG.name}] user journey — every nav link walked + screenshots`, async
   await page.fill(CFG.login.passwordSelector, PASSWORD);
   try {
     await Promise.all([
-      page.waitForURL(new RegExp(CFG.login.successUrlPattern), { timeout: 15000 }),
+      page.waitForURL(new RegExp(CFG.login.successUrlPattern), { timeout: CFG.login.successUrlTimeout ?? 30000 }),
       page.click(CFG.login.submitSelector),
     ]);
   } catch (loginErr) {
@@ -108,7 +109,7 @@ test(`[${CFG.name}] user journey — every nav link walked + screenshots`, async
         console.log(`[journey-audit] Computer-Use fallback failed: ${fb.error}`);
         throw loginErr;
       }
-      await page.waitForURL(new RegExp(CFG.login.successUrlPattern), { timeout: 15000 });
+      await page.waitForURL(new RegExp(CFG.login.successUrlPattern), { timeout: CFG.login.successUrlTimeout ?? 30000 });
     } else {
       throw loginErr;
     }

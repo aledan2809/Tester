@@ -828,3 +828,28 @@ LOW. All changes ADDITIVE or defensive. No existing CLI contract changed. Pre-ex
 - Risk: 🟢 LOW — flag-gated, additive, fallback throws original error on failure
 
 ---
+
+## 2026-04-27 — G-JOURNEY-002: Configurable login successUrlTimeout in journey-audit
+
+**Context**: Cross-project investigation surfaced from a 4pro-eat session. Apps with multiple sequential post-login fetches before redirect (e.g., 4pro-eat: SSO cookie set → identity verify → onboarding-state hydrate) intermittently exceeded the hardcoded 15s `waitForURL` timeout in `sidebar-walk.spec.ts:96` and `:111`. Audit failed before walking nav links.
+
+**Protocol step**: Direct mode, propose-confirm-apply (user "ok" 2026-04-27 morning).
+
+### Files modified
+- `journey-audit/tests/sidebar-walk.spec.ts` — interface field `successUrlTimeout?: number` (line ~30) + 2 call-sites read `CFG.login.successUrlTimeout ?? 30000` (lines 96, 111)
+- `Tester/AUDIT_GAPS.md` — added Eliminated gap G-JOURNEY-002 + Update Log row
+
+### Companion (outside Tester repo)
+- `4pro-eat/.journey-audit.json` — explicit `"successUrlTimeout": 30000` (committed on 4pro-eat side)
+
+### Smoke check
+- `npx tsc --noEmit` → clean
+- `npm test` (vitest) → 550/550 passed
+- Field is optional → existing `tradeinvest.json` config + any other consumer without the field receive silent default 30s (more lenient than prior 15s, no breakage path)
+
+### Stats
+- Files: 1 modified (spec) + 1 modified (AUDIT_GAPS.md) + 1 modified (this ledger)
+- Lines: ~3 functional changes (spec) + ledger entries
+- Risk: 🟢 LOW — additive optional field, default raised from 15s → 30s; configs without the field continue to work; configs with the field gain explicit control
+
+---
