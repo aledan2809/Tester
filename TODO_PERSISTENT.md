@@ -12,6 +12,69 @@
 
 ---
 
+## [ ] 🎯 Audit-Suite Methodology — codify procuchaingo2 True E2E pattern as Tester features (creat 2026-04-27)
+
+**Origin**: 2026-04-27 sesiune autonomous Procu True E2E Full Audit a developat un pattern reutilizabil pe care user-ul l-a cerut codificat în Tester. Pattern: **find/create/modify documents + provision users with different roles + execute scenarios end-to-end**.
+
+**Reference implementation** (already lives in procuchaingo2 — copy + generalize):
+- `procuchaingo2/e2e-scenarios/run_scenarios.py` (~1200 linii, 21 scenarios) — Counter + assert_eq DSL
+- `procuchaingo2/e2e-scenarios/fixtures/generate_pdfs.py` — reportlab PDF generator
+- `.tmp-provision-t2.mjs` (deleted post-run; regenerable from git history) — multi-tenant DB provisioning
+
+### Status accuracy
+
+This is a **DESIGN spec only** — no code in Tester yet. Estimates are best-case. Per `feedback_honest_reporting_no_overstating.md` rule, mark as `[~]` only when partial work lands; `[x]` only when ALL 4 modules ship + verified on a 2nd consumer project.
+
+### Modul A — `tester fixtures` (~3-4h)
+
+```bash
+tester fixtures invoice --out invoice.pdf --total 487.50 --currency EUR \
+  --line "BEV-PEPSI-003,7UP 1.5L,50,1.95"
+tester fixtures aviz --out aviz.pdf --linked-to invoice.pdf
+tester fixtures po-csv --rows 100 --supplier-id <id>
+tester fixtures user-list --roles OWNER,ADMIN,MEMBER --count 5
+```
+Implementation: prefer pdf-lib (pure JS, consistent with TS stack) over reportlab+Python child_process.
+Files: `src/cli/commands/fixtures/{invoice,aviz,po-csv,user-list}.ts` + `src/fixtures/templates/*.ts`.
+
+### Modul B — `tester provision` (~5-7h)
+
+```bash
+tester provision --project procuchaingo2 --tenants 2 \
+  --roles OWNER,ADMIN,MANAGER,MEMBER,SUPER_ADMIN --suppliers 3 \
+  --dual-role-pattern A,B --out master-creds.env
+```
+Project-adapter pattern. Each consumer ships `.tester-provision.json` with: DB driver (Prisma/Drizzle), schema mapping (User/role/password algo), multi-tenant model (column / schema / database isolation), Pattern A/B recipes.
+Files: `src/cli/commands/provision/index.ts` + `src/provision/adapters/{prisma,drizzle}.ts`.
+
+### Modul C — `tester scenarios run` (~6-8h)
+
+```bash
+tester scenarios run --suite procuchaingo2/e2e-scenarios/ \
+  --filter "E*,F*,H*" --report report.json --rate-limit-pacing 3s
+```
+TS DSL generalizing procuchaingo2 Counter + assert_eq pattern. Multi-role HTTP session helpers, rate-limit pacing, cross-tenant guards, bounds-test patterns, HTML + JSON report.
+Files: `src/cli/commands/scenarios/runner.ts` + `src/scenarios/{counter,session,assertions}.ts`.
+
+### Modul D — `tester audit-suite` (~3-4h)
+
+```bash
+tester audit-suite --project procuchaingo2 --true-e2e
+# fixtures → provision → scenarios → journey-audit → consolidated report
+```
+Composes A+B+C + existing journey-audit into one entry point.
+
+### Total: ~17-23h, 2-3 dedicated sessions
+
+### Acceptance criteria
+
+- `tester audit-suite --project procuchaingo2 --true-e2e` reproduces all 21 procuchaingo2 scenarios.
+- Same suite runnable on a 2ND project (e.g. eCabinet) with only `.tester-provision.json` + per-project scenario files — ZERO tester library changes.
+- All 4 modules independently vitest-tested.
+- Cross-linked from each consumer's CLAUDE.md + Tester README.
+
+---
+
 ## 🎯 Tester Upgrade Roadmap — target: reduce harness-induced false positives to <1% and expand meaningful coverage across independent Claude Code sessions, TWG loop, and Master pipelines (AIP / AIP2 / ABIP / ABIP2)
 
 ### Priority scheme
