@@ -51,10 +51,12 @@ interface JourneyConfig {
   onboardingMarkers?: string
   emptyStateMarkers?: string
   errorMarkers?: string
-  viewport: { width: number; height: number }
+  viewport?: { width: number; height: number }
   pageTimeout?: number
   settleDelay?: number
 }
+
+const DEFAULT_VIEWPORT = { width: 1280, height: 800 } as const
 
 export interface JourneyAuditOptions {
   project?: string
@@ -70,6 +72,12 @@ function readConfigFile(p: string): JourneyConfig {
   const cfg = JSON.parse(raw) as JourneyConfig
   if (!cfg.name || !cfg.baseUrl || !cfg.navLinks) {
     throw new Error(`Config at ${p} is missing required fields (name, baseUrl, navLinks)`)
+  }
+  // viewport is optional; warn (not throw) if missing so legacy configs keep working.
+  if (!cfg.viewport || typeof cfg.viewport.width !== 'number' || typeof cfg.viewport.height !== 'number') {
+    console.warn(
+      `[journey-audit] config "${cfg.name}" missing or invalid viewport — falling back to ${DEFAULT_VIEWPORT.width}x${DEFAULT_VIEWPORT.height}`
+    )
   }
   return cfg
 }
@@ -133,12 +141,18 @@ export async function journeyAuditCommand(opts: JourneyAuditOptions): Promise<vo
   console.log(`${bar}\n`)
 
   const needsAuth = !!cfg.login
-  const email = needsAuth ? (opts.email || process.env[cfg.credentials!.emailEnv] || '') : ''
-  const password = needsAuth ? (opts.password || process.env[cfg.credentials!.passwordEnv] || '') : ''
+  // cfg.credentials is optional in the interface — read defensively, fall back to
+  // CLI flags only. Avoids `cfg.credentials!.emailEnv` non-null-assertion crash
+  // when a config sets `login` but omits `credentials` (caller passes --email/--password).
+  const credEmailEnv = cfg.credentials?.emailEnv ?? ''
+  const credPasswordEnv = cfg.credentials?.passwordEnv ?? ''
+  const email = needsAuth ? (opts.email || (credEmailEnv ? process.env[credEmailEnv] : '') || '') : ''
+  const password = needsAuth ? (opts.password || (credPasswordEnv ? process.env[credPasswordEnv] : '') || '') : ''
   if (needsAuth && (!email || !password)) {
-    throw new Error(
-      `Missing credentials. Provide --email/--password or set env vars ${cfg.credentials!.emailEnv} and ${cfg.credentials!.passwordEnv}`
-    )
+    const envHint = credEmailEnv && credPasswordEnv
+      ? ` or set env vars ${credEmailEnv} and ${credPasswordEnv}`
+      : ''
+    throw new Error(`Missing credentials. Provide --email/--password${envHint}`)
   }
 
   const outputDir = path.resolve(
@@ -148,9 +162,10 @@ export async function journeyAuditCommand(opts: JourneyAuditOptions): Promise<vo
   const screenshotsDir = path.join(outputDir, 'screenshots')
   fs.mkdirSync(screenshotsDir, { recursive: true })
 
+  const viewport = cfg.viewport ?? DEFAULT_VIEWPORT
   const browser = await puppeteer.launch({
     headless: opts.headed !== true,
-    defaultViewport: { width: cfg.viewport.width, height: cfg.viewport.height },
+    defaultViewport: { width: viewport.width, height: viewport.height },
   })
   const page = await browser.newPage()
 
