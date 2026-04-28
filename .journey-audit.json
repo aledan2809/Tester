@@ -1,0 +1,14 @@
+{
+  "name": "Tester",
+  "baseUrl": "https://tester.techbiz.ae",
+  "navLinks": [
+    { "name": "Home", "href": "/" },
+    { "name": "API Health", "href": "/api/health" }
+  ],
+  "onboardingMarkers": "Welcome|Get started|Sign up|Verify",
+  "emptyStateMarkers": "No .*yet|No .*found|empty",
+  "errorMarkers": "Error: |Failed to |Something went wrong|Internal server error|Eroare:",
+  "viewport": { "width": 1440, "height": 900 },
+  "pageTimeout": 20000,
+  "settleDelay": 1500
+}

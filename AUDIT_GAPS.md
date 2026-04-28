@@ -44,6 +44,16 @@ Modificări la Tester pot cascada în orice consumator în mod silent dacă nu s
 
 ## OPEN gaps (require user decision)
 
+### G-JOURNEY-003 — [P2] Published `@aledan007/tester@0.2.0` requires `login` field; local dev allows it optional
+
+- **Surfaced**: 2026-04-28 (Master ML2 Wave 2 [8] Tester audit)
+- **Symptom**: `npx @aledan007/tester@0.2.0 journey-audit --config <no-login-config>` fails with `Config is missing required fields (name, baseUrl, navLinks, login)`. Local source at `src/cli/commands/journey-audit.ts:143` has `const needsAuth = !!cfg.login` (login optional). Published 0.2.0 was built before the no-auth path was added.
+- **Impact**: Consumers running journey-audit on no-auth public sites (landing pages, docs sites, marketing pages) cannot use the published npm distribution — must run from local Tester checkout.
+- **Recommendation**: Bump `@aledan007/tester` to 0.3.0 with the no-auth path included. Quick check: `npm view @aledan007/tester versions` → only 0.2.0 published. Build + publish would close this. Out-of-scope for current ML2 audit session; logged for Tester triage.
+- **Workaround in current session**: ran via `node /var/www/Tester/dist/cli/index.js` (local build) on Master machine.
+
+---
+
 ### G-001 — [P1] [Triage Pending] Triage rapoarte audit recente în G-XXX cu prioritizare
 
 - **Status**: OPEN
@@ -135,3 +145,4 @@ Modificări la Tester pot cascada în orice consumator în mod silent dacă nu s
 | 2026-04-25 | Creat ledger inițial (Master deep-audit Phase 4 follow-up). G-001 OPEN: triage rapoarte audit existente. |
 | 2026-04-25 | Added + Resolved **G-CU-001** — Computer-Use fallback for journey-audit Playwright failures. 4 files added (ai-computer + fallback + smoke + spec edit), 11/11 vitest, TS clean. Default flag off; live validation deferred (no Anthropic credit). |
 | 2026-04-27 | Resolved **G-JOURNEY-002** — Configurable `successUrlTimeout` for journey-audit login (default 15s → 30s, optional field per-config). 3 surgical edits in spec + companion config update on 4pro-eat. TS clean, vitest 550/550. |
+| 2026-04-28 | Created `Tester/.journey-audit.json` (1 new file, no source code touched) for Master ML2 Wave 2 [8] AVE batch. Audit ran 1 OK + 1 EMPTY (Home + /api/health). User confirm "confirm Tester Journey (UI real)". Logged in DIRECT-CHANGES-2026-04. New OPEN: **G-JOURNEY-003** below. |
