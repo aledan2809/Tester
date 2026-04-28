@@ -853,3 +853,29 @@ LOW. All changes ADDITIVE or defensive. No existing CLI contract changed. Pre-ex
 - Risk: 🟢 LOW — additive optional field, default raised from 15s → 30s; configs without the field continue to work; configs with the field gain explicit control
 
 ---
+
+## 2026-04-28 — Created `.journey-audit.json` for ML2 Wave 2 [8] journey audit (Sprint C.4.1)
+
+**Context**: Master ML2 Wave 2 AVE batch ([9] FULL E2E per project). Tester is part of the AVE ecosystem batch. Journey audit (real browser walk) needs `.journey-audit.json` config; previous sessions skipped Tester [8] entirely citing NO-TOUCH protocol. User explicitly confirmed "Tester Journey (UI real)" in current session — propose-confirm-apply honored.
+
+**Protocol step**: Direct mode, user confirm "confirm Tester Journey (UI real)" 2026-04-28.
+
+### Files created
+- `Tester/.journey-audit.json` (new file) — minimal config: name="Tester", baseUrl=`https://tester.techbiz.ae`, navLinks=[Home `/`, API Health `/api/health`]. NO `login` section (Tester landing page is public, no auth — confirmed via curl probe of https://tester.techbiz.ae/ which renders public marketing page with `crossnav` + 1 button "API Health").
+
+### Tester source code touched
+**None.** Single file is config (gitignore-able if user prefers, but kept tracked for reproducibility). Zero changes to `src/`, `journey-audit/`, `dist/`, or any test specs.
+
+### Smoke check (audit run, read-only)
+- Invoked via local CLI: `node dist/cli/index.js journey-audit --config .journey-audit.json` (published `@aledan007/tester@0.2.0` requires `login` field; local dev build supports optional `login` per `src/cli/commands/journey-audit.ts:143` → used local build).
+- Result: 1 OK + 1 EMPTY (Home `/` h1="Tester" OK; `/api/health` flagged EMPTY — bodyLen=76, expected for JSON endpoint, false-positive on HTML heuristic).
+- Output: `Tester/journey-audit-results/tester/{report.json,screenshots/}`.
+
+### Cross-context note
+- Discrepancy `@aledan007/tester@0.2.0` (npm published) vs local source: published version requires `login` in config, local dev allows it optional. NOT in scope of this change. If we want consumers to be able to journey-audit no-auth sites via npx, we need to publish a new version (e.g., 0.3.0). Logged as candidate `G-JOURNEY-003` in AUDIT_GAPS.md.
+
+### Stats
+- Files: 1 new (config) + 1 modified (this ledger) + 1 modified (AUDIT_GAPS.md, see G-JOURNEY-003)
+- Risk: 🟢 LOW — config-only; audit is read-only browser navigation on public landing page
+
+---
