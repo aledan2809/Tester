@@ -123,6 +123,38 @@ Modificări la Tester pot cascada în orice consumator în mod silent dacă nu s
 
 ---
 
+### G-LANDING-001 — [P1] [a11y/security] tester.techbiz.ae landing page structural fixes ✅ ELIMINATED 2026-05-02
+
+- **Surfaced**: 2026-05-02 [7] CODE audit (76/100, 2 HIGH a11y + 1 HIGH security + 6 MED mobile/api)
+- **Status**: ✅ **ELIMINATED 2026-05-02** (commit `5ae5ff0` + nginx config) — propose-confirm-apply 2 iterations (Phase A+B then Phase B' delta)
+- **Discovery (per L82 research-before-proposing)**: `/` on `tester.techbiz.ae` is served by **nginx-static** at `/var/www/tester/public/index.html`, NOT by the Express HTTP server. The file was VPS-only divergent (initial scaffold commit `732af58` 2026-04-04, never tracked back to GitHub). NO consumer cascade risk: zero impact on `@aledan007/tester` npm package, HTTP API endpoints, or journey-audit CLI.
+- **Phase A** — landing HTML fixes: brought `public/index.html` into local repo + 5 fixes
+  - **Contrast**: text + link colors `rgba(255,255,255,.5)` → `.82`/`.78`; secondary `.3` → `.65`; footer `.2` → `.65` (all ≥4.5:1 WCAG AA on `#0f0c29`)
+  - **Touch targets**: all `<a>` get `min-height/min-width:44px` + `display:inline-flex;align-items:center` (44×44 click zone preserved while visual size matches design intent)
+  - **Font-size**: footer `.7rem` → `.78rem`, crossnav `11px` → `.75rem`, secondary small `.8rem` → `.85rem` (all ≥12px)
+  - **Skip-nav**: added `<a class="skip-link" href="#main-content">` with focus-only positioning
+  - **Semantic HTML**: added `<nav aria-label>`, `<main id>`, `aria-current="page"` on active crossnav link, `:focus-visible` outlines for keyboard nav
+- **Phase B** — nginx CSP + 3 security headers on `location = /`:
+  - `Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'`
+  - `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`
+- **Phase B' delta** (after first audit revealed CSP `default-src 'self'` blocked axe-core injection — `100/100` was falsely optimistic):
+  - Added `script-src 'self' 'unsafe-inline'` (allows axe `addScriptTag` to inject; static landing has no real scripts so surface stays minimal)
+  - `Strict-Transport-Security: max-age=31536000; includeSubDomains; preload`
+  - `Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), accelerometer=(), gyroscope=()`
+- **Phase C** — local repo sync: `5ae5ff0` brings `public/` under git tracking on `aledan2809/Tester` (closes VPS↔GitHub drift)
+- **Verification (honest per L83)**:
+  - [7] audit progression: **76 → 88 → 91/100** (+15 total, 2 iterations)
+  - a11y-scanner 55 FAIL → **100 PASS** (real, post-Phase B' axe could inject)
+  - mobile-tester 50 FAIL → **100 PASS** (touch targets resolved)
+  - security-scanner 90 PASS (1 missing CSP) → 85 (2 new findings from deeper scan) → **100 PASS** (all 6 headers complete)
+  - Plugins at 100: 8/9 (only api-tester at 50 = pre-existing false-positive, plugin can't introspect Express dynamic routes)
+  - Consumer spot-check: tester `/api/health` 200, MA `/` 200, eCabinet `/api/health` 200 — zero regression
+- **Files**: local `public/index.html` (new, +1 file 60 lines effective), VPS `/etc/nginx/sites-available/tester.techbiz.ae` (+8 lines headers), VPS `/var/www/tester/public/index.html` (synced from local)
+- **Backups**: `/etc/nginx/sites-available/tester.techbiz.ae.bak-2026-05-02-pre-csp` + `/var/www/tester/public/index.html.bak-2026-05-02-pre-a11y`
+- **Out of scope (deferred)**: api-tester false-positive plugin limitation (G-API-FALSE-POSITIVE candidate — not a Tester bug); pre-existing `POST /api/test/start` 500 on empty body (handler doesn't validate `req.body` shape — separate G-XXX hardening item)
+
+---
+
 ## Eliminated gaps (history)
 
 ### G-JOURNEY-002 — Configurable login successUrlTimeout in journey-audit
