@@ -47,7 +47,7 @@ Modificări la Tester pot cascada în orice consumator în mod silent dacă nu s
 ### G-CLASSIFIER-EXT — [P2] [feature] journey-audit classifier config-driven exemptions ✅ ELIMINATED 2026-05-03
 
 - **Surfaced**: cross-project deferred from AVE work (`Projects/ave/ave-platform/AUDIT_GAPS.md` G-JOURNEY-EMPTY closure 2026-05-02 commit `dfcae65`). AVE shipped a post-processor wrapper `scripts/journey-audit-postclassify.mjs` that reclassifies EMPTY false-positives from Tester's journey-audit output. The proper long-term fix lives in Tester itself: config-driven exemption knobs.
-- **Status**: ✅ **ELIMINATED 2026-05-03** (commit `<pending>`) — shipping in `@aledan007/tester@0.3.0`.
+- **Status**: ✅ **ELIMINATED 2026-05-03** (commit `5a594aa`) — shipping in `@aledan007/tester@0.3.0`.
 - **Mechanism**: extracted classifier from inline runner code into pure function `src/cli/commands/journey-audit-classifier.ts` `classifyPage(input)`. New `JourneyConfig` knobs (all optional, backward-compat):
   - `bodyLenThreshold?: number` — overrides default 200-char "suspiciously empty" threshold.
   - `validContentMarkers?: string` — regex matched against body innerText; if ≥1 hit, EMPTY heuristic is bypassed for that page.
@@ -104,7 +104,7 @@ Modificări la Tester pot cascada în orice consumator în mod silent dacă nu s
 ### G-JOURNEY-003 — [P2] Published `@aledan007/tester@0.2.0` requires `login` field; local dev allows it optional ✅ ELIMINATED 2026-05-03
 
 - **Surfaced**: 2026-04-28 (Master ML2 Wave 2 [8] Tester audit)
-- **Status**: ✅ **ELIMINATED 2026-05-03** via `@aledan007/tester@0.3.0` publish (commit `<pending>`).
+- **Status**: ✅ **ELIMINATED 2026-05-03** via `@aledan007/tester@0.3.0` publish (commit `5a594aa`).
 - **Symptom**: `npx @aledan007/tester@0.2.0 journey-audit --config <no-login-config>` fails with `Config is missing required fields (name, baseUrl, navLinks, login)`. Local source at `src/cli/commands/journey-audit.ts:143` has `const needsAuth = !!cfg.login` (login optional). Published 0.2.0 was built before the no-auth path was added.
 - **Fix**: 0.3.0 ships the current source which already has `cfg.login` optional + `needsAuth = !!cfg.login` runtime gating. Plus adds the classifier extension (G-CLASSIFIER-EXT).
 - **Verified**: post-publish `npx @aledan007/tester@0.3.0 journey-audit --config <no-login>` should succeed without the missing-field error. Live verify pending consumer usage.
