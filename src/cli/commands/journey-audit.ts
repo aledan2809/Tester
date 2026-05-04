@@ -27,13 +27,14 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import puppeteer, { type Page } from 'puppeteer'
+import {
+  classifyPage,
+  type JourneyClassifierConfig,
+  type NavLink,
+  type PerPageOverride,
+} from './journey-audit-classifier.js'
 
-interface NavLink {
-  name: string
-  href: string
-}
-
-interface JourneyConfig {
+interface JourneyConfig extends JourneyClassifierConfig {
   name: string
   baseUrl: string
   login?: {
@@ -55,6 +56,10 @@ interface JourneyConfig {
   pageTimeout?: number
   settleDelay?: number
 }
+
+// Re-export config knob types so consumers' tooling can type
+// `.journey-audit.json` without reaching into internals.
+export type { JourneyClassifierConfig, NavLink, PerPageOverride }
 
 const DEFAULT_VIEWPORT = { width: 1280, height: 800 } as const
 
@@ -232,7 +237,7 @@ export async function journeyAuditCommand(opts: JourneyAuditOptions): Promise<vo
     }> = []
 
     for (const link of cfg.navLinks) {
-      const notes: string[] = []
+      let notes: string[] = []
       let status = 'OK'
       let httpStatus = 0
       let h1 = ''
@@ -269,22 +274,25 @@ export async function journeyAuditCommand(opts: JourneyAuditOptions): Promise<vo
         const gatedCount = cfg.onboardingMarkers
           ? await countRegexMatchesInBody(page, cfg.onboardingMarkers)
           : 0
+        const validContentCount = cfg.validContentMarkers
+          ? await countRegexMatchesInBody(page, cfg.validContentMarkers)
+          : 0
 
-        notes.push(`tables=${tableCount} buttons=${buttonCount} bodyLen=${bodyLen}`)
-        if (emptyCount > 0) notes.push(`emptyMarkers=${emptyCount}`)
-        if (errorCount > 0) {
-          notes.push(`errorMarkers=${errorCount}`)
-          status = 'HAS_ERRORS'
-        }
-        if (gatedCount > 0) {
-          notes.push('ONBOARDING_WALL')
-          status = 'GATED'
-        }
-        if (bodyLen < 200) {
-          notes.push('suspiciously_empty')
-          status = 'EMPTY'
-        }
-        if (httpStatus >= 400) status = `HTTP_${httpStatus}`
+        const result = classifyPage({
+          link,
+          httpStatus,
+          h1,
+          bodyLen,
+          tableCount,
+          buttonCount,
+          emptyCount,
+          errorCount,
+          gatedCount,
+          validContentCount,
+          cfg,
+        })
+        status = result.status
+        notes = result.notes
 
         await page.screenshot({ path: screenshot, fullPage: true })
       } catch (err) {

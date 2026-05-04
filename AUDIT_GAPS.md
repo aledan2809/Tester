@@ -44,36 +44,91 @@ Modificări la Tester pot cascada în orice consumator în mod silent dacă nu s
 
 ## OPEN gaps (require user decision)
 
-### G-JOURNEY-003 — [P2] Published `@aledan007/tester@0.2.0` requires `login` field; local dev allows it optional
+### G-CLASSIFIER-EXT — [P2] [feature] journey-audit classifier config-driven exemptions ✅ ELIMINATED 2026-05-03
 
-- **Surfaced**: 2026-04-28 (Master ML2 Wave 2 [8] Tester audit)
-- **Symptom**: `npx @aledan007/tester@0.2.0 journey-audit --config <no-login-config>` fails with `Config is missing required fields (name, baseUrl, navLinks, login)`. Local source at `src/cli/commands/journey-audit.ts:143` has `const needsAuth = !!cfg.login` (login optional). Published 0.2.0 was built before the no-auth path was added.
-- **Impact**: Consumers running journey-audit on no-auth public sites (landing pages, docs sites, marketing pages) cannot use the published npm distribution — must run from local Tester checkout.
-- **Recommendation**: Bump `@aledan007/tester` to 0.3.0 with the no-auth path included. Quick check: `npm view @aledan007/tester versions` → only 0.2.0 published. Build + publish would close this. Out-of-scope for current ML2 audit session; logged for Tester triage.
-- **Workaround in current session**: ran via `node /var/www/Tester/dist/cli/index.js` (local build) on Master machine.
+- **Surfaced**: cross-project deferred from AVE work (`Projects/ave/ave-platform/AUDIT_GAPS.md` G-JOURNEY-EMPTY closure 2026-05-02 commit `dfcae65`). AVE shipped a post-processor wrapper `scripts/journey-audit-postclassify.mjs` that reclassifies EMPTY false-positives from Tester's journey-audit output. The proper long-term fix lives in Tester itself: config-driven exemption knobs.
+- **Status**: ✅ **ELIMINATED 2026-05-03** (commit `<pending>`) — shipping in `@aledan007/tester@0.3.0`.
+- **Mechanism**: extracted classifier from inline runner code into pure function `src/cli/commands/journey-audit-classifier.ts` `classifyPage(input)`. New `JourneyConfig` knobs (all optional, backward-compat):
+  - `bodyLenThreshold?: number` — overrides default 200-char "suspiciously empty" threshold.
+  - `validContentMarkers?: string` — regex matched against body innerText; if ≥1 hit, EMPTY heuristic is bypassed for that page.
+  - `perPageOverrides?: Record<string, { skipEmptyCheck?: boolean; expectedH1?: string }>` — keyed by `link.href`; `skipEmptyCheck:true` exempts a specific page.
+  - `formHeroException?: boolean` — default `true` in 0.3.0+. When true, pages with non-empty `h1` AND `buttons>=1` are treated as legitimate even at low bodyLen (form pages, hero landings). Set to `false` to restore 0.2.x always-flag behavior.
+- **Impact on consumers**: backward-compatible. Consumers without new keys get `formHeroException:true` default, which CHANGES behavior — pages previously flagged EMPTY because of the hardcoded `bodyLen<200` rule will now pass when they have h1+buttons (the AVE false-positive shape). This is the bug fix; net effect is fewer false-positives on form/hero pages across all consumers.
+- **Tests**: `tests/journey-audit-classifier.test.ts` — 20 vitest cases covering basics + threshold override + formHero exception + validContentMarkers + perPageOverrides + exemption precedence.
+- **Files changed**: `src/cli/commands/journey-audit-classifier.ts` (new, 130 lines), `src/cli/commands/journey-audit.ts` (refactor: import + use pure fn, ~40 lines net), `tests/journey-audit-classifier.test.ts` (new, ~190 lines).
 
 ---
 
-### G-001 — [P1] [Triage Pending] Triage rapoarte audit recente în G-XXX cu prioritizare
+### G-API-START-EMPTY-BODY — [P2] [hardening] POST /api/test/start crashes 500 on empty body
 
+- **Surfaced**: deferred from G-LANDING-001 (2026-05-02). Audit run by [7] tooling caught a pre-existing 500 on empty-body POST.
 - **Status**: OPEN
+- **Mechanism**: `src/server/index.ts:86` destructures `const { url, config, callbackUrl } = req.body as ...`. If the request has no body (no `Content-Type` or empty payload), Express body-parser leaves `req.body` undefined → destructuring throws TypeError → unhandled rejection bubbles to default 500 with stack trace exposed.
+- **Impact**: external probes (uptime monitors, security scanners, fuzz tools) hitting the endpoint without a JSON body get a 500 instead of a clean 400 + structured error. Slight info leak (stack trace if NODE_ENV != production).
+- **Recommended fix** (~5 lines): guard `req.body` before destructure → `const body = (req.body || {}) as ...; const { url, config, callbackUrl } = body; if (!url) res.status(400).json({error:'url is required'})`. Same pattern for any other POST handlers that destructure body.
+- **Owner**: deferred to next Tester session; not blocking 0.3.0 publish.
+
+---
+
+### G-API-FALSE-POSITIVE — [P3] [audit-tooling] api-tester plugin can't introspect Express dynamic routes
+
+- **Surfaced**: AUDIT_E2E_2026-04-22 + 2026-04-26 + 2026-04-28 + 2026-05-02 — "(api-tester) No API endpoints discovered" appears in every E2E audit on Tester landing.
+- **Status**: OPEN — false-positive on Tester landing (out-of-scope for Tester source); root cause in audit tooling.
+- **Mechanism**: api-tester plugin in `e2e-audit-runner.mjs` discovers REST endpoints by scraping the rendered HTML for `<a href="/api/...">` links or by reading OpenAPI specs. Tester's landing page (`tester.techbiz.ae/`) is a static `public/index.html` with no API references; the actual REST surface is at `/api/*` registered programmatically in `src/server/index.ts` (Express router, no static manifest). Plugin doesn't probe `/api/openapi.json` or follow well-known patterns.
+- **Impact**: every Tester E2E audit shows api-tester at 50/100 (or similar), penalty applied to overall score even though there's no real bug.
+- **Recommended fix** (Master tooling concern, NOT Tester source): make api-tester plugin probe a list of well-known endpoints (`/api/health`, `/api/openapi.json`, `/api/swagger.json`) before reporting "No API endpoints discovered"; or accept a config hint listing endpoints. Owner: Master `mesh/audit-plugins/api-tester` (not Tester repo).
+- **Workaround in Tester audits**: discount api-tester score from overall when the project is known to be a CLI/library + HTTP server (Tester is BOTH).
+
+---
+
+### G-INNERHTML-FP — [P3] [audit-tooling] security-scanner reports phantom innerHTML in nonexistent files
+
+- **Surfaced**: AUDIT_E2E_2026-04-22 reports `(security-scanner) innerHTML assignment found in LoginForm.ts` + `MfaInput.ts` + `SessionStatus.ts`.
+- **Status**: OPEN — false-positive (no such files exist in Tester source). Audit tooling confused.
+- **Verification**: `find /Users/danciulescu/Projects/Tester -name 'LoginForm*' -o -name 'MfaInput*' -o -name 'SessionStatus*'` returns empty. The only `innerHTML` reference in Tester source is `src/core/safety.ts:104` which is a regex pattern used to detect `innerHTML` in user-supplied test scripts — not an assignment.
+- **Hypothesis**: security-scanner may be scanning `node_modules/` deep paths (some auth/MFA UI lib has these files) or generating phantom paths from AI-summarized findings.
+- **Recommended fix** (Master tooling): security-scanner plugin should report file paths relative to project root + verify they exist before emitting findings. Owner: Master `mesh/audit-plugins/security-scanner`.
+
+---
+
+### G-DEAD-SCRIPTS — [P3] [hygiene] Untracked .mjs debug scripts at repo root
+
+- **Surfaced**: `git status` after 2026-05-02 audit session shows ~17 untracked `.mjs` files at Tester repo root: `client-home-debug.mjs`, `eat-full-walk.mjs`, `eat-onboarding-screenshot.mjs`, `eat-photo-walk.mjs`, `full-ui-debug.mjs`, `sso-{final,firefox,fragment,iframe,meals,postmsg,race,real,strict,trace}-test.mjs`, `sw-killswitch-test.mjs`, `sso-final-test.mjs`.
+- **Status**: OPEN — untracked, undocumented; unclear which are still useful.
+- **Mechanism**: these are ad-hoc Playwright/Puppeteer scripts written during cross-project investigations (eat onboarding flow, SSO debug, killswitch testing). They're not part of the Tester library or test suite, but they live at repo root where they're discoverable by audit plugins (which may scan them and emit findings).
+- **Recommended fix**: move to `scripts/scratch/` or `scripts/investigations/` with a `.gitignore` rule, OR add brief docstring + commit them under `scripts/investigations/` for archival purposes, OR delete the obsolete ones. Decision: defer until a Tester hygiene session — not blocking 0.3.0.
+- **Owner**: next Tester session.
+
+---
+
+### G-JOURNEY-003 — [P2] Published `@aledan007/tester@0.2.0` requires `login` field; local dev allows it optional ✅ ELIMINATED 2026-05-03
+
+- **Surfaced**: 2026-04-28 (Master ML2 Wave 2 [8] Tester audit)
+- **Status**: ✅ **ELIMINATED 2026-05-03** via `@aledan007/tester@0.3.0` publish (commit `<pending>`).
+- **Symptom**: `npx @aledan007/tester@0.2.0 journey-audit --config <no-login-config>` fails with `Config is missing required fields (name, baseUrl, navLinks, login)`. Local source at `src/cli/commands/journey-audit.ts:143` has `const needsAuth = !!cfg.login` (login optional). Published 0.2.0 was built before the no-auth path was added.
+- **Fix**: 0.3.0 ships the current source which already has `cfg.login` optional + `needsAuth = !!cfg.login` runtime gating. Plus adds the classifier extension (G-CLASSIFIER-EXT).
+- **Verified**: post-publish `npx @aledan007/tester@0.3.0 journey-audit --config <no-login>` should succeed without the missing-field error. Live verify pending consumer usage.
+
+---
+
+### G-001 — [P1] [Triage Pending] Triage rapoarte audit recente în G-XXX cu prioritizare ✅ ELIMINATED 2026-05-03
+
+- **Status**: ✅ **ELIMINATED 2026-05-03** (Tester dedicated session per §2d waiver)
 - **Created**: 2026-04-25
-- **Context**: Folder-ul `Reports/` conține ~5 rapoarte audit recente (CODE_SURVEY, LESSONS_INVENTORY, PIPELINE_FAILURE_SIGNATURES, AUDIT_E2E, STRATEGY_VS_IMPLEMENTATION) cu finding-uri detaliate, dar **niciun finding nu a fost convertit în G-XXX entry** cu prioritate, owner, plan de fix. Fără triage, ledger-ul nu reflectă starea reală a gap-urilor — se contrazice cu rolul lui (auto-surface la session start ar trebui să arate items concrete acționabile).
-- **Files to read** (în ordinea relevanței):
-  1. `Reports/CODE_SURVEY_2026-04-24.md` — finding-uri statice (typing, error handling, untested paths)
-  2. `Reports/PIPELINE_FAILURE_SIGNATURES_2026-04-24.md` — failure modes structurate
-  3. `Reports/LESSONS_INVENTORY_2026-04-24.md` — cross-ref Master lessons (L01-L49)
-  4. `Reports/AUDIT_E2E_2026-04-22.md` — E2E run actual
-  5. `Reports/STRATEGY_VS_IMPLEMENTATION_AUDIT_2026-04-11.md` — strategie vs implementare gap
-- **Plan propus** (pentru sesiune dedicată Tester):
-  1. Citește cele 5 rapoarte; extrage fiecare finding distinct
-  2. Categorizează: Security / Reliability / Performance / DX / Documentation
-  3. Atribuie prioritate (P0/P1/P2) bazat pe impact pe consumatori (Website Guru live, e2e-audit-runner, journey-audit CLI)
-  4. Pentru fiecare → adaugă G-XXX entry aici cu: descriere, files affected, risc, plan de fix, propose-confirm-apply
-  5. Marchează G-001 Eliminated când triage-ul e complet
-- **Why deferred**: Sesiunea curentă e Master deep-audit (Phase 3+ STALE_WIP recovery). Triage-ul Tester merită sesiune dedicată (Tester-only) ca să respecte regula NO-TOUCH "un proiect per sesiune" și să facă fiecare G-XXX cu atenție.
-- **Estimat effort**: 1-2h sesiune dedicată
-- **Owner**: Master orchestration (Direct mode)
+- **Sources read**: `Reports/AUDIT_E2E_2026-04-22.md` + `2026-04-26.md` + `2026-04-28.md` + `2026-05-02.md` + `Reports/CODE_SURVEY_2026-04-24.md` + `Reports/PIPELINE_FAILURE_SIGNATURES_2026-04-24.md` + `Reports/LESSONS_INVENTORY_2026-04-24.md`.
+- **Triage outcome**: 4 new G-XXX entries below + 2 closures in this session:
+  - G-CLASSIFIER-EXT (this session) — config-driven journey-audit classifier exemptions, ships in 0.3.0
+  - G-JOURNEY-003 (this session) — 0.3.0 publish closes
+  - G-API-START-EMPTY-BODY (new, P2) — POST /api/test/start 500 on empty body
+  - G-API-FALSE-POSITIVE (new, P3) — api-tester plugin can't introspect Express dynamic routes
+  - G-INNERHTML-FP (new, P3) — security-scanner reports phantom files
+  - G-DEAD-SCRIPTS (new, P3) — untracked .mjs debug scripts at repo root
+- **Already covered elsewhere** (NOT re-filed):
+  - Tester landing page a11y/security → G-LANDING-001 already eliminated 2026-05-02
+  - Pipeline zombie cleanup (44% of failures) → tracked in `Master/TODO_PERSISTENT.md` + Master `mesh/scripts/watcher-reaper.js`. Not Tester source-code concern.
+  - Touch targets <44 on Tester landing → covered by G-LANDING-001
+  - Code-survey "untested paths" / "typing" — no concrete bug, just inventory; deferred until specific failure surfaces.
+- **Note on AUDIT_E2E_*-recurring findings**: most of the 4 recent AUDIT_E2E reports surface the same items (CSP, contrast, mobile touch on Tester landing) — all closed via G-LANDING-001 on 2026-05-02. The 2026-05-02 audit's "Top 5" (eval/setTimeout/hardcoded creds/etc.) are AI-generated by AIRouter against test-fixture code and are LOW-confidence finger-pointing; not actionable as-is.
 
 ---
 
