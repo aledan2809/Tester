@@ -953,4 +953,72 @@ scenarios:
 4. Backwards-compat contract: what counts as breaking the CLI? (Flags? Exit codes? stdout format?)
 5. Who owns the Tester repo going forward — does this person have 6-week availability?
 
-*Last updated: 2026-04-24. Next review: after T-001 + T-002 + T-003 land (estimate: +1 week).*
+*Last updated: 2026-05-04. Next review: after T-001 + T-002 + T-003 land (estimate: +1 week).*
+
+---
+
+## [ ] G-API-START-EMPTY-BODY — [P2] [hardening] POST /api/test/start crashes 500 on empty body (creat 2026-05-04)
+
+**Source**: `Reports/AUDIT_E2E_2026-04-22.md` deferred from G-LANDING-001 closure. Filed în AUDIT_GAPS.md în 0.3.0 release session.
+
+**File**: `src/server/index.ts:86`
+
+**Mechanism**: `const { url, config, callbackUrl } = req.body as ...` destructures `req.body` direct. Dacă request n-are body (no `Content-Type` sau payload empty), Express body-parser lasă `req.body` undefined → destructuring throws TypeError → unhandled rejection bubbles la default 500 cu stack trace exposed.
+
+**Impact**: external probes (uptime monitors, security scanners, fuzz tools) hitting endpoint fără JSON body iau 500 + stack-trace info leak (în non-production env).
+
+**Recommended fix** (~5 lines):
+```ts
+const body = (req.body || {}) as { url?: string; config?: Partial<TesterConfig>; callbackUrl?: string }
+const { url, config, callbackUrl } = body
+if (!url) {
+  res.status(400).json({ error: 'url is required' })
+  return
+}
+```
+Apply același guard la orice POST handler care destructurează `req.body`.
+
+**Protocol**: NO-TOUCH CRITIC, propose-confirm-apply per change. Tester-only session per §2d.
+
+**Estimated effort**: 30min including Express smoke test (curl `-X POST /api/test/start` cu și fără body, verify 400 vs 500) + commit + AUDIT_GAPS update.
+
+---
+
+## [ ] G-DEAD-SCRIPTS — [P3] [hygiene] Untracked .mjs debug scripts at repo root (creat 2026-05-04)
+
+**Source**: `git status` 2026-05-02+ arată ~17 untracked `.mjs` files la Tester repo root din cross-project investigations:
+- `client-home-debug.mjs`, `eat-full-walk.mjs`, `eat-onboarding-screenshot.mjs`, `eat-photo-walk.mjs`, `full-ui-debug.mjs`
+- `sso-final-test.mjs`, `sso-firefox-debug.mjs`, `sso-fragment-test.mjs`, `sso-iframe-test.mjs`, `sso-meals-flow.mjs`, `sso-postmsg-test.mjs`, `sso-race-test.mjs`, `sso-real-userflow.mjs`, `sso-strict-cookies.mjs`, `sso-trace.mjs`
+- `sw-killswitch-test.mjs`
+
+**Mechanism**: ad-hoc Playwright/Puppeteer scripts scrise în eat onboarding flow + SSO debug + killswitch testing. Nu sunt parte din Tester library sau test suite, dar trăiesc la repo root unde audit plugins le pot scana.
+
+**Recommendation options** (pick one):
+1. Move la `scripts/scratch/` sau `scripts/investigations/` cu `.gitignore` rule
+2. Add brief docstring per file + commit sub `scripts/investigations/` pentru archival
+3. Delete obsolete ones (most likely outcome)
+
+**Estimated effort**: 30-60min — read each, decide, organize. NO-TOUCH protocol se aplică dacă ceva se mută în tracked source.
+
+---
+
+## [ ] auth-resolver plugin investigation (Master tooling cross-ref, creat 2026-05-04)
+
+**NOTE**: This item is Master-tooling concern, NU Tester source. Tracked aici because audit-resolver scoring affects Tester-related E2E audits across consumers (MA confirmed 2026-05-04).
+
+**Origin**: G-MA-009 PARTIAL — admin user seeded + verified end-to-end via `npx @aledan007/tester@0.3.0 journey-audit` (30 authenticated dashboard pages walked cu admin@marketingautomation.local), dar `auth-resolver` plugin în [7] CODE audit-uri rămâne 20/100 cu "Login failed — still on login page after submit".
+
+**File**: `Master/mesh/audit-plugins/auth-resolver/<file>` (în Master repo, NU Tester)
+
+**Hypothesis** (per L82 research-before-proposing — needs source read):
+- Plugin folosește generic CSS selectors care nu match-uiesc form-uri custom (ex: MA folosește `#email` / `#password` — plugin probabil caută `input[name=email]`)
+- Plugin nu handle-uiește NextAuth CSRF token flow
+- Plugin nu follow-uiește `successUrlPattern` redirect (jourey-audit IL face)
+
+**Action remaining** (Master tooling sesiune dedicată ~30-60min):
+1. Read `Master/mesh/audit-plugins/auth-resolver` source
+2. Verify Puppeteer flow vs MA login form selectors
+3. Add config-driven selector overrides (per-project hint)
+4. Re-run [7] pe MA → confirm 20→100 transition
+
+**Closes**: G-MA-009 PARTIAL în `MarketingAutomation/AUDIT_GAPS.md`. Tracked aici ca Tester-ecosystem item pentru visibility.
