@@ -407,7 +407,7 @@ export function registerE2EFullAudit(program: Command): void {
             step: 1, name: 'BFS Discovery',
             status: discoveredUrls.length > 1 ? 'PASS' : 'WARN',
             durationMs: Date.now() - s,
-            details: `Discovered ${discoveredUrls.length} page(s) in ${(Date.now() - s / 1000).toFixed(1)}s`,
+            details: `Discovered ${discoveredUrls.length} page(s) in ${((Date.now() - s) / 1000).toFixed(1)}s`,
           })
           console.info(`PASS (${discoveredUrls.length} pages)`)
         } catch (err) {
