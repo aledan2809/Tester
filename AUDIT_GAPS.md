@@ -90,6 +90,17 @@ Modificări la Tester pot cascada în orice consumator în mod silent dacă nu s
 
 ---
 
+### G-INFINITE-LOAD-UNAUTH — [P3] [known-limitation] `detectInfiniteLoading` runs without auth cookies
+
+- **Surfaced**: code review 2026-05-07
+- **Status**: OPEN — documented known limitation, low priority
+- **Mechanism**: `e2e-full-audit` Step 14 spawns a **separate** `BrowserCore` instance (`infiniteLoadBrowser`) without transferring cookies from the authenticated session established in Step 4. On pages behind auth, the spinner detector navigates as an unauthenticated user → gets redirected to `/login` → sees no spinners → reports PASS even if the real dashboard has infinite loading issues.
+- **Impact**: false PASS on Step 14 for sites that require login to see the loading states worth testing. Step 15 (forbidden-actions guard) intentionally uses unauthenticated state; Step 14 does NOT share that intent.
+- **Recommended fix**: pass authenticated cookies from the main `browser` instance to `detectInfiniteLoading` via `page.cookies()` → `ilPage.setCookie(...)` before each navigation. ~10 lines.
+- **Owner**: next `e2e-full-audit` enhancement session.
+
+---
+
 ### G-DEAD-SCRIPTS — [P3] [hygiene] Untracked .mjs debug scripts at repo root ✅ ELIMINATED 2026-05-07
 
 - **Surfaced**: `git status` after 2026-05-02 audit session shows ~17 untracked `.mjs` files at Tester repo root: `client-home-debug.mjs`, `eat-full-walk.mjs`, `eat-onboarding-screenshot.mjs`, `eat-photo-walk.mjs`, `full-ui-debug.mjs`, `sso-{final,firefox,fragment,iframe,meals,postmsg,race,real,strict,trace}-test.mjs`, `sw-killswitch-test.mjs`, `sso-final-test.mjs`.

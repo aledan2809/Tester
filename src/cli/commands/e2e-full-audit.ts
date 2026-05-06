@@ -55,7 +55,7 @@ interface Finding {
   evidencePath?: string
 }
 
-interface StepOutcome {
+export interface StepOutcome {
   step: number
   name: string
   status: 'PASS' | 'FAIL' | 'WARN' | 'SKIP'
@@ -70,7 +70,7 @@ interface RoleCredentials {
   password: string
 }
 
-interface E2EFullAuditResult {
+export interface E2EFullAuditResult {
   url: string
   startedAt: string
   completedAt: string
@@ -80,6 +80,28 @@ interface E2EFullAuditResult {
   verdict: 'PASS' | 'FAIL' | 'WARN'
   reportPath?: string
   markdownReportPath?: string
+}
+
+// ── Pure utilities (exported for unit testing) ────────────────────────────────
+
+/** Resolve the history directory from opts — exported so tests can verify the typeof guard. */
+export function resolveHistoryDir(opts: { history?: string | boolean }, outDir: string): string {
+  return typeof opts.history === 'string' ? path.resolve(opts.history) : path.join(outDir, 'history')
+}
+
+/** Compute pass/fail score from a steps array — exported so tests can assert formula. */
+export function computeScore(steps: StepOutcome[]): {
+  passCount: number; failCount: number; warnCount: number; skipCount: number
+  totalRun: number; overallScore: number; verdict: 'PASS' | 'FAIL' | 'WARN'
+} {
+  const passCount = steps.filter(s => s.status === 'PASS').length
+  const failCount = steps.filter(s => s.status === 'FAIL').length
+  const warnCount = steps.filter(s => s.status === 'WARN').length
+  const skipCount = steps.filter(s => s.status === 'SKIP').length
+  const totalRun = steps.filter(s => s.status !== 'SKIP').length
+  const overallScore = totalRun > 0 ? Math.round((passCount / totalRun) * 100) : 0
+  const verdict: 'PASS' | 'FAIL' | 'WARN' = failCount > 0 ? 'FAIL' : overallScore >= 80 ? 'PASS' : 'WARN'
+  return { passCount, failCount, warnCount, skipCount, totalRun, overallScore, verdict }
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -264,7 +286,7 @@ async function auditRole(
 }
 
 /** Write the final markdown report. */
-function writeMarkdownReport(result: E2EFullAuditResult, outDir: string): string {
+export function writeMarkdownReport(result: E2EFullAuditResult, outDir: string): string {
   const lines: string[] = []
   lines.push(`# E2E Full Audit Report`)
   lines.push(``)
@@ -978,7 +1000,7 @@ export function registerE2EFullAudit(program: Command): void {
       // ════════════════════════════════════════════════════════════════════
       {
         process.stdout.write('   Step 18/19 — Audit history comparison... ')
-        const historyDir = typeof opts.history === 'string' ? path.resolve(opts.history) : path.join(outDir, 'history')
+        const historyDir = resolveHistoryDir(opts, outDir)
         fs.mkdirSync(historyDir, { recursive: true })
         const s = Date.now()
         try {
@@ -1020,16 +1042,16 @@ export function registerE2EFullAudit(program: Command): void {
         }
       }
 
-      // ── Compute score ──────────────────────────────────────────────────
-      const passCount = steps.filter(s => s.status === 'PASS').length
-      const failCount = steps.filter(s => s.status === 'FAIL').length
-      const totalRun = steps.filter(s => s.status !== 'SKIP').length
-      const overallScore = totalRun > 0 ? Math.round((passCount / totalRun) * 100) : 0
-      const verdict = failCount > 0 ? 'FAIL' : overallScore >= 80 ? 'PASS' : 'WARN'
+      // ── Compute preliminary score (steps 1-18, used for report generation) ──
+      const preliminary = computeScore(steps)
       const completedAt = new Date().toISOString()
       const totalDurationMs = steps.reduce((acc, s) => acc + s.durationMs, 0)
 
-      const result: E2EFullAuditResult = { url, startedAt, completedAt, totalDurationMs, steps, overallScore, verdict }
+      const result: E2EFullAuditResult = {
+        url, startedAt, completedAt, totalDurationMs, steps,
+        overallScore: preliminary.overallScore,
+        verdict: preliminary.verdict,
+      }
 
       // ════════════════════════════════════════════════════════════════════
       // STEP 19 — Final Report (markdown with severity + evidence)
@@ -1047,24 +1069,31 @@ export function registerE2EFullAudit(program: Command): void {
           status: 'PASS', durationMs: Date.now() - s,
           details: `JSON: ${reportPath} | MD: ${mdPath}`,
         })
+        // Recompute with Step 19 included — history + summary use the final 19-step score
+        const final = computeScore(steps)
+        result.overallScore = final.overallScore
+        result.verdict = final.verdict
         console.info('PASS')
       }
 
       // ── Save to history (after Step 19 so history includes all 19 steps) ──
-      const historyDir = typeof opts.history === 'string' ? path.resolve(opts.history) : path.join(outDir, 'history')
-      fs.mkdirSync(historyDir, { recursive: true })
-      const historyFile = path.join(historyDir, `${new Date().toISOString().replace(/[:.]/g, '-')}.json`)
-      fs.writeFileSync(historyFile, JSON.stringify(result, null, 2))
+      if (opts.history !== false) {
+        const historyDir = resolveHistoryDir(opts, outDir)
+        fs.mkdirSync(historyDir, { recursive: true })
+        const historyFile = path.join(historyDir, `${new Date().toISOString().replace(/[:.]/g, '-')}.json`)
+        fs.writeFileSync(historyFile, JSON.stringify(result, null, 2))
+      }
 
       // ── Print summary ─────────────────────────────────────────────────
+      const { passCount, failCount, warnCount, skipCount } = computeScore(steps)
       if (opts.json) {
         console.info(JSON.stringify(result, null, 2))
       } else {
         console.info(`\n${'─'.repeat(70)}`)
-        console.info(`  E2E Full Audit — ${verdict} (${overallScore}/100)`)
+        console.info(`  E2E Full Audit — ${result.verdict} (${result.overallScore}/100)`)
         console.info(`  URL: ${url}`)
         console.info(`  Duration: ${(totalDurationMs / 1000).toFixed(1)}s`)
-        console.info(`  Steps: ${passCount} PASS / ${failCount} FAIL / ${steps.filter(s => s.status === 'WARN').length} WARN / ${steps.filter(s => s.status === 'SKIP').length} SKIP`)
+        console.info(`  Steps: ${passCount} PASS / ${failCount} FAIL / ${warnCount} WARN / ${skipCount} SKIP`)
         console.info(`  Report: ${result.reportPath}`)
         console.info(`  Markdown: ${result.markdownReportPath}`)
         if (failCount > 0) {
