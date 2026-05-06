@@ -1,6 +1,6 @@
 # @aledan007/tester — Capabilities Reference
 
-> **Version**: 0.3.0 (npm published) | Modules A–M: live pe VPS1, nepublicate încă  
+> **Version**: 0.4.0 (npm published) | Modules A–M + 19-step E2E Full Audit  
 > **Deploy**: `tester.techbiz.ae` (VPS1, port 3012)  
 > **Ultima actualizare**: 2026-05-07
 
@@ -324,8 +324,44 @@ Toate disponibile via `npx @aledan007/tester <command>` sau `node dist/cli/index
 | `run <url>` | Rulează audit complet: crawl → scenarii → assertions → report |
 | `audit <url>` | Audit rapid (fără crawl BFS complet) |
 | `audit-only` | Validare audit-only (fără browser) pe rapoarte existente |
-| `e2e-full-audit --url <url>` | **[NOU]** 9-step unified audit (Modules A–M) |
+| `e2e-full-audit --url <url>` | **19-step** unified audit — BFS discovery, real login, infinite-load, forbidden-guard, multi-role, responsive, audit-history comparison, markdown report |
 | `smoke <url>` | Smoke test rapid: navighează + verifică zero erori critice |
+
+**`e2e-full-audit` opțiuni complete:**
+```
+--url <url>          URL target (obligatoriu)
+--out <dir>          Director output (default: e2e-audit-results)
+--headed             Browser vizibil
+--email <email>      Email pentru login real (Step 4)
+--password <pw>      Parola pentru login real (Step 4)
+--login-url <url>    URL login custom (default: <url>/login)
+--roles <json>       Multi-role audit: '[{"name":"Admin","email":"...","password":"..."}]'
+--max-pages <n>      Max pages BFS discovery (default: 50)
+--history            Activează comparare cu audit anterior (Step 18)
+```
+
+**Cele 19 steps:**
+| # | Step | Ce face |
+|---|---|---|
+| 1 | BFS Discovery | crawlSite complet pe URL target |
+| 2 | Public Surface | Audit pe toate paginile publice descoperite |
+| 3 | Auth Audit | Logout flow, cookie attrs, token refresh |
+| 4 | Real Login | autoLogin cu credențiale reale |
+| 5 | Private Dashboard | Audit pagini private (gated pe loginSucceeded) |
+| 6 | Form Audit | Fuzz 12 type-confusion payloads pe toate formularele |
+| 7 | Console Errors | Agregare erori console din întreaga sesiune |
+| 8 | Network/API Errors | Agregare request-uri eșuate din întreaga sesiune |
+| 9 | Security Audit | Headers, CORS, routes neprotejate, mixed content |
+| 10 | A11y Scan | axe-core pe toate paginile descoperite |
+| 11 | Performance | Lighthouse/performance metrics per pagină |
+| 12 | Visual Screenshots | captureFullPage pe toate paginile |
+| 13 | Video + Trace | Playwright trace + video recording (dacă instalat) |
+| 14 | Infinite Loading | 13 spinner/skeleton selectors, 8s wait per pagină |
+| 15 | Forbidden Guard | 12 rute private testate fără autentificare |
+| 16 | Multi-Role Audit | Login + crawl separat per rol (--roles) |
+| 17 | Responsive Audit | desktop/tablet/mobile viewport, overflow detection |
+| 18 | History Comparison | Diff față de cel mai recent run anterior |
+| 19 | Final Report | JSON + Markdown cu severity/reproSteps/expected/actual/evidencePath |
 | `scope-check` | Verifică dacă modificările recente au scope bloat |
 | `check-test-coupling` | Detectează coupling tight între teste și implementare |
 
