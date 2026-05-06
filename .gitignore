@@ -7,3 +7,10 @@ reports/
 .DS_Store
 Thumbs.db
 docs-build/
+
+# Generated output directories
+.tester/
+journey-audit-results/
+
+# Root-level ad-hoc investigation scripts (one-off debug, not source)
+/*.mjs

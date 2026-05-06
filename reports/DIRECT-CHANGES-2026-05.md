@@ -227,3 +227,34 @@ Items NOT re-filed (already covered):
 | HTTP API | UNCHANGED |
 | dom.ts `auditHydrationAndCSP` logic | IDENTICAL — only handler lifecycle changed; no behavioral diff on first call |
 
+---
+
+## 2026-05-07 — G-DEAD-SCRIPTS — .gitignore hygiene (commit TBD)
+
+**Mode**: Direct, autonomous (user auth)
+**Scope**: `.gitignore` only — zero source code touched, zero consumer cascade
+
+### Changes
+
+| File | Change |
+|------|--------|
+| `.gitignore` | Added `/*.mjs` (root-only, anchored — `scripts/build-docs.mjs` unaffected), `.tester/`, `journey-audit-results/` |
+| `AUDIT_GAPS.md` | G-DEAD-SCRIPTS marked ELIMINATED |
+
+### Effect
+
+- 17 untracked root-level debug `.mjs` scripts now gitignored (not deleted — preserved on disk)
+- `.tester/` runtime temp dir gitignored
+- `journey-audit-results/` CLI output dir gitignored
+- `git status` shows 0 untracked files (was 19 dirs/files)
+
+### Risk profile
+
+| Area | Status |
+|------|--------|
+| Source code (`src/`) | UNTOUCHED |
+| Build artifacts (`dist/`) | UNTOUCHED |
+| HTTP API | UNTOUCHED |
+| npm package | UNTOUCHED |
+| Tracked scripts (`scripts/build-docs.mjs`) | UNTOUCHED — `/*.mjs` anchored to root only |
+

@@ -90,13 +90,12 @@ Modificări la Tester pot cascada în orice consumator în mod silent dacă nu s
 
 ---
 
-### G-DEAD-SCRIPTS — [P3] [hygiene] Untracked .mjs debug scripts at repo root
+### G-DEAD-SCRIPTS — [P3] [hygiene] Untracked .mjs debug scripts at repo root ✅ ELIMINATED 2026-05-07
 
 - **Surfaced**: `git status` after 2026-05-02 audit session shows ~17 untracked `.mjs` files at Tester repo root: `client-home-debug.mjs`, `eat-full-walk.mjs`, `eat-onboarding-screenshot.mjs`, `eat-photo-walk.mjs`, `full-ui-debug.mjs`, `sso-{final,firefox,fragment,iframe,meals,postmsg,race,real,strict,trace}-test.mjs`, `sw-killswitch-test.mjs`, `sso-final-test.mjs`.
-- **Status**: OPEN — untracked, undocumented; unclear which are still useful.
+- **Status**: ✅ **ELIMINATED 2026-05-07** — `.gitignore` extended with `/*.mjs` (root-only, safe: `scripts/build-docs.mjs` tracked and unaffected) + `.tester/` + `journey-audit-results/` for generated output dirs.
 - **Mechanism**: these are ad-hoc Playwright/Puppeteer scripts written during cross-project investigations (eat onboarding flow, SSO debug, killswitch testing). They're not part of the Tester library or test suite, but they live at repo root where they're discoverable by audit plugins (which may scan them and emit findings).
-- **Recommended fix**: move to `scripts/scratch/` or `scripts/investigations/` with a `.gitignore` rule, OR add brief docstring + commit them under `scripts/investigations/` for archival purposes, OR delete the obsolete ones. Decision: defer until a Tester hygiene session — not blocking 0.3.0.
-- **Owner**: next Tester session.
+- **Fix applied**: `.gitignore` additions — `/*.mjs` anchored to root (doesn't match `scripts/*.mjs`), `.tester/` (runtime temp dir), `journey-audit-results/` (CLI output). Scripts remain on disk (untracked + ignored); no deletion — preserves any in-flight investigation state.
 
 ---
 
