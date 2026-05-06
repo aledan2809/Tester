@@ -1031,12 +1031,6 @@ export function registerE2EFullAudit(program: Command): void {
 
       const result: E2EFullAuditResult = { url, startedAt, completedAt, totalDurationMs, steps, overallScore, verdict }
 
-      // ── Save to history ────────────────────────────────────────────────
-      const historyDir = opts.history ? path.resolve(opts.history) : path.join(outDir, 'history')
-      fs.mkdirSync(historyDir, { recursive: true })
-      const historyFile = path.join(historyDir, `${new Date().toISOString().replace(/[:.]/g, '-')}.json`)
-      fs.writeFileSync(historyFile, JSON.stringify(result, null, 2))
-
       // ════════════════════════════════════════════════════════════════════
       // STEP 19 — Final Report (markdown with severity + evidence)
       // ════════════════════════════════════════════════════════════════════
@@ -1055,6 +1049,12 @@ export function registerE2EFullAudit(program: Command): void {
         })
         console.info('PASS')
       }
+
+      // ── Save to history (after Step 19 so history includes all 19 steps) ──
+      const historyDir = typeof opts.history === 'string' ? path.resolve(opts.history) : path.join(outDir, 'history')
+      fs.mkdirSync(historyDir, { recursive: true })
+      const historyFile = path.join(historyDir, `${new Date().toISOString().replace(/[:.]/g, '-')}.json`)
+      fs.writeFileSync(historyFile, JSON.stringify(result, null, 2))
 
       // ── Print summary ─────────────────────────────────────────────────
       if (opts.json) {
