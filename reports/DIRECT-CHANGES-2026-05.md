@@ -301,3 +301,32 @@ Items NOT re-filed (already covered):
 | HTTP API | UNCHANGED |
 | `e2e-full-audit` history semantics | FIXED (history now complete 19-step snapshot) |
 
+
+---
+
+## 2026-05-07 — review fixes: export utilities + 21 unit tests + score recompute + historyDir dedup
+
+**Mode**: Direct, propose-confirm-apply (full session authorization)
+**Trigger**: /review on 9 session commits returned 4 findings; user authorized all fixes
+
+**Commits**:
+- `281413f` — test(e2e-full-audit): export pure utilities + 21 unit tests, fix score after Step 19
+- `1912d41` — chore(release): bump to 0.4.2
+
+**Fixes applied** (4 findings from /review):
+1. [MEDIUM] Zero unit tests — created `tests/e2e-full-audit.test.ts` (21 cases for `resolveHistoryDir`, `computeScore`, `writeMarkdownReport`); 591/591 full suite pass
+2. [LOW] `historyDir` duplicated — extracted `resolveHistoryDir()` replaces both occurrences (Step 18 inline + outer save block); 1-line implementation, 5 test cases including Commander boolean edge case
+3. [COSMETIC] `overallScore` on 18 steps — recomputes `computeScore(steps)` after Step 19 push and writes primitives back to `result.overallScore`/`result.verdict` before history save + summary
+4. [LOW] `detectInfiniteLoading` auth gap — documented as `G-INFINITE-LOAD-UNAUTH` [P3] in AUDIT_GAPS.md (fix deferred; cookie pass-through is ~10 lines, next e2e-full-audit session)
+
+**Types exported**: `StepOutcome`, `E2EFullAuditResult`, `resolveHistoryDir`, `computeScore`, `writeMarkdownReport`
+
+**Published**: `@aledan007/tester@0.4.2` → npm registry ✅
+
+| Component | Status |
+|---|---|
+| Unit test coverage (new file) | ADDED — 21 tests |
+| `resolveHistoryDir` dedup | FIXED |
+| `overallScore` after Step 19 | FIXED |
+| `detectInfiniteLoading` auth gap | DOCUMENTED (P3 deferred) |
+| Full suite | 591/591 PASS |
