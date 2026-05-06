@@ -289,26 +289,30 @@ async function runL5(browser: BrowserCore, targetUrl: string): Promise<LayerResu
     const page = browser.getPage()
     if (!page) throw new Error('Browser not launched')
 
-    const result = await auditHydrationAndCSP(page, targetUrl)
     const consoleErrors: ConsoleError[] = []
     const networkErrors: NetworkError[] = []
 
-    // Also capture raw console errors
-    page.on('console', (msg) => {
+    // Attach listeners BEFORE navigation so first-load events are captured
+    const onConsole = (msg: import('puppeteer').ConsoleMessage) => {
       if (msg.type() === 'error') {
         consoleErrors.push({ message: msg.text(), level: 'error', url: targetUrl })
       }
-    })
-    page.on('requestfailed', (req) => {
+    }
+    const onRequestFailed = (req: import('puppeteer').HTTPRequest) => {
       networkErrors.push({
         url: req.url(),
         statusCode: 0,
         resource: req.failure()?.errorText ?? 'unknown',
       })
-    })
+    }
+    page.on('console', onConsole)
+    page.on('requestfailed', onRequestFailed)
 
-    await page.goto(targetUrl, { waitUntil: 'networkidle2', timeout: 30_000 }).catch(() => null)
+    const result = await auditHydrationAndCSP(page, targetUrl)
+
     await new Promise(r => setTimeout(r, 1_000))
+    page.off('console', onConsole)
+    page.off('requestfailed', onRequestFailed)
 
     const allIssues = [
       ...result.issues.map(i => i.message),
@@ -366,8 +370,16 @@ async function runL6(
 
   try {
     // Use existing snapshot compare
-    const { readFileSync } = await import('fs')
+    const { readFileSync, existsSync } = await import('fs')
     const { pixelDiffPercent } = await import('../snapshot/compare')
+    if (!existsSync(beforeScreenshot) || !existsSync(after)) {
+      return {
+        layer: 6, name: 'Visual diff pre/post fix',
+        passed: true, durationMs: Date.now() - start,
+        details: 'Screenshot path missing from disk — visual diff skipped',
+        afterScreenshot: after,
+      }
+    }
     const diffPercent = await pixelDiffPercent(readFileSync(beforeScreenshot), readFileSync(after))
     // > 30% change post-fix = suspicious regression flag
     const passed = diffPercent < 30

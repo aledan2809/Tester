@@ -226,14 +226,15 @@ export async function auditMixedContent(
 
   const mixedResources: string[] = []
 
-  page.on('request', (req) => {
+  const onRequest = (req: import('puppeteer').HTTPRequest) => {
     const url = req.url()
     if (url.startsWith('http://') && !url.startsWith('http://localhost')) {
       mixedResources.push(url)
     }
-  })
-
+  }
+  page.on('request', onRequest)
   await page.goto(targetUrl, { waitUntil: 'networkidle2', timeout: 30_000 }).catch(() => null)
+  page.off('request', onRequest)
 
   for (const url of mixedResources) {
     findings.push({
