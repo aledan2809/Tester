@@ -228,9 +228,10 @@ export async function auditHydrationAndCSP(
   })
 
   const consoleMessages: { type: string; text: string }[] = []
-  page.on('console', (msg) => {
+  const onConsole = (msg: import('puppeteer').ConsoleMessage) => {
     consoleMessages.push({ type: msg.type(), text: msg.text() })
-  })
+  }
+  page.on('console', onConsole)
 
   const response = await page.goto(targetUrl, { waitUntil: 'networkidle2', timeout: 30_000 }).catch(() => null)
 
@@ -265,6 +266,8 @@ export async function auditHydrationAndCSP(
       issues.push({ type: 'uncaught_error', message: text.slice(0, 300) })
     }
   }
+
+  page.off('console', onConsole)
 
   return {
     passed: issues.filter(i => i.type !== 'csp_missing').length === 0,

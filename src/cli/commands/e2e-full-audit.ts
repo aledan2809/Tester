@@ -342,7 +342,7 @@ export function registerE2EFullAudit(program: Command): void {
     .option('--no-trace', 'Skip Playwright trace recording')
     .option('--no-visual', 'Skip visual baseline diff')
     .option('--baseline <path>', 'Path to baseline screenshot for visual diff')
-    .option('--history <dir>', 'Directory for audit history (enables Step 18 comparison)')
+    .option('--history [dir]', 'Enable audit history comparison; optional custom directory (default: <out>/history)')
     .option('--out <dir>', 'Output directory for report and artifacts', './e2e-audit-results')
     .option('--json', 'Output results as JSON to stdout')
     .action(async (opts) => {
@@ -839,7 +839,7 @@ export function registerE2EFullAudit(program: Command): void {
       // STEP 14 — Infinite Loading Detector
       // ════════════════════════════════════════════════════════════════════
       {
-        process.stdout.write('   Step 14/19 — Infinite loading detector (8s wait)... ')
+        process.stdout.write(`   Step 14/19 — Infinite loading detector (8s × ${Math.min(discoveredUrls.length, 8)} pages, ~${Math.min(discoveredUrls.length, 8) * 9}s)... `)
         const s = Date.now()
         try {
           const infiniteLoadBrowser = new BrowserCore({ headless: !opts.headed })
@@ -978,7 +978,7 @@ export function registerE2EFullAudit(program: Command): void {
       // ════════════════════════════════════════════════════════════════════
       {
         process.stdout.write('   Step 18/19 — Audit history comparison... ')
-        const historyDir = opts.history ? path.resolve(opts.history) : path.join(outDir, 'history')
+        const historyDir = typeof opts.history === 'string' ? path.resolve(opts.history) : path.join(outDir, 'history')
         fs.mkdirSync(historyDir, { recursive: true })
         const s = Date.now()
         try {
