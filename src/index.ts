@@ -257,3 +257,36 @@ export { checkCoupling } from './scope-check/coupling'
 export type { CouplingCheckInput, CouplingCheckResult } from './scope-check/coupling'
 export { runSmoke, formatSmokeMarkdown } from './smoke/runner'
 export type { SmokeInput, SmokeResult } from './smoke/runner'
+
+// ─── Upgrade Modules (A–M) ────────────────────────────────────
+// Module A — Project Registry
+export { ProjectRegistry } from './registry/store'
+export type { ProjectEntry } from './registry/store'
+
+// Module B — Credentials Manager
+export { CredentialsManager } from './credentials/store'
+export type { CredentialEntry, CredentialRole } from './credentials/store'
+
+// Module F — Auth Audit
+export { runAuthAudit, auditCookieAttributes, auditLogout, auditSessionRefresh } from './auth/audit'
+export type { AuthAuditResult, AuthAuditOptions, AuthFinding, CookieAuditResult } from './auth/audit'
+
+// Module G + J — Loading Timer, Hydration, CSP (appended to dom.ts)
+export { auditLoadTiming, auditHydrationAndCSP } from './assertions/dom'
+export type { LoadTimingResult, HydrationAuditResult, HydrationIssue } from './assertions/dom'
+
+// Module H — Form Audit
+export { runFormAudit, fuzzFormFields, auditDuplicateSubmit, safeTestData, TYPE_CONFUSION_PAYLOADS } from './assertions/forms'
+export type { FormAuditResult, FormAuditOptions, FormFinding, FormFuzzResult, FuzzPayload } from './assertions/forms'
+
+// Module I — Security Assertions
+export { runSecurityAudit, auditSecurityHeaders, auditUnprotectedRoutes, auditApiContentType, auditMixedContent, auditCors } from './assertions/security'
+export type { SecurityAuditResult, SecurityAuditOptions, SecurityFinding } from './assertions/security'
+
+// Module K — Playwright Recorder
+export { startRecording, recordUrl, traceViewerUrl } from './playwright/recorder'
+export type { RecordingOptions, RecordingSession, RecordingArtifacts } from './playwright/recorder'
+
+// Module M — Post-Fix Verification Gate
+export { runVerifyFixGate } from './verify/gate'
+export type { VerifyFixInput, VerifyFixResult, LayerResult } from './verify/gate'

@@ -62,11 +62,10 @@ Modificări la Tester pot cascada în orice consumator în mod silent dacă nu s
 ### G-API-START-EMPTY-BODY — [P2] [hardening] POST /api/test/start crashes 500 on empty body
 
 - **Surfaced**: deferred from G-LANDING-001 (2026-05-02). Audit run by [7] tooling caught a pre-existing 500 on empty-body POST.
-- **Status**: OPEN
+- **Status**: ✅ **ELIMINATED 2026-05-06** (commit pending — Modules A–M upgrade session) — `src/server/index.ts:86` now guards with `const body = (req.body ?? {}) as {...}` before destructuring. All POST handlers (start, auth-login, verify-fix) updated.
 - **Mechanism**: `src/server/index.ts:86` destructures `const { url, config, callbackUrl } = req.body as ...`. If the request has no body (no `Content-Type` or empty payload), Express body-parser leaves `req.body` undefined → destructuring throws TypeError → unhandled rejection bubbles to default 500 with stack trace exposed.
 - **Impact**: external probes (uptime monitors, security scanners, fuzz tools) hitting the endpoint without a JSON body get a 500 instead of a clean 400 + structured error. Slight info leak (stack trace if NODE_ENV != production).
-- **Recommended fix** (~5 lines): guard `req.body` before destructure → `const body = (req.body || {}) as ...; const { url, config, callbackUrl } = body; if (!url) res.status(400).json({error:'url is required'})`. Same pattern for any other POST handlers that destructure body.
-- **Owner**: deferred to next Tester session; not blocking 0.3.0 publish.
+- **Fix applied**: guard `req.body` → `const body = (req.body ?? {}) as ...; const { url, config, callbackUrl } = body; if (!url) res.status(400).json({error:'url is required'})`. Same pattern applied to all other POST handlers.
 
 ---
 
@@ -233,3 +232,4 @@ Modificări la Tester pot cascada în orice consumator în mod silent dacă nu s
 | 2026-04-25 | Added + Resolved **G-CU-001** — Computer-Use fallback for journey-audit Playwright failures. 4 files added (ai-computer + fallback + smoke + spec edit), 11/11 vitest, TS clean. Default flag off; live validation deferred (no Anthropic credit). |
 | 2026-04-27 | Resolved **G-JOURNEY-002** — Configurable `successUrlTimeout` for journey-audit login (default 15s → 30s, optional field per-config). 3 surgical edits in spec + companion config update on 4pro-eat. TS clean, vitest 550/550. |
 | 2026-04-28 | Created `Tester/.journey-audit.json` (1 new file, no source code touched) for Master ML2 Wave 2 [8] AVE batch. Audit ran 1 OK + 1 EMPTY (Home + /api/health). User confirm "confirm Tester Journey (UI real)". Logged in DIRECT-CHANGES-2026-04. New OPEN: **G-JOURNEY-003** below. |
+| 2026-05-06 | **Modules A–M upgrade** (Direct mode, NO-TOUCH CRITIC §2d waiver, propose-confirm-apply per session). Delivered: **A** `ProjectRegistry` (SQLite multi-project store), **B** `CredentialsManager` (AES-256-GCM encrypted, role-based), **F** Auth Audit (cookies, logout, private routes, session refresh), **G** Loading Timer (CRITICAL >15s auto-flag), **H** Form Audit (type-confusion fuzz ×12 payloads, duplicate-submit), **I** Security Assertions (header uniqueness, 401-without-auth, HTML-vs-JSON, CORS, mixed content), **J** Hydration+CSP (evaluateOnNewDocument listener), **K** Playwright Recorder (video+trace, dynamic import), **M** Post-Fix Verification Gate (6 layers: re-run, regression smoke, tsc+eslint, security scan, console+network, visual diff). New CLI: `tester e2e-full-audit --url <URL>` (9-step unified: load→security→auth→forms→console→a11y→perf→visual→trace). New HTTP endpoint: `POST /api/test/verify-fix`. **G-API-START-EMPTY-BODY ELIMINATED** (body null-guard). Build: CJS+ESM+DTS clean. Committed & pushed with DIRECT-CHANGES-2026-05 entry. |

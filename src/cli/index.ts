@@ -54,6 +54,7 @@ import { pipelineStatsCommand } from './commands/pipeline-stats'
 import { flakeReportCommand } from './commands/flake-report'
 import { doneCommand, undoneCommand, statusCommand } from './commands/done'
 import { inventoryCommand } from './commands/inventory'
+import { registerE2EFullAudit } from './commands/e2e-full-audit'
 
 const program = new Command()
 
@@ -582,5 +583,8 @@ program
   .option('--markdown', 'Emit markdown report', false)
   .option('--json', 'Emit JSON', false)
   .action((url, opts) => smokeCommand(url, opts))
+
+// ─── e2e-full-audit (9-step unified audit) ────────────────
+registerE2EFullAudit(program)
 
 program.parse()

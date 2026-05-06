@@ -15,6 +15,7 @@ import { authMiddleware, requestLogger, createSession } from './middleware'
 import { autoLogin } from '../auth/login'
 import { BrowserCore } from '../core/browser'
 import { JobStorage, type Job as StoredJob } from './storage'
+import { runVerifyFixGate } from '../verify/gate'
 
 // ─── Types ──────────────────────────────────────────────
 
@@ -83,7 +84,8 @@ app.get('/api/health', (_req, res) => {
 
 /** Start a new test */
 app.post('/api/test/start', (req, res) => {
-  const { url, config, callbackUrl } = req.body as { url?: string; config?: Partial<TesterConfig>; callbackUrl?: string }
+  const body = (req.body ?? {}) as { url?: string; config?: Partial<TesterConfig>; callbackUrl?: string }
+  const { url, config, callbackUrl } = body
 
   if (!url) {
     res.status(400).json({ error: 'url is required' })
@@ -236,7 +238,7 @@ app.get('/api/test/:id/report', (req, res) => {
 
 /** Login endpoint - authenticates with target site and returns session token */
 app.post('/api/auth/login', async (req, res) => {
-  const { url, username, password, loginUrl } = req.body as {
+  const { url, username, password, loginUrl } = (req.body ?? {}) as {
     url?: string
     username?: string
     password?: string
@@ -304,6 +306,46 @@ app.post('/api/auth/login', async (req, res) => {
 /** Validate session endpoint */
 app.get('/api/auth/validate', (_req, res) => {
   res.json({ valid: true, message: 'Session is valid' })
+})
+
+/**
+ * POST /api/test/verify-fix — Module M: Post-Fix Verification Gate
+ * Called by checker/TWG after Website Guru returns APPLIED.
+ * Runs 6 verification layers; returns verdict RESOLVED / FIX_INCOMPLETE / REGRESSION_DETECTED.
+ */
+app.post('/api/test/verify-fix', async (req, res) => {
+  const body = (req.body ?? {}) as {
+    targetUrl?: string
+    originalScenario?: unknown
+    smokeRoutes?: string[]
+    beforeScreenshot?: string
+    maxLayer?: number
+  }
+
+  if (!body.targetUrl) {
+    res.status(400).json({ error: 'targetUrl is required' })
+    return
+  }
+
+  try {
+    const result = await runVerifyFixGate({
+      targetUrl: body.targetUrl,
+      originalScenario: body.originalScenario as Parameters<typeof runVerifyFixGate>[0]['originalScenario'],
+      smokeRoutes: body.smokeRoutes,
+      beforeScreenshot: body.beforeScreenshot,
+      config: {
+        headless: true,
+        anthropicApiKey: process.env.ANTHROPIC_API_KEY,
+        maxLayer: body.maxLayer ?? 6,
+      },
+    })
+    res.json(result)
+  } catch (err) {
+    res.status(500).json({
+      error: err instanceof Error ? err.message : 'Verification gate error',
+      verdict: 'ERROR',
+    })
+  }
 })
 
 // ─── Test Runner ────────────────────────────────────────
