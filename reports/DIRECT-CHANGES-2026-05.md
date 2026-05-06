@@ -258,3 +258,46 @@ Items NOT re-filed (already covered):
 | npm package | UNTOUCHED |
 | Tracked scripts (`scripts/build-docs.mjs`) | UNTOUCHED — `/*.mjs` anchored to root only |
 
+
+---
+
+## 2026-05-07 — fix(e2e-full-audit): historyDir string guard + history save after Step 19 (commit `ba4ea9e`) — 0.4.1 release
+
+**Mode**: Direct, autonomous (explicit user continuation from review recommendations)
+**Scope**: 2 surgical fixes in `src/cli/commands/e2e-full-audit.ts` + version bump + npm publish + VPS1 deploy
+
+### Changes
+
+| File | Change |
+|------|--------|
+| `src/cli/commands/e2e-full-audit.ts` | Outer `historyDir` block (line 1035): `opts.history ? path.resolve(...)` → `typeof opts.history === 'string' ? path.resolve(...)` |
+| `src/cli/commands/e2e-full-audit.ts` | Moved history save block to AFTER Step 19 `steps.push()` — history JSON now includes all 19 steps |
+| `package.json` | 0.4.0 → 0.4.1 |
+
+### Why
+
+**Bug 1** (`typeof` guard): Commander `.option('--history [dir]', ...)` sets `opts.history = true` (boolean) when flag given without value. Previous truthy `opts.history ?` passed `true` to `path.resolve()` → writes history to `cwd/true/`. Step 18's own `historyDir` already had the correct guard (line 981); outer block was inconsistent.
+
+**Bug 2** (move after Step 19): `result.steps` is a live reference to the `steps[]` array. History was serialized at line 1038, before Step 19 was pushed at line 1051. Consequence: history snapshots were always missing Step 19, so next-run delta comparison treated Step 19 as perpetually new.
+
+### Verification
+
+| Check | Result |
+|-------|--------|
+| `npm run build` (tsup CJS+ESM+DTS) | clean, pre-existing playwright-core warnings only |
+| `git push origin master` | pushed `c049c04..ba4ea9e` |
+| VPS1 `git pull origin master` + `pm2 restart tester` | `version 0.4.1 online` (PM2 id 5) |
+| L41 cascade | tester.techbiz.ae/ 200, cabinet 200, pro 200, guru 200, ma 200 |
+| `npm publish` | `@aledan007/tester@0.4.1` published to registry |
+
+### Risk profile
+
+| Area | Status |
+|------|--------|
+| BFS crawler | UNCHANGED |
+| Reporter format | UNCHANGED |
+| Rate limiting | UNCHANGED |
+| Journey-audit | UNCHANGED |
+| HTTP API | UNCHANGED |
+| `e2e-full-audit` history semantics | FIXED (history now complete 19-step snapshot) |
+
