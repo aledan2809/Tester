@@ -106,11 +106,14 @@ export function computeScore(steps: StepOutcome[]): {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-/** Detect persistent loading spinners on a page after waiting waitMs. */
+/** Detect persistent loading spinners on a page after waiting waitMs.
+ *  @param authCookies - cookies from the authenticated session (Step 4); injected before each
+ *    navigation so auth-gated pages load correctly instead of redirecting to /login. */
 async function detectInfiniteLoading(
   page: import('puppeteer').Page,
   pageUrl: string,
   waitMs = 8000,
+  authCookies: import('puppeteer').CookieParam[] = [],
 ): Promise<{ hasInfiniteLoad: boolean; selectors: string[] }> {
   const SPINNER_SELECTORS = [
     '[aria-busy="true"]',
@@ -128,6 +131,7 @@ async function detectInfiniteLoading(
     '[class*="shimmer"]',
   ]
   try {
+    if (authCookies.length > 0) await page.setCookie(...authCookies)
     await page.goto(pageUrl, { waitUntil: 'networkidle2', timeout: 30_000 })
     await new Promise(r => setTimeout(r, waitMs))
     const found: string[] = []
@@ -855,6 +859,13 @@ export function registerE2EFullAudit(program: Command): void {
         }
       }
 
+      // Capture auth cookies before closing the main browser so Step 14 can
+      // navigate auth-gated pages without being redirected to /login.
+      let capturedAuthCookies: import('puppeteer').CookieParam[] = []
+      if (loginSucceeded) {
+        try { capturedAuthCookies = await page.cookies() as import('puppeteer').CookieParam[] } catch { /* best-effort */ }
+      }
+
       await browser.close().catch(() => null)
 
       // ════════════════════════════════════════════════════════════════════
@@ -870,7 +881,7 @@ export function registerE2EFullAudit(program: Command): void {
           const pagesWithInfiniteLoad: string[] = []
 
           for (const pageUrl of discoveredUrls.slice(0, 8)) {
-            const result = await detectInfiniteLoading(ilPage, pageUrl)
+            const result = await detectInfiniteLoading(ilPage, pageUrl, 8000, capturedAuthCookies)
             if (result.hasInfiniteLoad) {
               pagesWithInfiniteLoad.push(`${pageUrl} (selectors: ${result.selectors.join(', ')})`)
             }
