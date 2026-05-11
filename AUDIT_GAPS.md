@@ -13,9 +13,10 @@
 - 2026-04-14 — `Reports/E2E_AUDIT_2026-04-14.md` (15KB)
 - 2026-04-11 — `Reports/STRATEGY_VS_IMPLEMENTATION_AUDIT_2026-04-11.md` (20KB) + `STRATEGY_GAPS_FIXED_2026-04-11.md` + `FINAL_100_PERCENT_2026-04-11.md`
 
-**Last fix commits** (relevant Direct-mode changes — see `Reports/DIRECT-CHANGES-2026-04.md` for full ledger):
-- 2026-04-22 — journey-audit CLI patch (no-auth config support, 4 surgical edits) per L39
-- 2026-04-25 — `Reports/DIRECT-CHANGES-2026-04.md` last entries
+**Last fix commits** (relevant Direct-mode changes — see `Reports/DIRECT-CHANGES-2026-05.md` for full ledger):
+- 2026-05-11 — T-004 AI Failure Classifier (commit `acba878`) — 7 new files, 691/691 tests pass
+- 2026-05-11 — T-003 Selector Linter ledger entry (commit `a71bf3e`)
+- 2026-05-11 — T-003 Selector Linter (commit `585890c`) — 7 files, 668/668 tests pass
 
 ---
 

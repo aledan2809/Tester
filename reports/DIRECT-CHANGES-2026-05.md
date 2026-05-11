@@ -382,3 +382,52 @@ Items NOT re-filed (already covered):
 **Risk**: LOW — pure addition to parameter list + defensive page.setCookie call. No breaking changes to public CLI/API surface.
 
 **Ledger closed**: Status = LIVE ✅
+
+---
+
+## 2026-05-11 — T-004 AI Failure Classifier (commit `acba878`)
+
+**Mode**: Direct, propose-confirm-apply + /review applied before commit
+**Scope**: 7 new files + 1 modified (`src/cli/index.ts`) + 1 modified (`src/index.ts`)
+
+### Deliverables
+
+| File | Type | Description |
+|------|------|-------------|
+| `src/classifier/failure-context.ts` | NEW | `FailureContext` interface + `NetworkEntry` interface + `buildFailureContext()` with 4096-char domSnapshot truncation |
+| `src/classifier/cache.ts` | NEW | `ClassifierCache` — SQLite WAL cache, sha256 signature keyed on assertion+pageUrl+domSnapshot[:200]; TTL-aware get/set/prune; prepared statements cached as instance fields (M-1) |
+| `src/classifier/classifier.ts` | NEW | `classifyFailure()` — Haiku 4.5 primary / Sonnet 4.6 fallback; forced `tool_use` output; prompt injection mitigated with UNTRUSTED delimiters (C-3); graceful FLAKE fallback when no API key |
+| `src/classifier/index.ts` | NEW | Barrel re-export of all public types and functions |
+| `src/cli/commands/classify.ts` | NEW | `tester classify <report.json>` — exit 0/1/2; --json --out --force-refresh --model |
+| `src/cli/index.ts` | MODIFIED | +classify command registration |
+| `src/index.ts` | MODIFIED | +classifier barrel re-exports |
+| `tests/classifier/classifier.test.ts` | NEW | 23 vitest tests (buildFailureContext × 4, ClassifierCache × 9, classifyFailure × 5, classifyCommand × 5) |
+
+### Review findings applied (before commit)
+
+| ID | Severity | Fix |
+|----|----------|-----|
+| C-1 | CRITICAL | TS types on `callAI` + `attemptCall` — already present in implementation |
+| C-3 | CRITICAL | Prompt injection: wrapped `domSnapshot`, `consoleLogs`, `networkTail` in `<<<UNTRUSTED_START>>>` / `<<<UNTRUSTED_END>>>` delimiters with system instruction |
+| M-1 | MEDIUM | `stmtGet`/`stmtSet`/`stmtDelete`/`stmtPrune` compiled once in constructor as instance fields (was per-call `.prepare()`) |
+| M-2 | MEDIUM | `classifyCommand` opts already typed as `ClassifyCommandOptions` — no change needed |
+| M-3 | MEDIUM | `tokensUsed` excluded from `cache.set()` Omit type (`…| 'tokensUsed'`) — live-call metric, not a cacheable property |
+| M-4 | LOW | SHA-256 collision probability documented in `ClassifierCache.signature()` JSDoc |
+
+### Verification
+
+| Check | Result |
+|-------|--------|
+| `npx vitest run` (full suite) | 691/691 pass (62 test files) |
+| `npm run build` (tsup CJS+ESM+DTS) | clean |
+| Staged scope `--shortstat` | 8 files, +891 insertions |
+
+### Risk profile
+
+| Area | Status |
+|------|--------|
+| Existing assertion engine, BFS crawler, reporter | UNCHANGED |
+| HTTP API, journey-audit, e2e-full-audit | UNCHANGED |
+| `src/cli/index.ts` | +1 import + 1 command registration (additive) |
+| `src/index.ts` | +classifier barrel exports (additive) |
+| New `src/classifier/` + `tests/classifier/` | NEW — no consumers yet; SQLite DB written to `<cwd>/.tester/classif-cache.db` |
