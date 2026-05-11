@@ -14,6 +14,7 @@
 - 2026-04-11 — `Reports/STRATEGY_VS_IMPLEMENTATION_AUDIT_2026-04-11.md` (20KB) + `STRATEGY_GAPS_FIXED_2026-04-11.md` + `FINAL_100_PERCENT_2026-04-11.md`
 
 **Last fix commits** (relevant Direct-mode changes — see `Reports/DIRECT-CHANGES-2026-05.md` for full ledger):
+- 2026-05-11 — review fix: ScenarioSession.login() Set-Cookie capture + resolveDbUrl partial interpolation (commit `6528be3`) — 849/849 tests pass; published @aledan007/tester@0.4.4
 - 2026-05-11 — T-005 Prisma spec generator (commit `c0a6a32`) — 14 CRUD scenarios, 691/691 tests pass
 - 2026-05-11 — T-004 AI Failure Classifier (commit `acba878`) — 7 new files, 691/691 tests pass
 - 2026-05-11 — T-003 Selector Linter ledger entry (commit `a71bf3e`)
