@@ -330,3 +330,55 @@ Items NOT re-filed (already covered):
 | `overallScore` after Step 19 | FIXED |
 | `detectInfiniteLoading` auth gap | DOCUMENTED (P3 deferred) |
 | Full suite | 591/591 PASS |
+
+## 2026-05-11 — T-003 selector linter (commit `585890c`)
+
+**Mode**: Direct, propose-confirm-apply
+**Scope**: 6 new files + 1 modified (`src/cli/index.ts`)
+
+### Deliverables
+
+| File | Type | Description |
+|------|------|-------------|
+| `src/linter/rules.ts` | NEW | 4 rule ID constants + `isStableSelector`/`hasFragileChars`/`hasInvalidCssChars`/`snippetAt` helpers |
+| `src/linter/test-linter.ts` | NEW | ts-morph AST walker for `.spec`/`.test` files — 4 rules (fragile-query-selector, text-content-primary, short-timeout-auth, invalid-css-chars) |
+| `src/linter/source-scanner.ts` | NEW | JSX/TSX walker flagging `<input>` without `name`/`data-testid`; `<button onClick>` in `.map()` without `data-testid`; `formatSelectorGapsMd()` |
+| `src/cli/commands/lint.ts` | NEW | `tester lint <dir>` CLI handler (exit 0/1/2) |
+| `src/cli/commands/scan-selectors.ts` | NEW | `tester scan-selectors <dir>` CLI handler, writes `SELECTOR_GAPS.md` |
+| `src/cli/index.ts` | MODIFIED | +2 imports + `lint` + `scan-selectors` command registrations |
+| `tests/linter/lint.test.ts` | NEW | 32 vitest tests (rule helpers + lintFile fixtures + scanSourceFile + formatMd + CLI exit codes) |
+
+### Verification
+
+| Check | Result |
+|-------|--------|
+| `npx vitest run` (full suite) | 668/668 pass (61 test files) |
+| `npm run build` (tsup CJS+ESM+DTS) | clean |
+| Staged scope `--shortstat` | 7 files, +977 insertions |
+
+### Risk profile
+
+| Area | Status |
+|------|--------|
+| Existing assertion engine, BFS crawler, reporter | UNCHANGED |
+| HTTP API, journey-audit, e2e-full-audit | UNCHANGED |
+| `src/cli/index.ts` | +2 imports + 2 command registrations (additive) |
+| New `src/linter/` + `tests/linter/` | NEW — no consumers yet |
+
+---
+
+## 2026-05-07 — Auth cookies for Step 14 infinite-loading check (af9ee33)
+
+**Scope**: 1 file (`src/cli/commands/e2e-full-audit.ts`), +13 lines
+
+**What**: Step 4 (login) now captures auth cookies before closing the first browser session. Step 14 (infinite loading detection) injects those cookies before navigating to auth-gated pages.
+
+**Why**: Without cookies, auth-gated pages redirect to /login (HTTP 302), which masks real infinite-loading spinners and produces false-negatives. Now Step 14 can correctly detect loading issues on authenticated routes.
+
+**Impact**: E2E audit Step 14 scope expands from public pages to auth-gated pages (for projects with working login auth). Backward-compat: if no login or cookies fail to capture, IL check silently proceeds (graceful degradation).
+
+**Tests**: 21/21 vitest cases pass (existing test suite; no new tests added — IL detection already stubbed with mock page.goto).
+
+**Risk**: LOW — pure addition to parameter list + defensive page.setCookie call. No breaking changes to public CLI/API surface.
+
+**Ledger closed**: Status = LIVE ✅

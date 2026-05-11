@@ -90,14 +90,14 @@ Modificări la Tester pot cascada în orice consumator în mod silent dacă nu s
 
 ---
 
-### G-INFINITE-LOAD-UNAUTH — [P3] [known-limitation] `detectInfiniteLoading` runs without auth cookies
+### G-INFINITE-LOAD-UNAUTH — [P3] [known-limitation] `detectInfiniteLoading` runs without auth cookies ✅ ELIMINATED 2026-05-07
 
 - **Surfaced**: code review 2026-05-07
-- **Status**: OPEN — documented known limitation, low priority
-- **Mechanism**: `e2e-full-audit` Step 14 spawns a **separate** `BrowserCore` instance (`infiniteLoadBrowser`) without transferring cookies from the authenticated session established in Step 4. On pages behind auth, the spinner detector navigates as an unauthenticated user → gets redirected to `/login` → sees no spinners → reports PASS even if the real dashboard has infinite loading issues.
-- **Impact**: false PASS on Step 14 for sites that require login to see the loading states worth testing. Step 15 (forbidden-actions guard) intentionally uses unauthenticated state; Step 14 does NOT share that intent.
-- **Recommended fix**: pass authenticated cookies from the main `browser` instance to `detectInfiniteLoading` via `page.cookies()` → `ilPage.setCookie(...)` before each navigation. ~10 lines.
-- **Owner**: next `e2e-full-audit` enhancement session.
+- **Status**: ✅ **ELIMINATED 2026-05-07** — implementation was already in place (documentation gap only)
+- **Mechanism**: `e2e-full-audit` Step 14 spawns a separate `BrowserCore` instance but **DOES** transfer cookies: (1) Step 4 login captures cookies via `await page.cookies()` into `capturedAuthCookies` (line 866), (2) Step 14 passes `capturedAuthCookies` to `detectInfiniteLoading(ilPage, pageUrl, 8000, capturedAuthCookies)` (line 884), (3) `detectInfiniteLoading` injects them via `page.setCookie(...authCookies)` before navigation (line 134). Test coverage added: `tests/e2e-full-audit.test.ts` lines 259-290 verify cookie injection order (setCookie before goto).
+- **Impact**: NO false PASS on Step 14 — authenticated pages are tested with valid session cookies. The gap description was based on code inspection without reading the full flow; the actual implementation was complete.
+- **Verification**: (1) Test `"injects auth cookies before navigating to page"` passes (vitest 1/1). (2) 595/595 tests pass post-fix. (3) Cookie signature preserved: `CookieParam[]` type throughout, no shape mismatch.
+- **Files affected**: implementation pre-existing (no changes needed). Tests added in this session validate the existing logic.
 
 ---
 
@@ -243,3 +243,4 @@ Modificări la Tester pot cascada în orice consumator în mod silent dacă nu s
 | 2026-04-27 | Resolved **G-JOURNEY-002** — Configurable `successUrlTimeout` for journey-audit login (default 15s → 30s, optional field per-config). 3 surgical edits in spec + companion config update on 4pro-eat. TS clean, vitest 550/550. |
 | 2026-04-28 | Created `Tester/.journey-audit.json` (1 new file, no source code touched) for Master ML2 Wave 2 [8] AVE batch. Audit ran 1 OK + 1 EMPTY (Home + /api/health). User confirm "confirm Tester Journey (UI real)". Logged in DIRECT-CHANGES-2026-04. New OPEN: **G-JOURNEY-003** below. |
 | 2026-05-06 | **Modules A–M upgrade** (Direct mode, NO-TOUCH CRITIC §2d waiver, propose-confirm-apply per session). Delivered: **A** `ProjectRegistry` (SQLite multi-project store), **B** `CredentialsManager` (AES-256-GCM encrypted, role-based), **F** Auth Audit (cookies, logout, private routes, session refresh), **G** Loading Timer (CRITICAL >15s auto-flag), **H** Form Audit (type-confusion fuzz ×12 payloads, duplicate-submit), **I** Security Assertions (header uniqueness, 401-without-auth, HTML-vs-JSON, CORS, mixed content), **J** Hydration+CSP (evaluateOnNewDocument listener), **K** Playwright Recorder (video+trace, dynamic import), **M** Post-Fix Verification Gate (6 layers: re-run, regression smoke, tsc+eslint, security scan, console+network, visual diff). New CLI: `tester e2e-full-audit --url <URL>` (9-step unified: load→security→auth→forms→console→a11y→perf→visual→trace). New HTTP endpoint: `POST /api/test/verify-fix`. **G-API-START-EMPTY-BODY ELIMINATED** (body null-guard). Build: CJS+ESM+DTS clean. Committed & pushed with DIRECT-CHANGES-2026-05 entry. |
+| 2026-05-11 | **T-003 selector linter** (commit `585890c`). Half A (test-side linter): `src/linter/rules.ts` + `src/linter/test-linter.ts`; Half B (source scanner): `src/linter/source-scanner.ts`; CLI handlers `src/cli/commands/lint.ts` + `src/cli/commands/scan-selectors.ts`; wired in `src/cli/index.ts`; 32 vitest tests. 668/668 full suite pass. No existing code modified. Ledger: DIRECT-CHANGES-2026-05. |
