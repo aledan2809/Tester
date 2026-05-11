@@ -52,6 +52,10 @@ export { saveSession, loadSession, isSessionValid } from './auth/session'
 // Scenarios
 export { generateScenarios } from './scenarios/generator'
 export { generateTemplateScenarios } from './scenarios/templates'
+export { runScenarios, discoverScenarios, makeFilterPredicate } from './scenarios/runner'
+export type { ScenarioContext, ScenarioOutcome, ScenarioFn, ScenarioRunResult, RunReport, StepLog } from './scenarios/runner'
+export { ScenarioSession } from './scenarios/session'
+export { ScenarioAssertions, AssertionError } from './scenarios/assertions'
 
 // Assertions
 export { runAssertion } from './assertions/index'
