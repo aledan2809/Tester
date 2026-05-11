@@ -53,6 +53,7 @@ export interface RunReport {
   fail: number
   skip: number
   total: number
+  durationMs: number
 }
 
 /** Injectable loader — default uses dynamic import, tests inject a mock. */
@@ -113,6 +114,7 @@ function sleep(ms: number): Promise<void> {
 export async function runScenarios(opts: RunnerOptions): Promise<RunReport> {
   const { suiteDir, filters = [], pacingMs = 0, baseUrl, loader = defaultLoader } = opts
 
+  const t0 = Date.now()
   const files = discoverScenarios(suiteDir, filters)
   const results: ScenarioRunResult[] = []
 
@@ -156,5 +158,5 @@ export async function runScenarios(opts: RunnerOptions): Promise<RunReport> {
   const fail = results.filter((r) => r.outcome.status === 'FAIL').length
   const skip = results.filter((r) => r.outcome.status === 'SKIP').length
 
-  return { results, pass, fail, skip, total: results.length }
+  return { results, pass, fail, skip, total: results.length, durationMs: Date.now() - t0 }
 }
