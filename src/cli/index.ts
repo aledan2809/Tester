@@ -25,6 +25,8 @@ import {
 import { zombieScanCmd } from './commands/zombie-scan'
 import { selfCheckCommand } from './commands/selfcheck'
 import { coverageCommand } from './commands/coverage'
+import { lintCommand } from './commands/lint'
+import { scanSelectorsCommand } from './commands/scan-selectors'
 import { generateCommand } from './commands/generate'
 import { untestedCommand } from './commands/untested'
 import { snapshotCommand } from './commands/snapshot'
@@ -263,6 +265,32 @@ program
   .option('--report <format>', 'Generate report file: html | json (writes coverage-report.<ext> in cwd)')
   .option('--out <path>', 'Output path for --report (default: ./coverage-report.<ext>)')
   .action(coverageCommand)
+
+// ─── lint (T-003 Half A — test-side selector linter) ──────
+program
+  .command('lint <dir>')
+  .description('T-003 Half A — Walk test files and report fragile selectors, textContent misuse, short timeouts')
+  .option('--json', 'Emit JSON', false)
+  .option('--severity <level>', 'Override all rule severities: warn | error')
+  .option('--no-fail', 'Exit 0 even when violations found', false)
+  .option('--min-timeout-ms <ms>', 'Minimum safe setTimeout ms (default 500)', (v) => parseInt(v, 10))
+  .action((dir: string, opts: Record<string, unknown>) =>
+    lintCommand({
+      dir,
+      json: opts.json as boolean | undefined,
+      severity: opts.severity as 'warn' | 'error' | undefined,
+      noFail: (opts.noFail as boolean | undefined) ?? false,
+      minTimeoutMs: opts.minTimeoutMs as number | undefined,
+    }),
+  )
+
+// ─── scan-selectors (T-003 Half B — source-side scanner) ──
+program
+  .command('scan-selectors <dir>')
+  .description('T-003 Half B — Walk source JSX/TSX and flag inputs/buttons without stable selector attributes')
+  .option('--json', 'Emit JSON instead of SELECTOR_GAPS.md markdown', false)
+  .option('--out <path>', 'Write SELECTOR_GAPS.md to this path (default: ./SELECTOR_GAPS.md)')
+  .action(scanSelectorsCommand)
 
 // ─── generate (T-005 test generator, Prisma MVP) ─────────
 program
