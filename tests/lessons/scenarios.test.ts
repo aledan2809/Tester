@@ -322,6 +322,104 @@ describe('ScenarioSession', () => {
       globalThis.fetch = origFetch
     }
   })
+
+  it('login extracts token from response json.accessToken', async () => {
+    const s = new ScenarioSession()
+    const origFetch = globalThis.fetch
+    globalThis.fetch = async () =>
+      new Response(JSON.stringify({ accessToken: 'bearer-xyz' }), { status: 200 })
+    try {
+      await s.login('http://example.com/login', { email: 'a', password: 'b' })
+      expect(s.getToken()).toBe('bearer-xyz')
+    } finally {
+      globalThis.fetch = origFetch
+    }
+  })
+
+  it('login captures a single Set-Cookie header into the cookie jar', async () => {
+    const s = new ScenarioSession()
+    const origFetch = globalThis.fetch
+    globalThis.fetch = async () => {
+      const headers = new Headers({ 'Content-Type': 'application/json' })
+      headers.append('Set-Cookie', 'next-auth.session-token=tok-123; Path=/; HttpOnly')
+      return new Response(JSON.stringify({}), { status: 200, headers })
+    }
+    try {
+      await s.login('http://example.com/auth/login', { email: 'a', password: 'b' })
+      expect(s.getCookieHeader()).toContain('next-auth.session-token=tok-123')
+    } finally {
+      globalThis.fetch = origFetch
+    }
+  })
+
+  it('login captures multiple Set-Cookie headers (session-cookie auth pattern)', async () => {
+    const s = new ScenarioSession()
+    const origFetch = globalThis.fetch
+    globalThis.fetch = async () => {
+      const headers = new Headers({ 'Content-Type': 'application/json' })
+      headers.append('Set-Cookie', 'session=abc123; Path=/; HttpOnly')
+      headers.append('Set-Cookie', 'csrf=xyz789; Path=/; SameSite=Strict')
+      return new Response(JSON.stringify({}), { status: 200, headers })
+    }
+    try {
+      await s.login('http://example.com/auth/login', { email: 'a', password: 'b' })
+      const cookieHeader = s.getCookieHeader()
+      expect(cookieHeader).toContain('session=abc123')
+      expect(cookieHeader).toContain('csrf=xyz789')
+    } finally {
+      globalThis.fetch = origFetch
+    }
+  })
+
+  it('login captures cookie AND Bearer token together (hybrid auth)', async () => {
+    const s = new ScenarioSession()
+    const origFetch = globalThis.fetch
+    globalThis.fetch = async () => {
+      const headers = new Headers({ 'Content-Type': 'application/json' })
+      headers.append('Set-Cookie', 'session=session-val; Path=/; HttpOnly')
+      return new Response(JSON.stringify({ accessToken: 'bearer-xyz' }), { status: 200, headers })
+    }
+    try {
+      await s.login('http://example.com/auth/login', { email: 'a', password: 'b' })
+      expect(s.getCookieHeader()).toContain('session=session-val')
+      expect(s.getToken()).toBe('bearer-xyz')
+    } finally {
+      globalThis.fetch = origFetch
+    }
+  })
+
+  it('login strips cookie attributes (only name=value stored)', async () => {
+    const s = new ScenarioSession()
+    const origFetch = globalThis.fetch
+    globalThis.fetch = async () => {
+      const headers = new Headers({ 'Content-Type': 'application/json' })
+      headers.append('Set-Cookie', 'auth=my-value; Path=/; HttpOnly; Secure; SameSite=None')
+      return new Response(JSON.stringify({}), { status: 200, headers })
+    }
+    try {
+      await s.login('http://example.com/auth/login', { email: 'a', password: 'b' })
+      expect(s.getCookieHeader()).toBe('auth=my-value')
+    } finally {
+      globalThis.fetch = origFetch
+    }
+  })
+
+  it('login uses custom extractToken when provided', async () => {
+    const s = new ScenarioSession()
+    const origFetch = globalThis.fetch
+    globalThis.fetch = async () =>
+      new Response(JSON.stringify({ data: { jwt: 'custom-tok' } }), { status: 200 })
+    try {
+      await s.login(
+        'http://example.com/login',
+        { email: 'a', password: 'b' },
+        (data: unknown) => (data as { data: { jwt: string } }).data.jwt,
+      )
+      expect(s.getToken()).toBe('custom-tok')
+    } finally {
+      globalThis.fetch = origFetch
+    }
+  })
 })
 
 // ── ScenarioAssertions ────────────────────────────────────────────────────────

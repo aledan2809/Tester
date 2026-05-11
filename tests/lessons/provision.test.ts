@@ -55,7 +55,50 @@ const baseConfig = {
 
 // ── imports ───────────────────────────────────────────────────────────────────
 
-import { loadConfig, runProvision, CONFIG_FILE } from '../../src/provision/engine'
+import { loadConfig, runProvision, resolveDbUrl, CONFIG_FILE } from '../../src/provision/engine'
+
+// ── resolveDbUrl ──────────────────────────────────────────────────────────────
+
+describe('resolveDbUrl', () => {
+  afterEach(() => {
+    delete process.env.TESTER_TEST_DB_HOST
+    delete process.env.TESTER_TEST_DATABASE_URL
+  })
+
+  it('returns empty string when databaseUrl is absent', () => {
+    const cfg = { ...baseConfig } as never
+    expect(resolveDbUrl(cfg)).toBe('')
+  })
+
+  it('returns the URL unchanged when no ${VAR} tokens are present', () => {
+    const cfg = { ...baseConfig, databaseUrl: 'postgresql://user:pass@localhost/db' } as never
+    expect(resolveDbUrl(cfg)).toBe('postgresql://user:pass@localhost/db')
+  })
+
+  it('interpolates a full-string ${DATABASE_URL} token', () => {
+    process.env.TESTER_TEST_DATABASE_URL = 'postgresql://user:pass@host/db'
+    const cfg = { ...baseConfig, databaseUrl: '${TESTER_TEST_DATABASE_URL}' } as never
+    expect(resolveDbUrl(cfg)).toBe('postgresql://user:pass@host/db')
+  })
+
+  it('interpolates ${VAR} in the middle of a connection string (partial)', () => {
+    process.env.TESTER_TEST_DB_HOST = 'db.example.com'
+    const cfg = { ...baseConfig, databaseUrl: 'postgresql://user@${TESTER_TEST_DB_HOST}/mydb' } as never
+    expect(resolveDbUrl(cfg)).toBe('postgresql://user@db.example.com/mydb')
+  })
+
+  it('interpolates multiple ${VAR} tokens in one string', () => {
+    process.env.TESTER_TEST_DB_HOST = 'host.local'
+    process.env.TESTER_TEST_DATABASE_URL = 'ignored'
+    const cfg = { ...baseConfig, databaseUrl: 'postgresql://${TESTER_TEST_DB_HOST}/${TESTER_TEST_DB_HOST}' } as never
+    expect(resolveDbUrl(cfg)).toBe('postgresql://host.local/host.local')
+  })
+
+  it('substitutes missing env var with empty string (no crash)', () => {
+    const cfg = { ...baseConfig, databaseUrl: 'postgresql://${TESTER_NONEXISTENT_VAR}/db' } as never
+    expect(resolveDbUrl(cfg)).toBe('postgresql:///db')
+  })
+})
 
 // ── loadConfig ────────────────────────────────────────────────────────────────
 

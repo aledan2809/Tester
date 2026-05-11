@@ -41,10 +41,11 @@ function resolveAdapter(driver: string, dryRun: boolean): ProvisionAdapter {
   return new PgBaseAdapter(dryRun)
 }
 
-function resolveDbUrl(config: ProvisionConfig): string {
+export function resolveDbUrl(config: ProvisionConfig): string {
   const raw = config.databaseUrl ?? ''
-  // Support ${ENV_VAR} interpolation in the JSON value
-  return raw.replace(/^\${(.+)}$/, (_, k) => process.env[k] ?? '')
+  // Support ${ENV_VAR} interpolation anywhere in the value,
+  // e.g. "postgresql://user@${DB_HOST}/mydb" or a bare "${DATABASE_URL}".
+  return raw.replace(/\${([^}]+)}/g, (_, k: string) => process.env[k] ?? '')
 }
 
 function makeSlug(role: string, tenantIdx: number): string {

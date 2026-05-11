@@ -39,8 +39,11 @@ export class ScenarioSession {
   }
 
   /**
-   * POST to a login endpoint and extract the Bearer token from the response.
-   * By default reads `json.token` or `json.accessToken`.
+   * POST to a login endpoint, capture any Set-Cookie headers into the cookie
+   * jar, and optionally extract a Bearer token from the JSON body.
+   *
+   * Works for both session-cookie auth (NextAuth, express-session) and
+   * Bearer-token auth — both paths are handled in one call.
    * Throws on non-2xx status.
    */
   async login(
@@ -54,6 +57,24 @@ export class ScenarioSession {
       body: JSON.stringify(body),
     })
     if (!res.ok) throw new Error(`Login failed: ${res.status} ${res.statusText}`)
+
+    // Capture all Set-Cookie headers into the session jar.
+    // Node 18+ exposes getSetCookie(); fall back to single-value get() otherwise.
+    const setCookies: string[] =
+      typeof (res.headers as { getSetCookie?: () => string[] }).getSetCookie === 'function'
+        ? (res.headers as { getSetCookie: () => string[] }).getSetCookie()
+        : res.headers.get('set-cookie')
+          ? [res.headers.get('set-cookie') as string]
+          : []
+
+    for (const raw of setCookies) {
+      const [pair] = raw.split(';')
+      const eq = pair.indexOf('=')
+      if (eq > 0) {
+        this.setCookie(pair.slice(0, eq).trim(), pair.slice(eq + 1).trim())
+      }
+    }
+
     const data = (await res.json()) as Record<string, unknown>
     const tok = extractToken
       ? extractToken(data)
