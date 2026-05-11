@@ -431,3 +431,53 @@ Items NOT re-filed (already covered):
 | `src/cli/index.ts` | +1 import + 1 command registration (additive) |
 | `src/index.ts` | +classifier barrel exports (additive) |
 | New `src/classifier/` + `tests/classifier/` | NEW — no consumers yet; SQLite DB written to `<cwd>/.tester/classif-cache.db` |
+
+---
+
+## 2026-05-11 — T-005 Prisma spec generator expanded to 14 CRUD scenarios (commit `c0a6a32`)
+
+**Session**: Direct, autonomous sequential (standing directive: continua + /review pe ce dezvolti)
+
+### Scope
+
+| File | Change | Lines |
+|------|--------|-------|
+| `src/generator/prisma.ts` | Rewrote `buildSpecFile()` — 3 MVP scenarios → 14 full-CRUD | +337/−121 |
+| `tests/lessons/generator.test.ts` | Updated test expectations to match new scenario names | +23/−0 |
+
+### New scenarios (beyond original 3)
+
+| Scenario | Condition |
+|----------|-----------|
+| `wrong-role-403` | Always when auth: 'token' |
+| `string-too-long-400` | When model has any String field |
+| `list-all-200` | Always |
+| `create-201` | Always |
+| `read-by-id-200` | Always |
+| `read-not-found-404` | Always |
+| `update-200` | Always |
+| `update-not-found-404` | Always |
+| `delete-204` | Always |
+| `delete-not-found-404` | Always |
+| `unique-409` | When model has @unique required non-id fields |
+| `cleanup-teardown` | Always (beforeAll + afterAll lifecycle) |
+
+### /review findings applied
+
+| Finding | Severity | Fix |
+|---------|----------|-----|
+| C-1: `unique-409` called `.clone()` after body consumed | Critical | Extracted JSON to local var before `??` |
+| M-1: `TEST_INVALID_TOKEN` hint missing when no unique fields | Medium | Moved outside `uniqueFields` guard |
+| M-2: `list-all-200` assertion was tautological | Medium | Added comment explaining array/envelope tolerance |
+| N-1: `FAKE_ID` unsafe for Int PKs | Minor | Added comment for non-string PK consumers |
+
+### Risk profile
+
+| Component | Status |
+|-----------|--------|
+| Existing assertion engine, BFS crawler, reporter | UNCHANGED |
+| HTTP API, journey-audit, e2e-full-audit, classifier | UNCHANGED |
+| `src/generator/prisma.ts` | CHANGED — only affects generated spec output; no runtime consumers |
+| `tests/lessons/generator.test.ts` | CHANGED — test assertions updated to match new scenario names |
+
+**Verification**: 691/691 vitest pass, CJS+ESM+DTS build clean
