@@ -78,8 +78,8 @@ describe('pluralize + camelCase helpers', () => {
   })
 })
 
-describe('generateFromPrisma — MVP output', () => {
-  it('generates a spec file with 3 scenarios for User model', () => {
+describe('generateFromPrisma — full CRUD output', () => {
+  it('generates a spec file with 14 scenarios for User model', () => {
     const schema = writeSchema(MINI_SCHEMA)
     const projectRoot = path.dirname(path.dirname(schema)) // above prisma/
     const outDir = path.join(projectRoot, 'tests', 'generated', 'user')
@@ -91,15 +91,33 @@ describe('generateFromPrisma — MVP output', () => {
       })
       expect(result.model).toBe('User')
       expect(result.filesWritten).toHaveLength(1)
+      // Auth scenarios (default auth: 'token')
       expect(result.scenariosGenerated).toContain('unauth-401')
+      expect(result.scenariosGenerated).toContain('wrong-role-403')
+      // Validation scenarios (User has required String fields)
       expect(result.scenariosGenerated).toContain('missing-required-400')
-      expect(result.scenariosGenerated).toContain('create-read-delete-happy-path')
-      // Verify content
+      expect(result.scenariosGenerated).toContain('string-too-long-400')
+      // CRUD scenarios
+      expect(result.scenariosGenerated).toContain('list-all-200')
+      expect(result.scenariosGenerated).toContain('create-201')
+      expect(result.scenariosGenerated).toContain('read-by-id-200')
+      expect(result.scenariosGenerated).toContain('read-not-found-404')
+      expect(result.scenariosGenerated).toContain('update-200')
+      expect(result.scenariosGenerated).toContain('update-not-found-404')
+      expect(result.scenariosGenerated).toContain('delete-204')
+      expect(result.scenariosGenerated).toContain('delete-not-found-404')
+      // Unique-constraint scenario (User.email is @unique + required)
+      expect(result.scenariosGenerated).toContain('unique-409')
+      // cleanup-teardown is always present
+      expect(result.scenariosGenerated).toContain('cleanup-teardown')
+      // Verify generated content
       const content = fs.readFileSync(result.filesWritten[0], 'utf8')
       expect(content).toContain('T-005 auto-generated')
       expect(content).toContain("describe('User — T-005 generated suite'")
       expect(content).toContain("fetch(BASE_URL + '/api/users'")
       expect(content).toContain('Authorization')
+      expect(content).toContain('beforeAll')
+      expect(content).toContain('afterAll')
     } finally {
       fs.rmSync(path.dirname(schema), { recursive: true, force: true })
       // outDir lives under projectRoot which is rm-ed by the line above
