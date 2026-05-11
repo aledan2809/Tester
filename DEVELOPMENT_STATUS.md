@@ -1,5 +1,9 @@
 # Project Status - Tester
 
+Last Updated: 2026-05-11 — **T-001 (Harness Self-Test Battery) DONE.** Critical Path implementation complete: harness.ts (264 LOC, 4 static checks + 2 deferred browser probes), harness.test.ts (18 vitest tests, all passing 18/18), selfcheck.ts CLI command with colored output + JSON mode. Probe coverage: CSS validator (layered with L-F2 lesson), case-insensitive text path (assertions/dom exports), timing defaults (≥5s baseline), lesson corpus presence (5 baseline lessons). Deferred to Day-2: Puppeteer-based Tailwind uppercase fixture + timing race fixture. Build successful (ESM + CJS + DTS). Next: T-002 (Coverage Matrix) + T-003 (Selector Linter) in parallel.
+
+---
+
 Last Updated: 2026-04-25 — **Tester TODO_PERSISTENT zero open + zero `it.skip` in audit-fix tests.** Cross-repo refactor in website-guru extracted F-004 / F-007 / F-008 atoms into sibling pure modules; Tester behavior tests now drive them with 14 real assertions (was 3 stubs). **539/539 tests pass, ZERO skipped** (was 528 with 3 skipped at end of 2026-04-24). Roadmap: 27/27 main items + 60/60 PAS 2 audit-fix items real-behavior-verified.
 
 ## 2026-04-25 cleanup session
