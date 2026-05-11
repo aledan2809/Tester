@@ -59,6 +59,7 @@ import { inventoryCommand } from './commands/inventory'
 import { registerE2EFullAudit } from './commands/e2e-full-audit'
 import { classifyCommand } from './commands/classify'
 import { registerFixtures } from './commands/fixtures'
+import { registerProvision } from './commands/provision'
 
 const program = new Command()
 
@@ -619,6 +620,7 @@ program
 // ─── e2e-full-audit (9-step unified audit) ────────────────
 registerE2EFullAudit(program)
 registerFixtures(program)
+registerProvision(program)
 
 // ─── classify (T-004 — AI Failure Classifier) ─────────────
 program
