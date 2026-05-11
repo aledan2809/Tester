@@ -290,3 +290,7 @@ export type { RecordingOptions, RecordingSession, RecordingArtifacts } from './p
 // Module M — Post-Fix Verification Gate
 export { runVerifyFixGate } from './verify/gate'
 export type { VerifyFixInput, VerifyFixResult, LayerResult } from './verify/gate'
+
+// T-004 — AI Failure Classifier
+export { classifyFailure, ClassifierCache, buildFailureContext } from './classifier'
+export type { FailureContext, NetworkEntry, FailureCategory, FailureClassification, ClassifyOptions } from './classifier'

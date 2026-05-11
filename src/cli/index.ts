@@ -57,6 +57,7 @@ import { flakeReportCommand } from './commands/flake-report'
 import { doneCommand, undoneCommand, statusCommand } from './commands/done'
 import { inventoryCommand } from './commands/inventory'
 import { registerE2EFullAudit } from './commands/e2e-full-audit'
+import { classifyCommand } from './commands/classify'
 
 const program = new Command()
 
@@ -616,5 +617,26 @@ program
 
 // ─── e2e-full-audit (9-step unified audit) ────────────────
 registerE2EFullAudit(program)
+
+// ─── classify (T-004 — AI Failure Classifier) ─────────────
+program
+  .command('classify <report-json>')
+  .description('Classify test failures from a JSON report as PRODUCT_BUG / HARNESS_BUG / FLAKE / ENV_MISCONFIG')
+  .option('--json', 'Output JSON instead of human-readable text', false)
+  .option('--out <path>', 'Write JSON output to file (requires --json)')
+  .option('--cache-dir <dir>', 'Directory for SQLite dedup cache (default: .tester/)')
+  .option('--cache-ttl-days <n>', 'Cache TTL in days (default: 7)', (v) => parseInt(v, 10))
+  .option('--force-refresh', 'Ignore cache and re-classify every failure', false)
+  .option('--model <id>', 'Override primary AI model (default: claude-haiku-4-5-20251001)')
+  .action((reportJson, opts) =>
+    classifyCommand(reportJson, {
+      json: opts.json,
+      out: opts.out,
+      cacheDir: opts.cacheDir,
+      cacheTtlDays: opts.cacheTtlDays,
+      forceRefresh: opts.forceRefresh,
+      model: opts.model,
+    }),
+  )
 
 program.parse()
