@@ -109,7 +109,7 @@ export function computeScore(steps: StepOutcome[]): {
 /** Detect persistent loading spinners on a page after waiting waitMs.
  *  @param authCookies - cookies from the authenticated session (Step 4); injected before each
  *    navigation so auth-gated pages load correctly instead of redirecting to /login. */
-async function detectInfiniteLoading(
+export async function detectInfiniteLoading(
   page: import('puppeteer').Page,
   pageUrl: string,
   waitMs = 8000,
@@ -530,12 +530,22 @@ export function registerE2EFullAudit(program: Command): void {
                 message: `Login failed for ${opts.email}`,
                 reproSteps: `Navigate to ${loginUrl}, enter email=${opts.email}, submit`,
                 expected: 'Redirect to dashboard after login',
-                actual: r.error ?? 'Remained on login page',
+                actual: r.error || (r.redirectUrl ? `Unexpected redirect to ${r.redirectUrl}` : 'Remained on login page'),
               }],
             })
             console.info(r.success ? 'PASS' : 'FAIL')
           } catch (err) {
-            steps.push({ step: 4, name: 'Real login', status: 'FAIL', durationMs: Date.now() - s, details: String(err) })
+            const errorMsg = err instanceof Error ? err.message : String(err)
+            steps.push({
+              step: 4, name: 'Real login', status: 'FAIL', durationMs: Date.now() - s, details: errorMsg,
+              findings: [{
+                severity: 'CRITICAL' as const,
+                message: `Login threw exception for ${opts.email}`,
+                reproSteps: `Navigate to ${loginUrl}, enter email=${opts.email}, submit`,
+                expected: 'Successful login without throwing',
+                actual: errorMsg,
+              }],
+            })
             console.info('FAIL')
           }
         }
@@ -585,7 +595,17 @@ export function registerE2EFullAudit(program: Command): void {
             })
             console.info(hydrationResults.length > 0 ? 'WARN' : 'PASS')
           } catch (err) {
-            steps.push({ step: 5, name: 'Private dashboard audit', status: 'FAIL', durationMs: Date.now() - s, details: String(err) })
+            const errorMsg = err instanceof Error ? err.message : String(err)
+            steps.push({
+              step: 5, name: 'Private dashboard audit', status: 'FAIL', durationMs: Date.now() - s, details: errorMsg,
+              findings: [{
+                severity: 'HIGH' as const,
+                message: 'Private dashboard audit threw exception',
+                reproSteps: `Login as ${opts.email}, navigate to dashboard`,
+                expected: 'Dashboard crawl and hydration audit completes without throwing',
+                actual: errorMsg,
+              }],
+            })
             console.info('FAIL')
           }
         }
@@ -616,8 +636,18 @@ export function registerE2EFullAudit(program: Command): void {
           })
           console.info(r.passed ? 'PASS' : 'WARN')
         } catch (err) {
-          steps.push({ step: 6, name: 'Form audit', status: 'SKIP', durationMs: Date.now() - s, details: String(err) })
-          console.info('SKIP')
+          const errorMsg = err instanceof Error ? err.message : String(err)
+          steps.push({
+            step: 6, name: 'Form audit — type confusion fuzz + duplicate submit', status: 'FAIL', durationMs: Date.now() - s, details: errorMsg,
+            findings: [{
+              severity: 'MEDIUM' as const,
+              message: 'Form audit threw exception',
+              reproSteps: `Navigate to ${url} and find form elements`,
+              expected: 'Form audit completes without throwing',
+              actual: errorMsg,
+            }],
+          })
+          console.info('FAIL')
         }
       }
 
@@ -646,8 +676,18 @@ export function registerE2EFullAudit(program: Command): void {
           })
           console.info(allIssues.length === 0 ? 'PASS' : 'FAIL')
         } catch (err) {
-          steps.push({ step: 7, name: 'Console errors', status: 'SKIP', durationMs: Date.now() - s, details: String(err) })
-          console.info('SKIP')
+          const errorMsg = err instanceof Error ? err.message : String(err)
+          steps.push({
+            step: 7, name: 'Console errors + hydration + CSP', status: 'FAIL', durationMs: Date.now() - s, details: errorMsg,
+            findings: [{
+              severity: 'HIGH' as const,
+              message: 'Console error audit threw exception',
+              reproSteps: `Open browser DevTools console and navigate to ${url}`,
+              expected: 'Console audit completes without throwing',
+              actual: errorMsg,
+            }],
+          })
+          console.info('FAIL')
         }
       }
 
@@ -678,8 +718,18 @@ export function registerE2EFullAudit(program: Command): void {
           })
           console.info(critical.length > 0 ? 'FAIL' : clientErr.length > 0 ? 'WARN' : 'PASS')
         } catch (err) {
-          steps.push({ step: 8, name: 'Network errors', status: 'SKIP', durationMs: Date.now() - s, details: String(err) })
-          console.info('SKIP')
+          const errorMsg = err instanceof Error ? err.message : String(err)
+          steps.push({
+            step: 8, name: 'Network/API errors', status: 'FAIL', durationMs: Date.now() - s, details: errorMsg,
+            findings: [{
+              severity: 'HIGH' as const,
+              message: 'Network error audit threw exception',
+              reproSteps: `Navigate to ${url}; open Network tab; check for 4xx/5xx responses`,
+              expected: 'Network audit completes without throwing',
+              actual: errorMsg,
+            }],
+          })
+          console.info('FAIL')
         }
       }
 
@@ -707,8 +757,18 @@ export function registerE2EFullAudit(program: Command): void {
           })
           console.info(r.passed ? 'PASS' : 'FAIL')
         } catch (err) {
-          steps.push({ step: 9, name: 'Security', status: 'SKIP', durationMs: Date.now() - s, details: String(err) })
-          console.info('SKIP')
+          const errorMsg = err instanceof Error ? err.message : String(err)
+          steps.push({
+            step: 9, name: 'Security audit — headers + CORS + mixed content', status: 'FAIL', durationMs: Date.now() - s, details: errorMsg,
+            findings: [{
+              severity: 'HIGH' as const,
+              message: 'Security audit threw exception',
+              reproSteps: `Check response headers for ${url}`,
+              expected: 'Security audit completes without throwing',
+              actual: errorMsg,
+            }],
+          })
+          console.info('FAIL')
         }
       }
 
@@ -740,8 +800,18 @@ export function registerE2EFullAudit(program: Command): void {
           })
           console.info(critCount === 0 ? 'PASS' : 'FAIL')
         } catch (err) {
-          steps.push({ step: 10, name: 'Accessibility', status: 'SKIP', durationMs: Date.now() - s, details: String(err) })
-          console.info('SKIP')
+          const errorMsg = err instanceof Error ? err.message : String(err)
+          steps.push({
+            step: 10, name: 'Accessibility — axe-core scan', status: 'FAIL', durationMs: Date.now() - s, details: errorMsg,
+            findings: [{
+              severity: 'HIGH' as const,
+              message: 'Accessibility audit threw exception',
+              reproSteps: `Open ${url} with axe DevTools or run: npx axe ${url}`,
+              expected: 'Accessibility audit completes without throwing',
+              actual: errorMsg,
+            }],
+          })
+          console.info('FAIL')
         }
       }
 
@@ -773,8 +843,18 @@ export function registerE2EFullAudit(program: Command): void {
           })
           console.info(passed ? 'PASS' : 'WARN')
         } catch (err) {
-          steps.push({ step: 11, name: 'Performance', status: 'SKIP', durationMs: Date.now() - s, details: String(err) })
-          console.info('SKIP')
+          const errorMsg = err instanceof Error ? err.message : String(err)
+          steps.push({
+            step: 11, name: 'Lighthouse/Performance metrics', status: 'FAIL', durationMs: Date.now() - s, details: errorMsg,
+            findings: [{
+              severity: 'MEDIUM' as const,
+              message: 'Performance metrics collection threw exception',
+              reproSteps: `Run Lighthouse on ${url}`,
+              expected: 'Performance metrics collection completes without throwing',
+              actual: errorMsg,
+            }],
+          })
+          console.info('FAIL')
         }
       }
 
@@ -825,8 +905,18 @@ export function registerE2EFullAudit(program: Command): void {
             })
             console.info(hasDiff ? 'WARN' : 'PASS')
           } catch (err) {
-            steps.push({ step: 12, name: 'Visual screenshots', status: 'SKIP', durationMs: Date.now() - s, details: String(err) })
-            console.info('SKIP')
+            const errorMsg = err instanceof Error ? err.message : String(err)
+            steps.push({
+              step: 12, name: 'Visual screenshots + baseline diff', status: 'FAIL', durationMs: Date.now() - s, details: errorMsg,
+              findings: [{
+                severity: 'MEDIUM' as const,
+                message: 'Visual screenshot capture threw exception',
+                reproSteps: `Compare baseline vs current screenshots in ${screenshotsDir}`,
+                expected: 'Screenshot capture completes without throwing',
+                actual: errorMsg,
+              }],
+            })
+            console.info('FAIL')
           }
         }
       }
@@ -895,18 +985,33 @@ export function registerE2EFullAudit(program: Command): void {
             details: pagesWithInfiniteLoad.length === 0
               ? `No persistent spinners after 8s on ${Math.min(discoveredUrls.length, 8)} pages`
               : `${pagesWithInfiniteLoad.length} page(s) with persistent loading state`,
-            findings: pagesWithInfiniteLoad.map(p => ({
-              severity: 'HIGH' as const,
-              message: `Persistent spinner detected: ${p}`,
-              reproSteps: `Navigate to the URL, wait 8+ seconds`,
-              expected: 'Loading state completes within 8s',
-              actual: 'Spinner/skeleton still visible after 8s',
-            })),
+            findings: pagesWithInfiniteLoad.map(p => {
+              const url = p.split(' (')[0]
+              const selectorsMatch = p.match(/\(selectors: (.+)\)$/)
+              const selectors = selectorsMatch ? selectorsMatch[1] : 'unknown'
+              return {
+                severity: 'HIGH' as const,
+                message: `Persistent spinner detected on ${url}`,
+                reproSteps: `Navigate to ${url}, wait 8+ seconds for page to finish loading`,
+                expected: 'Loading state completes within 8s',
+                actual: `After 8s wait, these selectors still visible: ${selectors}`,
+              }
+            }),
           })
           console.info(pagesWithInfiniteLoad.length > 0 ? 'FAIL' : 'PASS')
         } catch (err) {
-          steps.push({ step: 14, name: 'Infinite loading', status: 'SKIP', durationMs: Date.now() - s, details: String(err) })
-          console.info('SKIP')
+          const errorMsg = err instanceof Error ? err.message : String(err)
+          steps.push({
+            step: 14, name: 'Infinite loading detector', status: 'FAIL', durationMs: Date.now() - s, details: errorMsg,
+            findings: [{
+              severity: 'HIGH' as const,
+              message: 'Infinite loading detection threw exception',
+              reproSteps: 'Run e2e-full-audit on target URL',
+              expected: 'Infinite loading check completes without throwing',
+              actual: errorMsg,
+            }],
+          })
+          console.info('FAIL')
         }
       }
 

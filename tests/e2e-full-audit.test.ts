@@ -18,9 +18,11 @@ import {
   resolveHistoryDir,
   computeScore,
   writeMarkdownReport,
+  detectInfiniteLoading,
   type StepOutcome,
   type E2EFullAuditResult,
 } from '../src/cli/commands/e2e-full-audit.js'
+import { vi } from 'vitest'
 
 // ── resolveHistoryDir ─────────────────────────────────────────────────────────
 
@@ -248,5 +250,72 @@ describe('writeMarkdownReport', () => {
     const content = fs.readFileSync(mdPath, 'utf8')
     // pipe in details should be escaped so it doesn't break the markdown table
     expect(content).toContain('\\|')
+  })
+})
+
+// ── detectInfiniteLoading ────────────────────────────────────────────────────────
+
+describe('detectInfiniteLoading', () => {
+  it('injects auth cookies before navigating to page', async () => {
+    const cookies = [
+      { name: 'session', value: 'abc123', url: 'https://example.com' },
+      { name: 'token', value: 'def456', url: 'https://example.com' },
+    ]
+
+    const mockPage = {
+      setCookie: vi.fn().mockResolvedValue(undefined),
+      goto: vi.fn().mockResolvedValue(null),
+      evaluate: vi.fn().mockResolvedValue([]),
+    } as any
+
+    await detectInfiniteLoading(mockPage, 'https://example.com/dashboard', 100, cookies)
+
+    // Verify setCookie was called with the cookies before goto
+    expect(mockPage.setCookie).toHaveBeenCalledWith(...cookies)
+    expect(mockPage.setCookie).toHaveBeenCalledBefore(mockPage.goto as any)
+  })
+
+  it('navigates without cookies when authCookies is empty', async () => {
+    const mockPage = {
+      setCookie: vi.fn(),
+      goto: vi.fn().mockResolvedValue(null),
+      evaluate: vi.fn().mockResolvedValue([]),
+    } as any
+
+    await detectInfiniteLoading(mockPage, 'https://example.com/public', 100, [])
+
+    // setCookie should not be called when no cookies provided
+    expect(mockPage.setCookie).not.toHaveBeenCalled()
+    expect(mockPage.goto).toHaveBeenCalledWith('https://example.com/public', expect.objectContaining({ waitUntil: 'networkidle2' }))
+  })
+
+  it('returns hasInfiniteLoad=false when no spinners found', async () => {
+    const mockPage = {
+      setCookie: vi.fn(),
+      goto: vi.fn(),
+      evaluate: vi.fn().mockResolvedValue(false),
+    } as any
+
+    const result = await detectInfiniteLoading(mockPage, 'https://example.com/page', 50)
+
+    expect(result.hasInfiniteLoad).toBe(false)
+    expect(result.selectors).toEqual([])
+  })
+
+  it('returns hasInfiniteLoad=true when spinners found', async () => {
+    const visibleSelectors = ['.loading', '[aria-busy="true"]']
+    const mockPage = {
+      setCookie: vi.fn(),
+      goto: vi.fn(),
+      evaluate: vi.fn().mockImplementation((fn, sel) =>
+        Promise.resolve(visibleSelectors.includes(sel))
+      ),
+    } as any
+
+    const result = await detectInfiniteLoading(mockPage, 'https://example.com/page', 50)
+
+    expect(result.hasInfiniteLoad).toBe(true)
+    expect(result.selectors).toContain('.loading')
+    expect(result.selectors).toContain('[aria-busy="true"]')
   })
 })

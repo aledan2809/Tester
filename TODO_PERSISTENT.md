@@ -516,7 +516,7 @@ scenarios:
 
 ---
 
-### T-006 [P0] — Session-Awareness Query (`tester untested`)
+### T-006 [DONE 2026-04-24 commit 280bc4a + 3988f58] — Session-Awareness Query (`tester untested`)
 
 **Problem:** At Milestone 3 today, I didn't know what was still untested in Procu without re-reading AUDIT_GAPS.md + DEVELOPMENT_STATUS.md manually. A machine-readable answer would have prevented drift.
 
