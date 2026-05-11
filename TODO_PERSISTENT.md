@@ -12,7 +12,7 @@
 
 ---
 
-## [ ] 🎯 Audit-Suite Methodology — codify procuchaingo2 True E2E pattern as Tester features (creat 2026-04-27)
+## [x] 🎯 Audit-Suite Methodology — codify procuchaingo2 True E2E pattern as Tester features (creat 2026-04-27, DONE 2026-05-11 commits a446043+168e50a+62b81f5+ad5510e+ee0b04d)
 
 **Origin**: 2026-04-27 sesiune autonomous Procu True E2E Full Audit a developat un pattern reutilizabil pe care user-ul l-a cerut codificat în Tester. Pattern: **find/create/modify documents + provision users with different roles + execute scenarios end-to-end**.
 
@@ -953,11 +953,11 @@ scenarios:
 4. Backwards-compat contract: what counts as breaking the CLI? (Flags? Exit codes? stdout format?)
 5. Who owns the Tester repo going forward — does this person have 6-week availability?
 
-*Last updated: 2026-05-04. Next review: after T-001 + T-002 + T-003 land (estimate: +1 week).*
+*Last updated: 2026-05-11. Open: G-API-FALSE-POSITIVE (P3, audit-tooling), G-INNERHTML-FP (P3, audit-tooling), auth-resolver plugin (Master-side).*
 
 ---
 
-## [ ] G-API-START-EMPTY-BODY — [P2] [hardening] POST /api/test/start crashes 500 on empty body (creat 2026-05-04)
+## [x] G-API-START-EMPTY-BODY — [P2] [hardening] POST /api/test/start crashes 500 on empty body (creat 2026-05-04, DONE 2026-05-06 Modules A-M upgrade session)
 
 **Source**: `Reports/AUDIT_E2E_2026-04-22.md` deferred from G-LANDING-001 closure. Filed în AUDIT_GAPS.md în 0.3.0 release session.
 
@@ -984,7 +984,7 @@ Apply același guard la orice POST handler care destructurează `req.body`.
 
 ---
 
-## [ ] G-DEAD-SCRIPTS — [P3] [hygiene] Untracked .mjs debug scripts at repo root (creat 2026-05-04)
+## [x] G-DEAD-SCRIPTS — [P3] [hygiene] Untracked .mjs debug scripts at repo root (creat 2026-05-04, DONE 2026-05-07 .gitignore /*.mjs)
 
 **Source**: `git status` 2026-05-02+ arată ~17 untracked `.mjs` files la Tester repo root din cross-project investigations:
 - `client-home-debug.mjs`, `eat-full-walk.mjs`, `eat-onboarding-screenshot.mjs`, `eat-photo-walk.mjs`, `full-ui-debug.mjs`
