@@ -64,6 +64,7 @@
     "express": "^5.2.1",
     "js-yaml": "^4.1.1",
     "otpauth": "^9.0.0",
+    "pdf-lib": "^1.17.1",
     "pixelmatch": "^7.1.0",
     "pngjs": "^7.0.0",
     "puppeteer": "^24.0.0",

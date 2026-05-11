@@ -1,0 +1,136 @@
+/**
+ * Audit-Suite Module A — Invoice PDF fixture generator.
+ *
+ * Produces a realistic invoice PDF using pdf-lib (pure-JS, no native deps).
+ * Supports multi-line items, currency formatting, and linked aviz reference.
+ */
+
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
+import * as fs from 'node:fs'
+import * as path from 'node:path'
+import * as crypto from 'node:crypto'
+
+export interface InvoiceLineItem {
+  sku: string
+  description: string
+  quantity: number
+  unitPrice: number
+}
+
+export interface InvoiceOptions {
+  out: string
+  total?: number
+  currency?: string
+  lines?: InvoiceLineItem[]
+  invoiceNumber?: string
+  vendorName?: string
+  buyerName?: string
+  linkedAviz?: string
+}
+
+function toWinAnsi(s: string): string {
+  return s.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\x00-\xFF]/g, '?')
+}
+
+function formatMoney(amount: number, currency: string): string {
+  return `${amount.toFixed(2)} ${currency}`
+}
+
+function randomInvoiceNumber(): string {
+  const year = new Date().getFullYear()
+  const seq = Math.floor(Math.random() * 9000) + 1000
+  return `INV-${year}-${seq}`
+}
+
+export async function generateInvoicePdf(opts: InvoiceOptions): Promise<void> {
+  const currency = opts.currency ?? 'EUR'
+  const invoiceNumber = opts.invoiceNumber ?? randomInvoiceNumber()
+  const vendorName = opts.vendorName ?? 'Test Supplier SRL'
+  const buyerName = opts.buyerName ?? 'Test Buyer Co.'
+  const today = new Date().toISOString().split('T')[0]
+
+  // Build line items — if explicit total given without lines, create one summary line
+  let lines = opts.lines ?? []
+  if (lines.length === 0 && opts.total != null) {
+    lines = [{ sku: 'SVC-001', description: 'Services rendered', quantity: 1, unitPrice: opts.total }]
+  }
+  if (lines.length === 0) {
+    lines = [{ sku: 'SVC-001', description: 'Services rendered', quantity: 1, unitPrice: 100.0 }]
+  }
+
+  const computedTotal = lines.reduce((s, l) => s + l.quantity * l.unitPrice, 0)
+
+  const doc = await PDFDocument.create()
+  const page = doc.addPage([595, 842]) // A4
+  const helvetica = await doc.embedFont(StandardFonts.Helvetica)
+  const helveticaBold = await doc.embedFont(StandardFonts.HelveticaBold)
+
+  const { width } = page.getSize()
+  let y = 800
+
+  // Header
+  page.drawText('INVOICE', { x: 50, y, font: helveticaBold, size: 24, color: rgb(0.1, 0.1, 0.5) })
+  page.drawText(toWinAnsi(invoiceNumber), { x: width - 200, y, font: helvetica, size: 11, color: rgb(0.3, 0.3, 0.3) })
+  y -= 20
+  page.drawText(`Date: ${today}`, { x: width - 200, y, font: helvetica, size: 10, color: rgb(0.3, 0.3, 0.3) })
+  y -= 40
+
+  // Vendor / Buyer
+  page.drawText('From:', { x: 50, y, font: helveticaBold, size: 10 })
+  page.drawText(toWinAnsi(vendorName), { x: 90, y, font: helvetica, size: 10 })
+  page.drawText('To:', { x: 300, y, font: helveticaBold, size: 10 })
+  page.drawText(toWinAnsi(buyerName), { x: 320, y, font: helvetica, size: 10 })
+  y -= 40
+
+  // Column headers
+  page.drawRectangle({ x: 50, y: y - 4, width: width - 100, height: 18, color: rgb(0.85, 0.85, 0.92) })
+  page.drawText('SKU', { x: 55, y, font: helveticaBold, size: 9 })
+  page.drawText('Description', { x: 110, y, font: helveticaBold, size: 9 })
+  page.drawText('Qty', { x: 330, y, font: helveticaBold, size: 9 })
+  page.drawText('Unit Price', { x: 370, y, font: helveticaBold, size: 9 })
+  page.drawText('Total', { x: 460, y, font: helveticaBold, size: 9 })
+  y -= 22
+
+  for (const line of lines) {
+    const lineTotal = line.quantity * line.unitPrice
+    page.drawText(toWinAnsi(line.sku), { x: 55, y, font: helvetica, size: 9 })
+    page.drawText(toWinAnsi(line.description.slice(0, 35)), { x: 110, y, font: helvetica, size: 9 })
+    page.drawText(String(line.quantity), { x: 338, y, font: helvetica, size: 9 })
+    page.drawText(formatMoney(line.unitPrice, currency), { x: 370, y, font: helvetica, size: 9 })
+    page.drawText(formatMoney(lineTotal, currency), { x: 460, y, font: helvetica, size: 9 })
+    y -= 16
+  }
+
+  y -= 10
+  // Divider
+  page.drawLine({ start: { x: 50, y }, end: { x: width - 50, y }, thickness: 0.5, color: rgb(0.6, 0.6, 0.6) })
+  y -= 18
+  page.drawText(`Total: ${formatMoney(computedTotal, currency)}`, {
+    x: 410, y, font: helveticaBold, size: 12, color: rgb(0.1, 0.1, 0.5),
+  })
+
+  // Linked aviz reference
+  if (opts.linkedAviz) {
+    y -= 30
+    page.drawText(`Linked Delivery Note: ${path.basename(opts.linkedAviz)}`, {
+      x: 50, y, font: helvetica, size: 9, color: rgb(0.4, 0.4, 0.4),
+    })
+    // Embed the file hash so downstream 4-way-match can verify linkage
+    if (fs.existsSync(opts.linkedAviz)) {
+      const hash = crypto.createHash('sha256').update(fs.readFileSync(opts.linkedAviz)).digest('hex').slice(0, 16)
+      y -= 12
+      page.drawText(`Aviz SHA-256 (first 16): ${hash}`, {
+        x: 50, y, font: helvetica, size: 8, color: rgb(0.5, 0.5, 0.5),
+      })
+    }
+  }
+
+  // Footer
+  page.drawText('This document was generated by @aledan007/tester fixtures for testing purposes.', {
+    x: 50, y: 30, font: helvetica, size: 7, color: rgb(0.6, 0.6, 0.6),
+  })
+
+  const outPath = path.resolve(opts.out)
+  fs.mkdirSync(path.dirname(outPath), { recursive: true })
+  fs.writeFileSync(outPath, await doc.save())
+}
