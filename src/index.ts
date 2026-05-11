@@ -53,9 +53,21 @@ export { saveSession, loadSession, isSessionValid } from './auth/session'
 export { generateScenarios } from './scenarios/generator'
 export { generateTemplateScenarios } from './scenarios/templates'
 export { runScenarios, discoverScenarios, makeFilterPredicate } from './scenarios/runner'
-export type { ScenarioContext, ScenarioOutcome, ScenarioFn, ScenarioRunResult, RunReport, StepLog } from './scenarios/runner'
+export type { ScenarioContext, ScenarioOutcome, ScenarioFn, ScenarioRunResult, RunReport, StepLog, ScenarioLoader, RunnerOptions } from './scenarios/runner'
 export { ScenarioSession } from './scenarios/session'
 export { ScenarioAssertions, AssertionError } from './scenarios/assertions'
+
+// Audit-Suite orchestrator (Module D)
+export { runAuditSuite } from './audit-suite/orchestrator'
+export type {
+  AuditSuiteOptions,
+  AuditSuiteReport,
+  PhaseResult,
+  PhaseStatus,
+  FixturesPhaseRunner,
+  ProvisionPhaseRunner,
+  ScenariosPhaseRunner,
+} from './audit-suite/orchestrator'
 
 // Assertions
 export { runAssertion } from './assertions/index'

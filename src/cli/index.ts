@@ -61,6 +61,7 @@ import { classifyCommand } from './commands/classify'
 import { registerFixtures } from './commands/fixtures'
 import { registerProvision } from './commands/provision'
 import { registerScenarios } from './commands/scenarios'
+import { registerAuditSuite } from './commands/audit-suite'
 
 const program = new Command()
 
@@ -623,6 +624,7 @@ registerE2EFullAudit(program)
 registerFixtures(program)
 registerProvision(program)
 registerScenarios(program)
+registerAuditSuite(program)
 
 // ─── classify (T-004 — AI Failure Classifier) ─────────────
 program
