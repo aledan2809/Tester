@@ -3,8 +3,10 @@
  * T-001 — Harness Self-Test regression tests.
  */
 
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
+import * as harness from '../../src/self-test/harness'
 import { runSelfCheck, exitCodeForSummary } from '../../src/self-test/harness'
+import type { SelfCheckSummary } from '../../src/self-test/harness'
 
 describe('T-001 harness self-check', () => {
   it('returns a structured summary with expected categories', () => {
@@ -83,5 +85,34 @@ describe('T-001 harness self-check', () => {
       results: [],
     } as ReturnType<typeof runSelfCheck>
     expect(exitCodeForSummary(synthetic)).toBe(1)
+  })
+})
+
+describe('AITester.run() — self-check gate', () => {
+  it('throws before launching the browser when harness has a failing primitive', async () => {
+    const failing: SelfCheckSummary = {
+      total: 2,
+      pass: 1,
+      warn: 0,
+      fail: 1,
+      skipped: 0,
+      results: [
+        { id: 'lesson-corpus-presence', title: 'Corpus', severity: 'fail', message: 'corpus dir missing: /bad/path' },
+        { id: 'css-validator', title: 'CSS', severity: 'pass', message: 'ok' },
+      ],
+    }
+    const spy = vi.spyOn(harness, 'runSelfCheck').mockReturnValue(failing)
+    try {
+      // Dynamic import so the spy is in place before the module runs
+      const { AITester } = await import('../../src/tester')
+      const tester = new AITester()
+      await expect(tester.run('https://example.com')).rejects.toThrow(
+        /harness self-check failed.*1 broken primitive/s,
+      )
+      // Error message must include the failing probe id
+      await expect(tester.run('https://example.com')).rejects.toThrow(/lesson-corpus-presence/)
+    } finally {
+      spy.mockRestore()
+    }
   })
 })

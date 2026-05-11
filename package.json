@@ -5,6 +5,18 @@
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./self-test": {
+      "types": "./dist/self-test/harness.d.ts",
+      "import": "./dist/self-test/harness.mjs",
+      "require": "./dist/self-test/harness.js"
+    }
+  },
   "bin": {
     "tester": "dist/cli/index.js"
   },

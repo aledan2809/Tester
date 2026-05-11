@@ -1,9 +1,9 @@
 import { defineConfig } from 'tsup'
 
 export default defineConfig([
-  // Library build
+  // Library build (includes self-test subpath so DTS is emitted in the same pass)
   {
-    entry: ['src/index.ts'],
+    entry: ['src/index.ts', 'src/self-test/harness.ts'],
     format: ['cjs', 'esm'],
     dts: true,
     sourcemap: true,

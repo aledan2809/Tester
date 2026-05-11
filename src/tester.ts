@@ -20,6 +20,7 @@ import { loadSession, saveSession } from './auth/session'
 import { generateScenarios as aiGenerateScenarios } from './scenarios/generator'
 import { executeScenarios } from './executor'
 import { generateReports } from './reporter/index'
+import { runSelfCheck, exitCodeForSummary } from './self-test/harness'
 
 export class AITester {
   private browser: BrowserCore
@@ -133,6 +134,17 @@ export class AITester {
    * Full autonomous test run: discover → login → generate → execute → report.
    */
   async run(url: string): Promise<TestRun> {
+    // Pre-flight before browser launch — runSelfCheck is pure-static, no Puppeteer needed.
+    // Failing here avoids a wasteful Chromium spawn when a harness primitive is broken.
+    const selfCheck = runSelfCheck()
+    if (exitCodeForSummary(selfCheck) === 2) {
+      const failed = selfCheck.results.filter((r) => r.severity === 'fail')
+      const detail = failed.map((r) => `  [${r.id}] ${r.message}`).join('\n')
+      throw new Error(
+        `Tester harness self-check failed (${failed.length} broken primitive${failed.length === 1 ? '' : 's'}):\n${detail}`,
+      )
+    }
+
     await this.launch()
     try {
       if (this.config.credentials) {
