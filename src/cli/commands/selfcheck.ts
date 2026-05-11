@@ -66,7 +66,7 @@ function formatAsText(
   lines.push('')
   lines.push('─'.repeat(50))
   lines.push(
-    `Summary: ${summary.pass} pass, ${summary.warn} warn, ${summary.fail} fail, ${summary.skipped} skipped`,
+    `pass: ${summary.pass} | warn: ${summary.warn} | fail: ${summary.fail} | skipped: ${summary.skipped} — ${summary.total} probe(s)`,
   )
 
   const exitCode = exitCodeForSummary(summary)
@@ -87,14 +87,11 @@ function formatAsText(
 function formatAsJson(summary: ReturnType<typeof runSelfCheck>): string {
   return JSON.stringify(
     {
-      timestamp: new Date().toISOString(),
-      summary: {
-        total: summary.total,
-        pass: summary.pass,
-        warn: summary.warn,
-        fail: summary.fail,
-        skipped: summary.skipped,
-      },
+      total: summary.total,
+      pass: summary.pass,
+      warn: summary.warn,
+      fail: summary.fail,
+      skipped: summary.skipped,
       exitCode: exitCodeForSummary(summary),
       results: summary.results,
     },

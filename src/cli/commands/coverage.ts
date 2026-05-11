@@ -17,12 +17,15 @@ import * as path from 'node:path'
 import * as fs from 'node:fs'
 import { loadCoverageMatrix, loadCoverageForProject, buildReport } from '../../coverage/loader'
 import type { FeatureCoverageReport } from '../../coverage/schema'
+import { generateHtmlReport } from '../../coverage/html-report'
 
 export interface CoverageOptions {
   feature?: string
   project?: string
   failUnder?: number
   json?: boolean
+  report?: 'html' | 'json'
+  out?: string
 }
 
 function fmtPercent(r: number): string {
@@ -142,6 +145,33 @@ export async function coverageCommand(opts: CoverageOptions): Promise<void> {
     if (failUnder > 0) {
       process.stdout.write(`Threshold: --fail-under ${fmtPercent(failUnder)} → ${aggRatio >= failUnder ? 'PASS' : 'FAIL'}\n`)
     }
+  }
+
+  // --report file generation
+  if (opts.report) {
+    const fmt = opts.report
+    if (fmt !== 'html' && fmt !== 'json') {
+      process.stderr.write(`[coverage] ERROR: --report must be 'html' or 'json', got: ${fmt}\n`)
+      process.exit(2)
+    }
+    const ext = fmt === 'html' ? 'html' : 'json'
+    const outPath = opts.out ? path.resolve(opts.out) : path.resolve(`coverage-report.${ext}`)
+    if (fmt === 'html') {
+      const html = generateHtmlReport(reports, {
+        title: opts.project ? `Coverage — ${path.basename(opts.project)}` : 'Feature Coverage Report',
+        failUnder: failUnder > 0 ? failUnder : undefined,
+      })
+      fs.writeFileSync(outPath, html, 'utf8')
+    } else {
+      const data = {
+        reports,
+        aggregate: { features: reports.length, total: aggTotal, covered: aggCovered, coverage_ratio: aggRatio, critical_missing: aggCriticalMissing, high_missing: aggHighMissing },
+        errors,
+        fail_under: failUnder,
+      }
+      fs.writeFileSync(outPath, JSON.stringify(data, null, 2) + '\n', 'utf8')
+    }
+    process.stdout.write(`[coverage] report written → ${outPath}\n`)
   }
 
   let exitCode = 0

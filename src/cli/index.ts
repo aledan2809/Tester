@@ -260,6 +260,8 @@ program
   .option('--project <path>', 'Project root; loads all coverage/*.yaml files under it')
   .option('--fail-under <ratio>', 'Exit 1 if coverage ratio below this (0..1, e.g. 0.9)', (v) => parseFloat(v))
   .option('--json', 'Emit JSON', false)
+  .option('--report <format>', 'Generate report file: html | json (writes coverage-report.<ext> in cwd)')
+  .option('--out <path>', 'Output path for --report (default: ./coverage-report.<ext>)')
   .action(coverageCommand)
 
 // ─── generate (T-005 test generator, Prisma MVP) ─────────
