@@ -257,7 +257,7 @@ program
   .command('selfcheck')
   .description('T-001 — Run harness self-test battery (CSS validator + timing + corpus presence). Exit 0 pass, 1 warn, 2 fail')
   .option('--json', 'Emit JSON', false)
-  .action(selfCheckCommand)
+  .action(async (options) => { await selfCheckCommand(options) })
 
 // ─── coverage (T-002 feature coverage matrix) ────────────
 program

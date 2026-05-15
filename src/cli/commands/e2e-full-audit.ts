@@ -206,7 +206,8 @@ async function runResponsiveAudit(
       try {
         await page.goto(url, { waitUntil: 'networkidle2', timeout: 20_000 })
         const screenshotPath = path.join(outDir, `responsive-${vp.name}-${encodeURIComponent(url.replace(/https?:\/\//, '')).slice(0, 40)}.png`)
-        await captureFullPage(page, screenshotPath)
+        const buf = await captureFullPage(page)
+        fs.writeFileSync(screenshotPath, buf)
         const overflows = await page.evaluate(() =>
           document.body.scrollWidth > window.innerWidth + 5
         ).catch(() => false)
@@ -266,7 +267,7 @@ async function auditRole(
       fs.mkdirSync(screenshotDir, { recursive: true })
       for (const p of privateCrawl.pages.slice(0, 3)) {
         const ss = path.join(screenshotDir, `${encodeURIComponent(p.url).slice(0, 40)}.png`)
-        await captureFullPage(page, ss).catch(() => null)
+        await captureFullPage(page).then(buf => fs.writeFileSync(ss, buf)).catch(() => null)
       }
       outcomes.push({
         step: stepBase + 1,
@@ -573,7 +574,7 @@ export function registerE2EFullAudit(program: Command): void {
             // Screenshot first 5 private pages
             for (const pu of privateUrls.slice(0, 5)) {
               const ss = path.join(screenshotsDir, `private-${encodeURIComponent(pu.replace(/https?:\/\//, '')).slice(0, 50)}.png`)
-              await captureFullPage(page, ss).catch(() => null)
+              await captureFullPage(page).then(buf => fs.writeFileSync(ss, buf)).catch(() => null)
             }
             const hydrationResults = []
             for (const pu of privateUrls.slice(0, 5)) {
@@ -780,10 +781,10 @@ export function registerE2EFullAudit(program: Command): void {
         const s = Date.now()
         try {
           const scanFile = path.join(outDir, 'a11y-scan.json')
-          const r = await runA11yScan(page, url)
+          const r = await runA11yScan(page)
           fs.writeFileSync(scanFile, JSON.stringify(r, null, 2))
-          const violations = r.routes?.[0]?.violations ?? []
-          const critCount = violations.filter((v: { impact: string }) => v.impact === 'critical' || v.impact === 'serious').length
+          const violations = r.violations ?? []
+          const critCount = violations.filter((v) => v.impact === 'critical' || v.impact === 'serious').length
           steps.push({
             step: 10, name: 'Accessibility — axe-core scan',
             status: critCount === 0 ? 'PASS' : 'FAIL',
@@ -823,22 +824,22 @@ export function registerE2EFullAudit(program: Command): void {
         const s = Date.now()
         try {
           const metrics = await capturePerformanceMetrics(page)
-          const fcp = metrics.firstContentfulPaint ?? 0
-          const lcp = metrics.largestContentfulPaint ?? 0
-          const tbt = metrics.totalBlockingTime ?? 0
+          const fcp = metrics.fcp ?? 0
+          const lcp = metrics.lcp ?? 0
+          const tti = metrics.tti ?? 0
           const cls = (metrics as { cumulativeLayoutShift?: number }).cumulativeLayoutShift ?? 0
-          const passed = fcp < 3000 && lcp < 4000 && tbt < 600 && cls < 0.25
+          const passed = fcp < 3000 && lcp < 4000 && tti < 5000 && cls < 0.25
           steps.push({
             step: 11, name: 'Lighthouse/Performance metrics',
             status: passed ? 'PASS' : 'WARN',
             durationMs: Date.now() - s,
-            details: `FCP: ${fcp}ms | LCP: ${lcp}ms | TBT: ${tbt}ms | CLS: ${cls.toFixed(3)}`,
+            details: `FCP: ${fcp}ms | LCP: ${lcp}ms | TTI: ${tti}ms | CLS: ${cls.toFixed(3)}`,
             findings: !passed ? [{
               severity: 'MEDIUM' as const,
-              message: `Performance below threshold — FCP:${fcp}ms LCP:${lcp}ms TBT:${tbt}ms CLS:${cls.toFixed(3)}`,
+              message: `Performance below threshold — FCP:${fcp}ms LCP:${lcp}ms TTI:${tti}ms CLS:${cls.toFixed(3)}`,
               reproSteps: `Run Lighthouse on ${url}`,
-              expected: 'FCP<3000 LCP<4000 TBT<600 CLS<0.25',
-              actual: `FCP:${fcp} LCP:${lcp} TBT:${tbt} CLS:${cls.toFixed(3)}`,
+              expected: 'FCP<3000 LCP<4000 TTI<5000 CLS<0.25',
+              actual: `FCP:${fcp} LCP:${lcp} TTI:${tti} CLS:${cls.toFixed(3)}`,
             }] : [],
           })
           console.info(passed ? 'PASS' : 'WARN')
@@ -877,11 +878,12 @@ export function registerE2EFullAudit(program: Command): void {
               const name = encodeURIComponent(pageUrl.replace(/https?:\/\//, '')).slice(0, 60)
               const ssPath = path.join(screenshotsDir, `current-${name}.png`)
               await page.goto(pageUrl, { waitUntil: 'networkidle2', timeout: 20_000 }).catch(() => null)
-              await captureFullPage(page, ssPath)
+              const buf = await captureFullPage(page)
+              fs.writeFileSync(ssPath, buf)
               screenshotPaths.push(ssPath)
 
               if (opts.baseline && fs.existsSync(opts.baseline)) {
-                const diff = await pixelDiffPercent(opts.baseline, ssPath).catch(() => 0)
+                const diff = await pixelDiffPercent(fs.readFileSync(opts.baseline), buf).catch(() => 0)
                 if (diff > maxDiff) maxDiff = diff
               }
             }

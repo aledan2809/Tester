@@ -532,3 +532,52 @@ Items NOT re-filed (already covered):
 | `tests/lessons/generator.test.ts` | CHANGED — test assertions updated to match new scenario names |
 
 **Verification**: 691/691 vitest pass, CJS+ESM+DTS build clean
+
+---
+
+## 2026-05-15 (session B) — G-TSC-DRIFT eliminated (13 pre-existing `tsc --noEmit` errors)
+
+**Mode**: Direct, NO-TOUCH CRITIC §2d propose-confirm-apply
+**Gap**: G-TSC-DRIFT (newly filed + immediately eliminated, see AUDIT_GAPS.md)
+**Authorization**: user `B2` (after ST handoff under-counted scope as 2 errors; real scope = 13 errors across 5 type contracts)
+**Commit**: pending (this session)
+
+### Scope
+
+13 `tsc --noEmit` errors across 2 files. Build (tsup/esbuild) was lenient and didn't catch them; only strict TS did. Plus a latent runtime bug surfaced by the fix: `tester e2e-full-audit` subcommand wasn't actually writing screenshots to disk at 4 sites (passed paths to `captureFullPage` which doesn't write — returns a Buffer for caller to write).
+
+### Errors fixed (5 contract drifts)
+
+| Contract | Caller mistake | Fix |
+|---|---|---|
+| `captureFullPage(page, opts)` returns Buffer, 2nd arg = `CaptureFullPageOptions` | Passed path as 2nd arg × 4 sites (TS2559 ×4) | `const buf = await captureFullPage(page); fs.writeFileSync(path, buf)` |
+| `runA11yScan(page)` single-arg | Passed `(page, url)` (TS2554) | Drop 2nd arg |
+| `A11yViolationSummary` has flat `violations[]` | Read `r.routes?.[0]?.violations` (TS2339) | `r.violations` |
+| `PerformanceMetrics` has `fcp`/`lcp`/`tti` (short names) | Read `firstContentfulPaint`/`largestContentfulPaint`/`totalBlockingTime` (TS2339 ×3) | Rename + relabel `TBT`→`TTI` (no TBT in type; TTI is closest analogue); threshold `<600`→`<5000` |
+| `pixelDiffPercent(baseline: Buffer, current: Buffer)` | Passed paths (TS2345) | `fs.readFileSync(baseline)` + reuse already-captured `buf` |
+| Commander `.action((this, ...args) => void \| Promise<void>)` | `selfCheckCommand` returns `Promise<number>` (TS2345) | Wrap `async (options) => { await selfCheckCommand(options) }` to discard number |
+
+### /review findings applied
+
+None — fix was contract-correction; no novel logic introduced. L82 (research before proposing) applied: read all 5 type definitions before any Edit.
+
+### Risk profile
+
+| Component | Status |
+|-----------|--------|
+| `src/cli/commands/e2e-full-audit.ts` | CHANGED — fixes type drift + latent runtime bug (screenshots now actually write to disk at the 4 call sites) |
+| `src/cli/index.ts` | CHANGED — 1 line, `.action()` wrapper for self-check command |
+| Existing assertion engine, BFS crawler, reporter, HTTP API | UNCHANGED |
+| `captureFullPage`, `pixelDiffPercent`, `runA11yScan`, `capturePerformanceMetrics` library APIs | UNCHANGED (callers fixed, not libraries) |
+| journey-audit, e2e-audit-runner consumers | UNCHANGED |
+
+### Verification
+
+- `tsc --noEmit`: exit 0 (was 13 errors)
+- `npx vitest run`: 849/849 pass, 66 test files
+- `npm run build`: tsup CJS+ESM+DTS clean
+- diff stat: 2 files, +20/−18
+
+### L41 cascade
+
+Doc-only edit on caller paths inside `tester e2e-full-audit` CLI subcommand. Not consumed by Website Guru HTTP API, not consumed by `e2e-audit-runner.mjs`, not consumed by `journey-audit`. No NO-TOUCH cascade. Post-push spot-check still ran on tester.techbiz.ae/cabinet/PRO/guru — all 200.

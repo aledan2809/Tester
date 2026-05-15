@@ -47,6 +47,30 @@ Modificări la Tester pot cascada în orice consumator în mod silent dacă nu s
 
 ## OPEN gaps (require user decision)
 
+### G-TSC-DRIFT — [P2] [hygiene] 13 pre-existing `tsc --noEmit` errors in e2e-full-audit + cli/index ✅ ELIMINATED 2026-05-15
+
+- **Surfaced**: ST-2026-05-15-4 handoff flagged "2 pre-existing TS errors" as candidate quick-win. Reality (per `tsc --noEmit` re-run 2026-05-15): **13 errors across 5 type contracts**. Build still succeeded (tsup/esbuild lenient); only strict `tsc --noEmit` caught them. Per L03 (code = mine, Done = 100%), user authorized B2 scope = fix all.
+- **Status**: ✅ **ELIMINATED 2026-05-15** (commit pending — this session). `tsc --noEmit` exit 0, 849/849 vitest pass, tsup CJS+ESM+DTS clean.
+- **Mechanism — 5 contract drifts vs caller `e2e-full-audit.ts`**:
+  1. `captureFullPage(page, opts)` returns `Promise<Buffer>` and 2nd arg is `CaptureFullPageOptions` (not a path string). Caller passed paths × 4 sites (lines 209, 269, 576, 880) → TS2559 ×4.
+  2. `runA11yScan(page)` is single-arg. Caller passed `(page, url)` at line 783 → TS2554.
+  3. `A11yViolationSummary` has flat `violations[]`. Caller read `r.routes?.[0]?.violations` at line 785 → TS2339.
+  4. `PerformanceMetrics` uses short names `fcp`/`lcp`/`tti`. Caller read `firstContentfulPaint`/`largestContentfulPaint`/`totalBlockingTime` at 826-828 → TS2339 ×3. Note: `tti` (TTI) is the available analogue for the removed `totalBlockingTime` (TBT); threshold + label updated accordingly.
+  5. `pixelDiffPercent(baseline: Buffer, current: Buffer)` requires Buffers. Caller passed paths at line 884 → TS2345.
+  6. `cli/index.ts:260` — commander `.action()` expects `(...args) => void | Promise<void>`. `selfCheckCommand` returns `Promise<number>` (exit code). Wrapped in `async (options) => { await selfCheckCommand(options) }` to discard the number.
+- **Fixes applied (surgical, 8 edits, 2 files)**:
+  - `e2e-full-audit.ts` 4× `captureFullPage(page, path)` → `const buf = await captureFullPage(page); fs.writeFileSync(path, buf)` (or `.then(buf => writeFileSync)` for catch-chain sites)
+  - `e2e-full-audit.ts:783` drop 2nd arg from `runA11yScan(page, url)`
+  - `e2e-full-audit.ts:785-786` `r.routes?.[0]?.violations` → `r.violations`; remove redundant inline type on `.filter((v: { impact: string })` — flat type known.
+  - `e2e-full-audit.ts:826-841` rename `firstContentfulPaint`→`fcp`, `largestContentfulPaint`→`lcp`, `totalBlockingTime`→`tti`; threshold `tbt<600`→`tti<5000`; label `TBT`→`TTI` in 3 display strings.
+  - `e2e-full-audit.ts:884` `pixelDiffPercent(opts.baseline, ssPath)` → `pixelDiffPercent(fs.readFileSync(opts.baseline), buf)` (uses already-captured `buf`, avoids re-reading just-written file).
+  - `cli/index.ts:260` action wrap.
+- **Impact**: zero runtime behavior change for `tester run` / journey-audit / HTTP server (these paths weren't broken — only `tester e2e-full-audit` CLI subcommand had silent runtime risk: screenshots were never written to disk at the 4 call sites because `captureFullPage` only writes its return value. Now they are. So this also fixes a latent UX bug: e2e-full-audit screenshots actually land on disk.).
+- **Verification**: `tsc --noEmit` exit 0 (was 13 errors); `npx vitest run` 849/849; `npm run build` tsup CJS+ESM+DTS clean.
+- **Files changed**: `src/cli/commands/e2e-full-audit.ts` (+19/−17), `src/cli/index.ts` (+1/−1).
+
+---
+
 ### G-CLASSIFIER-EXT — [P2] [feature] journey-audit classifier config-driven exemptions ✅ ELIMINATED 2026-05-03
 
 - **Surfaced**: cross-project deferred from AVE work (`Projects/ave/ave-platform/AUDIT_GAPS.md` G-JOURNEY-EMPTY closure 2026-05-02 commit `dfcae65`). AVE shipped a post-processor wrapper `scripts/journey-audit-postclassify.mjs` that reclassifies EMPTY false-positives from Tester's journey-audit output. The proper long-term fix lives in Tester itself: config-driven exemption knobs.
