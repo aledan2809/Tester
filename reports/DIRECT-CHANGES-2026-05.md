@@ -4,6 +4,57 @@ Per Master CLAUDE.md §2d: append entry per Direct-mode change on NO-TOUCH CRITI
 
 ---
 
+## 2026-05-15 — L04 + L05 STANDING RULES codified in `knowledge/lessons-learned.md`
+
+**Mode**: Direct, propose-confirm-apply, "Tester exclusiv" directive (concurrent RPA-Hub session blocked Master scope)
+**Trigger**: Session start menu offered T-000 P0 work; user picked A → discovered T-000 already shipped → L04 codifies the verify-before-propose reflex. Mid-session, user surfaced misreporting from concurrent session → L05 codifies TRWG-GW credit-architecture truth.
+**Scope**: 1 file (`knowledge/lessons-learned.md`), 2 commits, append-only +114 lines, zero reformat of L01-L03 above, zero collateral file changes.
+
+### Commits
+
+| Commit | Scope | +/− | Subject |
+|---|---|---|---|
+| `0db77f3` | `knowledge/lessons-learned.md` | +55/0 | L04 — Verify existing code state before proposing new code (STANDING RULE) |
+| `b8733b1` | `knowledge/lessons-learned.md` | +59/0 | L05 — TRWG-GW credit-blocking myth (only Vision is credit-bound, not the whole loop) (STANDING RULE) |
+
+### L04 codification
+
+3-check pre-proposal reflex: git log + `ls src/<dir>/` + `vitest run tests/<feature>/`. TODO_PERSISTENT as hypothesis, not source of truth. Reference incident: averted Phase 1 build-from-zero of T-000 Active Lessons Engine after discovering 12 files in `src/lessons/` + 20 test files + 6 YAMLs + 9 CLI subcommands already shipped via 11 named commits (T-000 Day-4 FINAL `4bb6358` etc).
+
+### L05 codification
+
+4-layer architecture table cited verbatim from `Master/mesh/engine/trwg-loop.mjs:248-295`: /review (AIRouter groq no credit) + WG fix (CLI subprocess with `delete cliEnv.ANTHROPIC_API_KEY` line 267) + Tester runtime Vision (Anthropic SDK YES credit, score 0 doesn't block) + Gateway poll (HTTP only). Mandatory 4-line per-layer reporting template + violation-detection self-audit. Reference incident: concurrent session 2026-05-15 reported TRWG-GW = PARTIAL on a loop that functioned as designed (3/4 layers worked, fixes landed via /review + WG).
+
+### Verification
+
+- `npm run build`: ✅ DTS Build success 1494ms (CJS+ESM+DTS)
+- `npx vitest run`: ✅ 849/849 pass, 66 test files, 11.11s
+- `git diff --stat origin/master..HEAD`: 1 file, +114/0 — only `knowledge/lessons-learned.md`
+- `/review` formal: push approved, doc-only changes, zero functional risk
+
+### Out-of-scope surfaced (NOT in these commits, NOT addressed this session)
+
+- **G-TSC-DRIFT** (proposed gap, not yet filed): 2 pre-existing TS errors in `src/cli/commands/e2e-full-audit.ts:884:68` (Buffer/string type) + `src/cli/index.ts:260:11` (Promise<number> vs Promise<void>). Build still passes (tsup/esbuild lenient); only `tsc --noEmit` strict catches them. Track in dedicated session.
+- **Audit cross-reference of 27 T-XXX items** (read-only completed, surgical TODO_PERSISTENT edit deferred): all shipped per git log + filesystem evidence. Proposed summary block append at line ~245 of TODO_PERSISTENT.md — awaiting next-session apply.
+
+### Cross-deliverable (no file change)
+
+Composed copy-paste correction prompt for concurrent session that misreported TRWG-GW = PARTIAL, citing L05 architecture table + Master CLAUDE.md anti-pattern. Delivered inline to user.
+
+### Risk profile
+
+| Component | Status |
+|-----------|--------|
+| Source code (`src/`) | UNCHANGED |
+| Tests (`tests/`) | UNCHANGED |
+| Build artifacts (`dist/`) | UNCHANGED |
+| `knowledge/lessons-learned.md` | CHANGED — append-only, 2 new STANDING RULE sections after L03 |
+| All other files | UNCHANGED |
+
+**Push status (end of session)**: commits LOCAL, NOT yet pushed to origin/master. Push gate held for user explicit OK or next session.
+
+---
+
 ## 2026-05-02 — G-LANDING-001 — tester.techbiz.ae landing page a11y + security uplift
 
 **Mode**: Direct, propose-confirm-apply, 2-phase iteration
