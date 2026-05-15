@@ -1,8 +1,59 @@
 # Project Status - Tester
 
-Last Updated: 2026-05-15 — **L04 + L05 STANDING RULES codified** (commits `0db77f3` + `b8733b1`, +114 lines `knowledge/lessons-learned.md`). Session occurred under "Tester exclusiv" directive (concurrent RPA-Hub session blocked Master scope). L04 = verify-existing-code-state-before-proposing-new-code (averted multi-hour rewrite of already-shipped T-000 Active Lessons Engine). L05 = TRWG-GW credit-blocking myth (only Vision layer credit-bound; /review + WG fix + Gateway are credit-free per `trwg-loop.mjs:248-295` cite). Audit cross-reference confirmed ALL 27 T-XXX items in TODO_PERSISTENT.md `Audit-Suite Methodology` parent section are shipped via 11 named commits — `4bb6358` T-000 FINAL, `b5c4985` T-001, `a94f276` T-002, `4484a2d` T-003, `30ac792` T-004, `301f2a9`+`c0a6a32` T-005, plus T-007..T-D4 closures. **Proposed surgical TODO_PERSISTENT edit (summary block) NOT applied this session — deferred to next session.** /review: build green + vitest 849/849 + 1 file +114/0 surgical. Surfaced 2 pre-existing TSC errors (G-TSC-DRIFT): `e2e-full-audit.ts:884:68` Buffer/string + `cli/index.ts:260:11` Promise<number>/Promise<void>. Build still succeeds via tsup/esbuild. ST file: `Master/reports/handoffs/ST-2026-05-15-4.md`.
+Last Updated: 2026-05-15 (session B — continuation from ST-2026-05-15-4) — **5 commits live origin/master**: B `984bfea` G-TSC-DRIFT eliminated (13 TS errors → 0, +92/−17), C `f2ed2fc` STATUS MATRIX (27/27 audit, +67/0), F1 `7ac46b8` selfcheck exit-code regression fix (+47/−1 after `/review` retroactively caught my own regression), F4+F5 `0d587d6` real CLS capture via PerformanceObserver + await/try-catch cleanup (+107/−7), F2+F3 `f87fdb3` dead `?? []` removal + TOCTOU baseline collapse (+77/−4). G-TSC-DRIFT initially scoped as "2 errors" per ST handoff; reality = 13 errors across 5 type contracts (`captureFullPage`, `runA11yScan`, `A11yViolationSummary`, `PerformanceMetrics`, `pixelDiffPercent` + commander). User authorized B2 best-of-best. `/review` campaign closed: 5/5 findings disposed (F1 HIGH + F2-F5 LOW/INFO). 4 ledger entries in `reports/DIRECT-CHANGES-2026-05.md` (sessions B + C + F1 + F4+F5 + F2+F3). Verification campaign-wide: `tsc --noEmit` exit 0 (was 13), vitest 849/849 (4 reruns), tsup CJS+ESM+DTS clean, L41 cascade 200/200/200/200 post each push. Latent runtime bug fixed colateral: `tester e2e-full-audit` screenshots now actually land on disk (4 `captureFullPage(page, path)` sites had been silently discarding output). CLS now captured for real (previously reported `0.000` always). **2 lessons codified**: L06 (preserve semantic return value when wrapping for stricter type contract) + L07 (inline type cast = symptom of upstream feature absence, not just cleanup). ST file: `Master/reports/handoffs/ST-2026-05-15-5.md` (next session = Master dedicated on 4 plugin/loop items).
 
-## Session (2026-05-15) — L04 + L05 STANDING RULES + audit cross-reference
+## Session (2026-05-15 — B continuation) — G-TSC-DRIFT + STATUS MATRIX + /review F1-F5 campaign close
+
+**Context**: Continuation session from ST-2026-05-15-4 handoff. User invoked "PA! - Tester" + provided ST file path; session opened in Direct mode, NO-TOUCH CRITIC §2d propose-confirm-apply.
+
+**Scope executed**: A→B→C per user direction, then `/review all + fix cu TWG` discovery → 4 more surgical fixes (F1-F5).
+
+**Commits live origin/master** (5, since ST `528b2bf`):
+
+| Commit | Scope | Lines |
+|---|---|---|
+| `984bfea` | B — G-TSC-DRIFT (13 TS errors → 0; 5 contract drifts: captureFullPage/runA11yScan/A11yViolationSummary/PerformanceMetrics/pixelDiffPercent + commander action) | +92/−17 |
+| `f2ed2fc` | C — STATUS MATRIX insert in TODO_PERSISTENT.md (27/27 ✅ Tester Upgrade Roadmap audit) | +67/0 |
+| `7ac46b8` | F1 (HIGH) — selfcheck exit code regression fix (process.exit wrap) — `/review` caught my own regression introduced in B | +47/−1 |
+| `0d587d6` | F4 (feature-upgrade) + F5 — real CLS capture via PerformanceObserver + 2× await/try-catch cleanup | +107/−7 |
+| `f87fdb3` | F2 + F3 — drop dead-defensive `?? []` + collapse TOCTOU existsSync→readFileSync window | +77/−4 |
+
+**Verification**:
+- `tsc --noEmit`: exit 0 (was 13 errors at session start)
+- `npx vitest run`: 849/849 pass (4 reruns: post-B, post-F1, post-F4+F5, post-F2+F3)
+- `npm run build`: tsup CJS+ESM+DTS clean
+- L41 cascade post-each-push: tester / cabinet / PRO / guru = 200/200/200/200 (2 transient `000` retries succeeded)
+
+**Findings disposition** (`/review` campaign close):
+
+| ID | Sev | Status |
+|---|---|---|
+| F1 | HIGH | ✅ FIXED `7ac46b8` — `process.exit(await selfCheckCommand(options))` preserves contracted "exit 0 pass, 1 warn, 2 fail" semantics |
+| F2 | LOW | ✅ FIXED `f87fdb3` — `r.violations ?? []` dead code (typed non-optional); removed |
+| F3 | LOW | ✅ FIXED `f87fdb3` — `existsSync→readFileSync` TOCTOU collapsed into single defensive try-read; per-URL skip instead of step abort |
+| F4 | INFO → feature | ✅ FIXED `0d587d6` — discovered `capturePerformanceMetrics` never actually captured CLS; added PerformanceObserver `layout-shift` buffered + `hadRecentInput` filter; interface gained `cls: number` non-optional |
+| F5 | INFO | ✅ FIXED `0d587d6` — 2× `.then(buf => writeFileSync).catch()` → `try { await; writeFileSync } catch {}` |
+
+**Latent runtime bugs fixed colateral** (not in original scope, surfaced via type-correction):
+- `tester e2e-full-audit` screenshots: 4 sites passed paths to `captureFullPage(page, path)` which has signature `(page, opts: CaptureFullPageOptions)` returning Buffer. Result: screenshots silently dropped at all 4 sites. Now written explicitly via `fs.writeFileSync(path, await captureFullPage(page))`.
+- CLS reporting: every page audit reported `CLS: 0.000` regardless of actual layout shifts because metric was never captured.
+
+**Ledger** (per §2d propose-confirm-apply):
+- `AUDIT_GAPS.md` G-TSC-DRIFT entry — filed + ELIMINATED in single insert (umbrella covers F1-F5)
+- `reports/DIRECT-CHANGES-2026-05.md` — 5 session entries (B + C + F1 + F4+F5 + F2+F3) with risk profile + verification per fix
+
+**TODO sync**: STATUS MATRIX block landed in TODO_PERSISTENT.md (27 T-XXX items with closure commits, append-only +67 lines). G-TSC-DRIFT marked ELIMINATED in AUDIT_GAPS.
+
+**Tester source-side status post-session**: 0 open AUDIT_GAPS rows on Tester source code. 3 remaining items in Tester ledger are cross-references to Master tooling (auth-resolver plugin + api-tester false-positive + security-scanner phantom files), plus 2 trwg-loop sub-bugs from ST handoff — all 4 require Master dedicated session.
+
+## Lessons Learned (sesiunea 2026-05-15 B)
+
+- **L06** — When wrapping a function to satisfy a stricter type contract, preserve its semantic return value. Discarding via `async (args) => { await fn(args) }` is a feature loss disguised as type fix. Especially `*Command` functions returning `Promise<number>` exit codes by convention. Reference: F1 regression in `984bfea` → fix in `7ac46b8`.
+- **L07** — Inline type casts in callers (`(value as { field?: T }).field ?? default`) are often symptoms of upstream feature absence, not "type cleanup" opportunities. Audit whether the value is actually captured before promoting the cast into a canonical type. Reference: F4 in `0d587d6` — `capturePerformanceMetrics` never captured CLS; inline cast masked the gap.
+
+---
+
+## Session (2026-05-15 A) — L04 + L05 STANDING RULES + audit cross-reference
 
 **Context**: Session opened with "PA! - Tester" + Direct mode + N max-speed. Concurrent RPA-Hub session running on Master mesh; user directive = "continui pe Tester exclusiv".
 

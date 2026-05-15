@@ -286,3 +286,51 @@ groq Llama-4 + AIRouter wrapping with forced `tool_use` produces structured find
 **Reference incident.** 2026-05-15. Another concurrent session reported TRWG-GW = PARTIAL with rationale "credit + auto-review shallow", then described 7 of 11 P1+P2 issues fixed "via /review path instead" with 18 new tests + deployed clean. User flagged the misdiagnosis. Per-layer truth: WG layer (CLI subprocess) was fully functional + the 7 fixes were the loop's intended output; /review layer worked; only Vision was credit-blocked. The PARTIAL label was applied to a loop that functioned as designed. Master CLAUDE.md TRWG-GW section already had the anti-pattern documented at the time of the incident; L05 codifies it Tester-side with the concrete architecture cite (`trwg-loop.mjs:248-295`) so future sessions reading Tester governance see the credit-myth refutation without needing to cross-look to Master.
 
 ---
+
+## L06 — 2026-05-15 — Preserve semantic return values when wrapping for stricter type contracts (STANDING RULE)
+
+**Rule.** When a TypeScript error forces you to wrap a function call to satisfy a stricter expected signature (e.g., framework callback expects `void | Promise<void>` but the function returns `Promise<number>`), the wrap MUST preserve the original return value via the framework's idiomatic mechanism. Discarding the return is a feature loss disguised as a type fix.
+
+**Recipe.**
+1. Identify the TS error site (often `TS2345` — return type incompatibility).
+2. Read the called function's signature AND its caller's contract (especially function name conventions: `*Command`, `*Handler`, `*Action`).
+3. If the return type carries semantic weight (exit code, status code, result for forwarding), preserve it via the wrapping framework's mechanism:
+   - Commander CLI `*Command` returning `Promise<number>` (exit code) → wrap as `async (args) => { process.exit(await fn(args)) }`
+   - Express handler returning `Promise<Response>` → wrap as `async (req, res) => { res.send(await fn(req)) }`
+   - Event handler returning a result → wrap to dispatch / forward the result
+4. Only if the return is documented as ignored (`void` upstream by design) is `async (args) => { await fn(args) }` correct.
+
+**Why it matters.** A silent type-correcting wrap can demote a documented contract ("Exit 0 pass, 1 warn, 2 fail") to default behavior (exit 0 always). CI consumers depending on the original semantic break in silence. Build passes, tests pass, but the feature is gone.
+
+**Detection signal.** When wrapping a function, ask: "What does the original return value do?" If the answer involves words like `exit`, `status`, `result`, `code`, `dispatch`, or any noun denoting downstream effect — the wrap must preserve it. If the answer is "nothing, it's already void" — discard is fine.
+
+**Reference incident.** 2026-05-15 session B. The G-TSC-DRIFT fix (`984bfea`) wrapped `selfCheckCommand: (opts?) => Promise<number>` (line `src/cli/index.ts:260`) as `.action(async (options) => { await selfCheckCommand(options) })` to silence `TS2345`. The Promise<number> exit code was silently discarded. Commander defaulted to exit 0 regardless. The command's own description on line 258 promised `Exit 0 pass, 1 warn, 2 fail` — broken until the user invoked retroactive `/review` which caught the regression. Fix landed in `7ac46b8`: `.action(async (options) => { process.exit(await selfCheckCommand(options)) })`.
+
+**No regression test existed.** This is the second-order lesson: when contracts are documented in CLI `.description()` strings but not asserted in tests, type fixes can regress them silently. Consider adding minimal regression tests for exit-code-carrying CLI commands.
+
+---
+
+## L07 — 2026-05-15 — Inline type casts in callers are often symptoms of upstream feature absence (STANDING RULE)
+
+**Rule.** When you see an inline type assertion in caller code like `(value as { field?: T }).field ?? default`, treat it as a smell, not a candidate for cleanup-via-interface-update. The cast often hides the fact that the producing function never captures `field` at all — the `?? default` is masking actual data absence under a benign-looking fallback.
+
+**Recipe.**
+1. Identify the inline cast site.
+2. Read the function that produces `value` — DO NOT just look at its return type.
+3. Verify the field is actually populated by tracing through the function body (especially `page.evaluate` callbacks, fetch wrappers, transform pipelines).
+4. If the field is captured: promote it to the canonical type (interface field). Drop the cast. Done.
+5. If the field is NOT captured: this is a feature gap, not a type-cleanup. Implement the capture logic before promoting to the interface. Document the discovery in commit message + ledger so the gap doesn't reappear.
+
+**Why it matters.** "Type cleanup" is a tempting framing — feels low-risk, looks like dead-defensive cleanup. But promoting an absent field to a typed interface just moves the silent zero from caller to producer, and now every downstream consumer thinks the data is real. The bug propagates further with less visibility.
+
+**Detection signal.** Inline casts that include `??` or `||` defaults are almost always covering for either (a) genuinely-optional data or (b) absent data. The shape of the cast — using a one-off anonymous type instead of importing the canonical type — is a strong tell that the canonical type doesn't have the field.
+
+**Reference incident.** 2026-05-15 session B `/review` F4. The pre-fix code at `src/cli/commands/e2e-full-audit.ts:829` read:
+```ts
+const cls = (metrics as { cumulativeLayoutShift?: number }).cumulativeLayoutShift ?? 0
+```
+Tempting "cleanup": add `cumulativeLayoutShift?: number` to `PerformanceMetrics` interface, drop the cast. That would have been wrong — `capturePerformanceMetrics` in `src/assertions/performance.ts` never actually captured CLS. The metric requires `PerformanceObserver` with `layout-shift` type + `buffered: true`, which the function lacked entirely. Every Tester e2e audit reported `CLS: 0.000` regardless of actual layout shifts. Real fix in `0d587d6` added the observer logic + made the field non-optional after capture.
+
+**Scope of applicability.** Universal across TypeScript codebases. Especially relevant in Tester / audit tooling where reported metrics are consumed by downstream scoring — silent zeros become silent "all-good" scores.
+
+---
