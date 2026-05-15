@@ -172,3 +172,58 @@ The user's analogy: "WG trebuie sa ajunga la 100%". Apply this to every score-be
 **Reference incident.** 2026-04-25, post-website-guru-refactor E2E audit. Claude reported 78/100 with pre-existing findings ignored + asked for admin creds instead of seeding a test admin via Prisma. User flagged both. Both were checkbox-driven, not problem-driven. L03 supersedes that pattern from this point forward.
 
 ---
+
+## L04 — 2026-05-15 — Verify existing code state before proposing new code (STANDING RULE)
+
+**Problem:** Sub-tasks marked done in commit messages or via parent-task DONE markers can be invisible if I only read TODO_PERSISTENT headers without cross-referencing `git log` + filesystem. This session, I almost rebuilt T-000 Active Lessons Engine from scratch when it had already shipped Day-1 through Day-4 (FINAL) on 2026-04-24 — 12 files in `src/lessons/`, 20 test files in `tests/lessons/`, 6 seed YAMLs in `lessons/`, CLI wired across 9 subcommands, 328 tests pass. The L02 rule 2 reflex (preserve uncommitted variants) is what saved me: I checked `ls src/lessons/` before writing new files. Without that reflex, I'd have proposed Phase 1 commits creating `src/lessons/schema.ts` + `loader.ts` + `store.ts` — overwriting working code with a duplicate skeleton.
+
+**Root cause:** TODO_PERSISTENT.md showed T-000..T-005 as P0 items under heading `## [x] 🎯 Audit-Suite Methodology — DONE 2026-05-11`. Parent marked DONE; sub-tasks not individually marked. My reading: "those P0 items aren't checked off, must be open." Reality: they were shipped as part of the parent's commit chain and individually via 11 named commits (`b71a429` T-000 Day-2 / `d285bba` Day-3 / `4bb6358` Day-4 FINAL / `b5c4985` T-001 / `a94f276` T-002 / `4484a2d` T-003 / `30ac792` T-004 / `301f2a9` T-005 / etc). TODO_PERSISTENT was out of sync with code reality.
+
+### Principle 1 — Read code, not just the spec doc
+
+Before proposing ANY new file or function, run this 3-check sequence:
+
+1. **Git log check.** `git log --all --oneline | grep -E '<feature-keyword>|T-XXX-id'` — every shipped feature leaves a commit trail. If the trail exists, the feature exists (and may need extension, not rewrite).
+2. **Filesystem check.** `ls src/<expected-dir>/` + `find . -name '<expected-file>'`. If the directory or file is present and non-empty, READ IT before writing alongside.
+3. **Test check.** `ls tests/<feature>/ && npx vitest run tests/<feature>/`. Passing tests = the feature works; broken tests + present source = partial implementation needing repair, not rebuild.
+
+Run all three before stating "X needs to be built". State of `[ ]` in any TODO file is NOT proof of unshipped — it's potential staleness.
+
+### Principle 2 — Treat TODO_PERSISTENT as a hypothesis, not a source of truth
+
+TODO/spec documents are written-by-human, updated-by-human → they drift from code reality the moment a developer ships a commit without updating the doc. The code is the only source of truth on what's shipped. Use TODO for INTENT (what's planned, why, priority) but verify STATE against git + filesystem.
+
+**Specific tells that a TODO entry is stale:**
+- Sub-tasks listed under a parent marked `[x] DONE` — the parent's DONE marker may cascade implicitly to subs
+- "Day-N" or "Phase-N" sequenced work where some days are checked but not the final → check git log; the final day may have shipped without doc update
+- Spec dated >2 weeks before today's date with no recent edits + the source dir mentioned (e.g. `src/lessons/`) exists with files dated within that 2-week window → very likely shipped, doc lagging
+- "Effort estimate: N days" entries — if the spec was written N+1 days ago, work might already be done
+
+### Principle 3 — When uncertain, AUDIT before WRITE
+
+If git log + filesystem checks return conflicting signals (some commits present, some files missing, some tests passing, some absent), STOP and run a structured audit pass:
+1. List each promised deliverable from the spec
+2. For each: check git, check fs, check tests
+3. Build a matrix: shipped / partial / not started / unclear
+4. Report findings to user BEFORE writing any code
+5. User confirms which gaps to close
+
+This protects against both (a) duplicating done work, and (b) extending broken work that should have been rewritten.
+
+**Prevention (MANDATORY):**
+
+1. **Pre-proposal checklist.** Before drafting Phase plans, commit plans, or "I'll build X" statements, mandatorily run the 3 checks (git log, fs, tests). Include the checks' output in the proposal to user so they can verify the basis.
+2. **Cross-reference DONE markers.** When reading TODO files, build mental map: `parent [x]` ⊃ `subs may all be done implicitly`. Spot-check by `git log --oneline --grep '<sub-id>'`. If commits exist matching sub-IDs, the subs are shipped regardless of doc state.
+3. **Honest correction reflex.** If I propose work then discover it's done, immediately retract + acknowledge mistake + reset plan. Do NOT silently pivot or pretend the proposal was conditional. The user's trust depends on honest reporting of my own errors.
+
+**Violation detection.** Future-session Claude self-audit before drafting a proposal:
+- Did I check git log for the feature keyword / T-ID? (If no → violation.)
+- Did I `ls` the expected source directory and read its index/main entry? (If no → violation.)
+- Did I run the tests for the feature to confirm working state? (If no → violation.)
+- Did my proposal cite the git/fs/test evidence basis? (If no → violation.)
+
+**Scope of applicability.** All Tester sessions. Strongly recommended for Master + cross-repo work too. Especially critical on NO-TOUCH CRITIC projects where wasted-work proposals can erode user trust + double the propose-confirm-apply overhead.
+
+**Reference incident.** 2026-05-15, this session. Initial menu offered "T-000 Active Lessons Engine" as the headline P0 to attack on Tester. User picked A. I proposed an 8-phase build-from-zero plan (Phase 1 = schema + loader + store + tests + SCHEMA.md, ~600 lines, 8 files). Before writing Phase 1, ran `cat package.json` + `ls src/` → saw `src/lessons/` already present with 12 files dated 2026-04-24. Pivoted to inspect. Found `index.ts` exporting 9 modules + CLI wired in `src/cli/index.ts` line 15-23 + 20 test files in `tests/lessons/` + 6 seed YAMLs in `lessons/` + 328 tests pass. Git log showed 11 commits T-000 Day-1 through Day-4 FINAL (`4bb6358`) + T-001..T-005 all shipped. The proposal was a waste-of-work disaster averted by the existing-state check reflex. L04 codifies that reflex as a mandatory pre-proposal gate.
+
+---
