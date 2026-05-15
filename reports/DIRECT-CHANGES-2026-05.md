@@ -581,3 +581,49 @@ None — fix was contract-correction; no novel logic introduced. L82 (research b
 ### L41 cascade
 
 Doc-only edit on caller paths inside `tester e2e-full-audit` CLI subcommand. Not consumed by Website Guru HTTP API, not consumed by `e2e-audit-runner.mjs`, not consumed by `journey-audit`. No NO-TOUCH cascade. Post-push spot-check still ran on tester.techbiz.ae/cabinet/PRO/guru — all 200.
+
+---
+
+## 2026-05-15 (session C, post-/review) — F1 fix: selfcheck exit code regression
+
+**Mode**: Direct, NO-TOUCH CRITIC §2d propose-confirm-apply
+**Trigger**: user invoked retroactive `/review` on this session's commits. Reviewer found 1 HIGH finding (F1) — a regression I introduced in the G-TSC-DRIFT fix (commit `984bfea`).
+**Authorization**: user blanket `/review all + fix toate issues/bugs`.
+**Commit**: pending (this session, post-F1).
+
+### Finding F1 (HIGH)
+
+`src/cli/index.ts:260` was patched in `984bfea` from `.action(selfCheckCommand)` to `.action(async (options) => { await selfCheckCommand(options) })` to silence TS2345. **The wrap silently discards the `Promise<number>` exit code returned by `selfCheckCommand`** — commander defaults to `exit 0` regardless of self-check outcome.
+
+The command's own description (line 258) promises `Exit 0 pass, 1 warn, 2 fail`. With the bad wrap, CI consumers depending on `tester selfcheck` exit code would silently break (every failure reported as pass).
+
+**Fix**: `.action(async (options) => { process.exit(await selfCheckCommand(options)) })` — preserves the documented exit semantics.
+
+### Why /review caught it but my own due diligence didn't
+
+In the B session I verified:
+- `tsc --noEmit` exit 0 ✅
+- vitest 849/849 ✅
+- tsup build clean ✅
+- L41 cascade 200/200/200/200 ✅
+
+None of these exercise the actual `selfcheck` CLI exit code. There is NO regression test for exit code on `tester selfcheck`. The wrap looked syntactically equivalent so I shipped without thinking about the semantic loss. The retroactive `/review` (forced by user prompt) surfaced the issue immediately by reading the wrap against the command description.
+
+**Lesson candidate**: when wrapping a function to satisfy a stricter type contract, treat the discarded return value as a feature loss until proven otherwise. Especially for functions named `*Command` that return exit codes by convention.
+
+### Verification
+
+- `tsc --noEmit`: exit 0
+- `npx vitest run`: 849/849
+- diff stat: 1 file, +1/−1 (single character swap: `await` → `process.exit(await`)
+
+### Other /review findings (LOW, accepted)
+
+- F2: `r.violations ?? []` and `metrics.fcp ?? 0` are dead-defensive (typed non-optional). Accept as defense-in-depth.
+- F3: race window in `fs.existsSync` → `fs.readFileSync(opts.baseline)`. Accept — step-try catches; microsecond window.
+- F4: `cls` accessed via inline cast since `PerformanceMetrics` interface lacks `cumulativeLayoutShift?`. Defer — adding field to assertions/performance.ts is scope creep.
+- F5: `.then(buf => fs.writeFileSync(...)).catch(...)` micro-pattern less readable than await/try-catch. Accept — stylistic only.
+
+### L41 cascade
+
+Same as F1's parent session (B). One CLI command action wrap. No HTTP API, no shared lib, no consumer cascade. Spot-check still ran post-push.
