@@ -1,5 +1,30 @@
 # Project Status - Tester
 
+Last Updated: 2026-05-15 — **L04 + L05 STANDING RULES codified** (commits `0db77f3` + `b8733b1`, +114 lines `knowledge/lessons-learned.md`). Session occurred under "Tester exclusiv" directive (concurrent RPA-Hub session blocked Master scope). L04 = verify-existing-code-state-before-proposing-new-code (averted multi-hour rewrite of already-shipped T-000 Active Lessons Engine). L05 = TRWG-GW credit-blocking myth (only Vision layer credit-bound; /review + WG fix + Gateway are credit-free per `trwg-loop.mjs:248-295` cite). Audit cross-reference confirmed ALL 27 T-XXX items in TODO_PERSISTENT.md `Audit-Suite Methodology` parent section are shipped via 11 named commits — `4bb6358` T-000 FINAL, `b5c4985` T-001, `a94f276` T-002, `4484a2d` T-003, `30ac792` T-004, `301f2a9`+`c0a6a32` T-005, plus T-007..T-D4 closures. **Proposed surgical TODO_PERSISTENT edit (summary block) NOT applied this session — deferred to next session.** /review: build green + vitest 849/849 + 1 file +114/0 surgical. Surfaced 2 pre-existing TSC errors (G-TSC-DRIFT): `e2e-full-audit.ts:884:68` Buffer/string + `cli/index.ts:260:11` Promise<number>/Promise<void>. Build still succeeds via tsup/esbuild. ST file: `Master/reports/handoffs/ST-2026-05-15-4.md`.
+
+## Session (2026-05-15) — L04 + L05 STANDING RULES + audit cross-reference
+
+**Context**: Session opened with "PA! - Tester" + Direct mode + N max-speed. Concurrent RPA-Hub session running on Master mesh; user directive = "continui pe Tester exclusiv".
+
+**Deliverables landed**:
+- `0db77f3` — L04 standing rule (+55 lines)
+- `b8733b1` — L05 standing rule (+59 lines)
+- Both append-only to `knowledge/lessons-learned.md` after L03; zero reformat of L01-L03 above
+
+**Audit findings (read-only, surgical edit deferred)**:
+- All 27 T-XXX items shipped + closure commits identified
+- 2 pre-existing TS errors flagged (NOT introduced this session)
+- Proposed L02-style summary block append at line ~245 (before T-000 detail section) — awaiting next-session apply
+
+**Cross-deliverable**: copy-paste correction prompt composed for concurrent session that misreported TRWG-GW = PARTIAL (citing the L05 anti-pattern). Delivered inline to user.
+
+## Lessons Learned (sesiunea 2026-05-15)
+
+- **L04** — Verify existing code state before proposing new code (STANDING RULE). Codified via commit `0db77f3`. Cross-ref: dogfooded L02 rule 2 (preserve uncommitted variants). Full text in `knowledge/lessons-learned.md`.
+- **L05** — TRWG-GW credit-blocking myth: only Vision is credit-bound, not whole loop (STANDING RULE). Codified via commit `b8733b1`. Cross-ref: Master CLAUDE.md TRWG-GW section anti-pattern. Full text in `knowledge/lessons-learned.md`.
+
+---
+
 Last Updated: 2026-05-11 — **T-001 (Harness Self-Test Battery) DONE.** Critical Path implementation complete: harness.ts (264 LOC, 4 static checks + 2 deferred browser probes), harness.test.ts (18 vitest tests, all passing 18/18), selfcheck.ts CLI command with colored output + JSON mode. Probe coverage: CSS validator (layered with L-F2 lesson), case-insensitive text path (assertions/dom exports), timing defaults (≥5s baseline), lesson corpus presence (5 baseline lessons). Deferred to Day-2: Puppeteer-based Tailwind uppercase fixture + timing race fixture. Build successful (ESM + CJS + DTS). Next: T-002 (Coverage Matrix) + T-003 (Selector Linter) in parallel.
 
 ---
