@@ -267,7 +267,10 @@ async function auditRole(
       fs.mkdirSync(screenshotDir, { recursive: true })
       for (const p of privateCrawl.pages.slice(0, 3)) {
         const ss = path.join(screenshotDir, `${encodeURIComponent(p.url).slice(0, 40)}.png`)
-        await captureFullPage(page).then(buf => fs.writeFileSync(ss, buf)).catch(() => null)
+        try {
+          const buf = await captureFullPage(page)
+          fs.writeFileSync(ss, buf)
+        } catch { /* swallow — best-effort screenshot */ }
       }
       outcomes.push({
         step: stepBase + 1,
@@ -574,7 +577,10 @@ export function registerE2EFullAudit(program: Command): void {
             // Screenshot first 5 private pages
             for (const pu of privateUrls.slice(0, 5)) {
               const ss = path.join(screenshotsDir, `private-${encodeURIComponent(pu.replace(/https?:\/\//, '')).slice(0, 50)}.png`)
-              await captureFullPage(page).then(buf => fs.writeFileSync(ss, buf)).catch(() => null)
+              try {
+                const buf = await captureFullPage(page)
+                fs.writeFileSync(ss, buf)
+              } catch { /* swallow — best-effort screenshot */ }
             }
             const hydrationResults = []
             for (const pu of privateUrls.slice(0, 5)) {
@@ -824,10 +830,10 @@ export function registerE2EFullAudit(program: Command): void {
         const s = Date.now()
         try {
           const metrics = await capturePerformanceMetrics(page)
-          const fcp = metrics.fcp ?? 0
-          const lcp = metrics.lcp ?? 0
-          const tti = metrics.tti ?? 0
-          const cls = (metrics as { cumulativeLayoutShift?: number }).cumulativeLayoutShift ?? 0
+          const fcp = metrics.fcp
+          const lcp = metrics.lcp
+          const tti = metrics.tti
+          const cls = metrics.cls
           const passed = fcp < 3000 && lcp < 4000 && tti < 5000 && cls < 0.25
           steps.push({
             step: 11, name: 'Lighthouse/Performance metrics',

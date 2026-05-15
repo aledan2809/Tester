@@ -11,6 +11,7 @@ export interface PerformanceMetrics {
   fcp: number  // First Contentful Paint (ms)
   lcp: number  // Largest Contentful Paint (ms)
   tti: number  // Time to Interactive (ms)
+  cls: number  // Cumulative Layout Shift (unitless, 0..N)
   domContentLoaded: number
   loadComplete: number
   resourceCount: number
@@ -21,7 +22,7 @@ export interface PerformanceMetrics {
  * Capture performance metrics from the current page.
  */
 export async function capturePerformanceMetrics(page: Page): Promise<PerformanceMetrics> {
-  return page.evaluate(() => {
+  return page.evaluate(async () => {
     const nav = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined
     const paint = performance.getEntriesByType('paint')
     const resources = performance.getEntriesByType('resource') as PerformanceResourceTiming[]
@@ -46,10 +47,32 @@ export async function capturePerformanceMetrics(page: Page): Promise<Performance
 
     const totalTransferSize = resources.reduce((sum, r) => sum + (r.transferSize || 0), 0)
 
+    // CLS via PerformanceObserver (layout-shift entries are NOT exposed via
+    // getEntriesByType, must observe). buffered:true delivers historical
+    // entries; 150ms settle allows the observer to flush before resolve.
+    const cls = await new Promise<number>((resolve) => {
+      let total = 0
+      try {
+        const observer = new PerformanceObserver((list) => {
+          for (const entry of list.getEntries()) {
+            const shift = entry as PerformanceEntry & { value?: number; hadRecentInput?: boolean }
+            if (!shift.hadRecentInput) {
+              total += shift.value || 0
+            }
+          }
+        })
+        observer.observe({ type: 'layout-shift', buffered: true })
+        setTimeout(() => { observer.disconnect(); resolve(total) }, 150)
+      } catch {
+        resolve(0)
+      }
+    })
+
     return {
       fcp: Math.round(fcp),
       lcp: Math.round(lcp || fcp * 1.5),
       tti: Math.round(tti),
+      cls: Math.round(cls * 1000) / 1000,
       domContentLoaded: Math.round(domContentLoaded),
       loadComplete: Math.round(loadComplete),
       resourceCount: resources.length,

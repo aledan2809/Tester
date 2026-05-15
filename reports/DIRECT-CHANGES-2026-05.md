@@ -627,3 +627,74 @@ None of these exercise the actual `selfcheck` CLI exit code. There is NO regress
 ### L41 cascade
 
 Same as F1's parent session (B). One CLI command action wrap. No HTTP API, no shared lib, no consumer cascade. Spot-check still ran post-push.
+
+---
+
+## 2026-05-15 (session D, post-/review F4+F5) — finish "/review all + fix all"
+
+**Mode**: Direct, NO-TOUCH CRITIC §2d propose-confirm-apply
+**Trigger**: user "fix all cu TWG" after F1 — explicit blanket OK to address F4 + F5 (LOW/INFO findings deferred in /review).
+**TWG rationale**: TWG = Tester↔Website Guru loop on **deployed web UI**. F4/F5 are source-code in Tester itself (no UI), so the loop tool doesn't apply technically. Equivalent path executed = same propose-confirm-apply pattern with /review + smoke check (which IS the verify-fix structure TWG automates for web bugs).
+**Commit**: pending (this session, post-F4+F5).
+
+### F4 (INFO → upgraded to real feature, not just type cleanup)
+
+**Original /review finding**: `cls` accessed via inline cast `(metrics as { cumulativeLayoutShift?: number }).cumulativeLayoutShift ?? 0` because `PerformanceMetrics` interface lacked the field. Symptom of a deeper issue: `capturePerformanceMetrics` doesn't actually capture CLS — the cast was just papering over absence with a default 0. CLS is a Web Vital, capturing it is a legitimate feature not a stylistic cleanup.
+
+**Mechanism**: CLS (`layout-shift` entries) is NOT exposed via `performance.getEntriesByType()`. Must use `PerformanceObserver` with `buffered: true` to read accumulated post-navigation shifts. Standard pattern: sum `entry.value` where `!entry.hadRecentInput` (filter out user-initiated layout changes like scroll).
+
+**Fix applied** in `src/assertions/performance.ts`:
+1. Added `cls: number` field to `PerformanceMetrics` interface (non-optional; defaults to 0 if observer fails)
+2. Made `page.evaluate` callback `async` (was sync)
+3. Added `await new Promise<number>(resolve => {...PerformanceObserver...setTimeout(150)...})` after existing sync logic
+4. Returns `cls: Math.round(cls * 1000) / 1000` (3-decimal precision, matches CLS reporting convention)
+5. Try/catch inside observer setup — gracefully resolves to 0 if `layout-shift` entry type unsupported (older browsers / non-Chromium)
+
+**Caller update** in `src/cli/commands/e2e-full-audit.ts:826-829`:
+- Dropped `(metrics as { cumulativeLayoutShift?: number }).cumulativeLayoutShift ?? 0` cast
+- Now reads `metrics.cls` directly (typed, non-optional)
+- Also dropped `?? 0` defensive coalesce on `fcp/lcp/tti` (all non-optional now)
+
+### F5 (INFO, stylistic — converted for consistency)
+
+**Original /review finding**: `.then(buf => fs.writeFileSync(...)).catch(...)` micro-pattern less readable than await/try-catch at 2 sites.
+
+**Fix applied** in `src/cli/commands/e2e-full-audit.ts` (lines 268-272 + 575-579):
+```ts
+// Before
+await captureFullPage(page).then(buf => fs.writeFileSync(ss, buf)).catch(() => null)
+
+// After
+try {
+  const buf = await captureFullPage(page)
+  fs.writeFileSync(ss, buf)
+} catch { /* swallow — best-effort screenshot */ }
+```
+
+Equivalent behavior, consistent with the rest of the file's await + try-catch idiom (e.g., the new pattern at line 209-210). The comment also documents intent (best-effort, not silent failure).
+
+### Verification
+
+- `tsc --noEmit`: exit 0 (still clean)
+- `npx vitest run`: 849/849 pass
+- `npm run build`: tsup CJS+ESM+DTS clean
+- diff stat: 2 files, +27/−13 (performance.ts +21/−2; e2e-full-audit.ts +6/−11 net)
+
+### Risk profile
+
+| Component | Status |
+|---|---|
+| `src/assertions/performance.ts` — `PerformanceMetrics` interface | CHANGED — added `cls: number` field (non-optional, additive — no consumer breakage since `executor.ts` import was dead, only `e2e-full-audit.ts` reads metrics) |
+| `src/assertions/performance.ts` — `capturePerformanceMetrics` function | CHANGED — now captures CLS via PerformanceObserver. `page.evaluate` callback is now async; existing sync logic preserved verbatim |
+| `src/cli/commands/e2e-full-audit.ts` Step 11 (Performance) | CHANGED — caller cleanup, drops inline cast + defensive coalesce |
+| `src/cli/commands/e2e-full-audit.ts` 2× screenshot loops | CHANGED — stylistic await/try-catch (semantic equivalent) |
+| HTTP API, journey-audit, runner, BFS crawler, reporter | UNCHANGED |
+| `src/perf/budget.ts` (`cls?: number` in `PerfBudget`) | UNCHANGED — was already optional; now `PerformanceMetrics.cls` non-optional, compatible with budget gating |
+
+### L41 cascade
+
+`PerformanceMetrics` exported from `src/index.ts:78` (public API). Adding a non-optional field to an interface is technically a breaking change for any external consumer constructing `PerformanceMetrics` manually. Internal-only check: only `capturePerformanceMetrics` produces this type, and it now produces the new field. No npm consumer constructs `PerformanceMetrics` (verified by grep across PROJECTS_ROOT — only Tester itself + dist/index.d.ts artifact). Post-push spot-check still on tester/cabinet/PRO/guru.
+
+### Why F4 was worth doing properly (not just type cast cleanup)
+
+`capturePerformanceMetrics` claimed to capture Web Vitals but silently dropped CLS — one of the three Core Web Vitals (with FCP/LCP). The inline cast in the caller was hiding the bug under a `?? 0` default. Anyone running `tester e2e-full-audit` saw `CLS: 0.000` regardless of actual layout shifts. Surface fix would have moved the cast into the interface; real fix captures actual data. Best-of-best per L01.
