@@ -227,3 +227,62 @@ This protects against both (a) duplicating done work, and (b) extending broken w
 **Reference incident.** 2026-05-15, this session. Initial menu offered "T-000 Active Lessons Engine" as the headline P0 to attack on Tester. User picked A. I proposed an 8-phase build-from-zero plan (Phase 1 = schema + loader + store + tests + SCHEMA.md, ~600 lines, 8 files). Before writing Phase 1, ran `cat package.json` + `ls src/` → saw `src/lessons/` already present with 12 files dated 2026-04-24. Pivoted to inspect. Found `index.ts` exporting 9 modules + CLI wired in `src/cli/index.ts` line 15-23 + 20 test files in `tests/lessons/` + 6 seed YAMLs in `lessons/` + 328 tests pass. Git log showed 11 commits T-000 Day-1 through Day-4 FINAL (`4bb6358`) + T-001..T-005 all shipped. The proposal was a waste-of-work disaster averted by the existing-state check reflex. L04 codifies that reflex as a mandatory pre-proposal gate.
 
 ---
+
+## L05 — 2026-05-15 — TRWG-GW credit-blocking myth: only Vision is credit-bound, not the whole loop (STANDING RULE)
+
+**Problem:** Sessions reporting TRWG-GW outcomes as "PARTIAL — credit blocker" treat the entire loop as credit-bound when in fact only ONE of its 4 layers (Tester runtime Vision API) actually consumes Anthropic credit. The other 3 layers — `/review`, Website Guru fix, and Gateway poll — are either free (CLI subprocess) or routed through AIRouter (groq primary + fallback chain that may not touch Anthropic at all). Treating "Anthropic credit low" as a whole-loop blocker is a misdiagnosis that leads to unnecessary scope reductions ("fixes applied via /review path instead" — but /review IS part of TRWG-GW, not a substitute).
+
+**Architecture (verified 2026-05-15 in `Master/mesh/engine/trwg-loop.mjs:248-295`):**
+
+| Layer | Source / Mechanism | Anthropic credit consumed? | Blockable by Anthropic credit? |
+|---|---|---|---|
+| `/review` | AIRouter smart-routing — groq primary, fallback chain (gemini/mistral/cohere/cerebras) | None unless fallback reaches Anthropic in chain | NO (groq free tier covers normal volume) |
+| Website Guru fix | `spawnSync(claudePath, ['-p', '--dangerously-skip-permissions', ...])` with `delete cliEnv.ANTHROPIC_API_KEY` (`trwg-loop.mjs:267`) | None — CLI uses subscription quota, NOT API tokens | NO |
+| Tester runtime (Vision scoring) | `@anthropic-ai/sdk` direct calls in Tester's vision-scoring path | Yes (Sonnet 4.5 vision tokens) | YES — score returns 0, loop continues with the other 3 layers |
+| Gateway phase (TG :3012 poll) | HTTP poll to local Tester service | None (network only) | NO |
+
+Master CLAUDE.md TRWG-GW section already codifies the anti-pattern explicitly: *"Skip TRWG-GW pe 'credit low' — `/review` + WG funcționează fără credit; doar Vision e blocked."* L05 dogfoods this Tester-side via a concrete reporting incident.
+
+### Principle 1 — When TRWG-GW reports PARTIAL, name the layer
+
+Acceptable: *"PARTIAL — Tester Vision blocked (Anthropic credit low), but /review found 11 P1+P2 issues and WG fix landed 7 patches in commits X+Y+Z."* Concrete layer + concrete impact.
+
+Unacceptable: *"PARTIAL — credit + auto-review shallow."* Vague conflation of two distinct mechanisms (Vision credit ≠ /review quality), with no per-layer breakdown. Specifically, the fix path described as "applied via /review path instead" IS the /review layer of TRWG-GW; not a substitute for the loop, but a constitutive part of it.
+
+### Principle 2 — Verify CLI availability before claiming WG-blocked
+
+If WG didn't produce fixes, the diagnosis sequence is:
+1. `which claude` returns a path? (CLI installed)
+2. Path includes `~/.local/bin` or wherever the symlink lives + that path is in `PATH` when spawning? (CLI reachable)
+3. `claude --help` runs without error? (CLI auth still valid)
+
+If all three pass, WG layer is functional. "WG didn't fix anything" then points to one of: (a) /review found no actionable issues (clean code is the right answer); (b) WG ran but Tester re-verify lagged the iteration boundary; (c) issues are subtle enough WG decided no-op. **None of these is "credit blocked"** — CLI doesn't consume Anthropic API credit at all.
+
+### Principle 3 — /review through groq doesn't make it "shallow"
+
+groq Llama-4 + AIRouter wrapping with forced `tool_use` produces structured findings: severity + file:line + recommendation. "auto-review shallow" as a complaint usually means the reporter expected GPT-4-class elaboration that groq doesn't always emit — but that's a TASTE judgment on output verbosity, not a TRWG-GW architectural limitation. If findings are too terse to action, the fix is **prompt-engineering the /review skill**, not skipping TRWG-GW or labeling it PARTIAL.
+
+**Prevention (MANDATORY):**
+
+1. **Per-layer reporting template.** Every TRWG-GW outcome report MUST include this 4-line breakdown:
+   ```
+   /review:       <status> — <N issues found / clean / blocked because X>
+   WG fix:        <status> — <N files modified / no-op / CLI unavailable>
+   Tester Vision: <status> — <score N/100 / blocked credit>
+   Gateway:       <status> — <issueCount=N / timeout>
+   ```
+   A report saying "TRWG-GW: PARTIAL" without this breakdown is incomplete + flagged as L05 violation.
+2. **"Credit low" claims require evidence.** Cite which API call returned the credit error, with timestamp + which layer it occurred in. Bare claim "credit blocker" = anti-pattern; force diagnosis to the right layer.
+3. **TRWG-GW vs subset distinction.** If only /review ran (no WG iteration, no Tester re-verify), the work was a code review, not TRWG-GW. Don't label it TRWG-GW even if it produced useful fixes — protects the term's meaning for future audits.
+
+**Violation detection.** Future-session Claude self-audit when reporting TRWG-GW outcomes:
+- Did I name each of the 4 layers' status explicitly? (If no → violation.)
+- If I claimed "credit blocked", did I cite which layer + which API call + timestamp? (If no → violation.)
+- Did I conflate "WG didn't fix because of credit" when actually CLI doesn't consume credit? (If yes → violation, retract.)
+- Did I label the run "TRWG-GW: PARTIAL" while really only /review ran? (If yes → violation, relabel as "code review via /review skill" instead.)
+
+**Scope of applicability.** All sessions running TRWG-GW on any project. Tester-specific because Tester's Vision API layer is the ONLY credit-bound piece + correctly diagnosing requires reading Tester source. Cross-references Master CLAUDE.md "TRWG-GW — DEFAULT pe sesiuni feature" section which carries the same anti-pattern at a higher level.
+
+**Reference incident.** 2026-05-15. Another concurrent session reported TRWG-GW = PARTIAL with rationale "credit + auto-review shallow", then described 7 of 11 P1+P2 issues fixed "via /review path instead" with 18 new tests + deployed clean. User flagged the misdiagnosis. Per-layer truth: WG layer (CLI subprocess) was fully functional + the 7 fixes were the loop's intended output; /review layer worked; only Vision was credit-blocked. The PARTIAL label was applied to a loop that functioned as designed. Master CLAUDE.md TRWG-GW section already had the anti-pattern documented at the time of the incident; L05 codifies it Tester-side with the concrete architecture cite (`trwg-loop.mjs:248-295`) so future sessions reading Tester governance see the credit-myth refutation without needing to cross-look to Master.
+
+---
