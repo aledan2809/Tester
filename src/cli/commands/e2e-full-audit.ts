@@ -789,7 +789,7 @@ export function registerE2EFullAudit(program: Command): void {
           const scanFile = path.join(outDir, 'a11y-scan.json')
           const r = await runA11yScan(page)
           fs.writeFileSync(scanFile, JSON.stringify(r, null, 2))
-          const violations = r.violations ?? []
+          const violations = r.violations
           const critCount = violations.filter((v) => v.impact === 'critical' || v.impact === 'serious').length
           steps.push({
             step: 10, name: 'Accessibility — axe-core scan',
@@ -888,9 +888,14 @@ export function registerE2EFullAudit(program: Command): void {
               fs.writeFileSync(ssPath, buf)
               screenshotPaths.push(ssPath)
 
-              if (opts.baseline && fs.existsSync(opts.baseline)) {
-                const diff = await pixelDiffPercent(fs.readFileSync(opts.baseline), buf).catch(() => 0)
-                if (diff > maxDiff) maxDiff = diff
+              if (opts.baseline) {
+                // Single defensive read — eliminates existsSync→readFileSync race
+                // window. If baseline missing/unreadable, skip diff for this URL.
+                try {
+                  const baselineBuf = fs.readFileSync(opts.baseline)
+                  const diff = await pixelDiffPercent(baselineBuf, buf).catch(() => 0)
+                  if (diff > maxDiff) maxDiff = diff
+                } catch { /* baseline missing or unreadable; skip diff */ }
               }
             }
 

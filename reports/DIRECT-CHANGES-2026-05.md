@@ -698,3 +698,71 @@ Equivalent behavior, consistent with the rest of the file's await + try-catch id
 ### Why F4 was worth doing properly (not just type cast cleanup)
 
 `capturePerformanceMetrics` claimed to capture Web Vitals but silently dropped CLS — one of the three Core Web Vitals (with FCP/LCP). The inline cast in the caller was hiding the bug under a `?? 0` default. Anyone running `tester e2e-full-audit` saw `CLS: 0.000` regardless of actual layout shifts. Surface fix would have moved the cast into the interface; real fix captures actual data. Best-of-best per L01.
+
+---
+
+## 2026-05-15 (session E, F2+F3) — final /review findings cleanup
+
+**Mode**: Direct, NO-TOUCH CRITIC §2d propose-confirm-apply
+**Trigger**: user "fixeaza si F2 si F3" — explicit OK to close the two remaining `/review` findings even though originally accepted as LOW.
+**Commit**: pending (this session).
+
+### F2 (LOW → fixed) — dead-defensive `?? []` on typed non-optional
+
+Sweep audit on `src/cli/commands/e2e-full-audit.ts` `??` operators identified only **1 dead-defensive** remaining after F4 cleanup: line 792 `const violations = r.violations ?? []`. `A11yViolationSummary.violations` is typed `Array<...>` non-optional, so the `?? []` branch is unreachable. The other 10 `??` operators in the file are all on optional / index-access / unknown-shape types (e.g., `response?.status() ?? 0`, `opts.maxPages ?? '20'`, `r.error ?? 'unknown'`) — those stay.
+
+**Fix**: drop `?? []`. Code now reads `const violations = r.violations`.
+
+### F3 (LOW → fixed) — TOCTOU race window in baseline pixel diff
+
+`existsSync(baseline)` → `readFileSync(baseline)` had a microsecond TOCTOU window. If the baseline file was deleted between the two calls, `readFileSync` threw synchronously **outside** the `pixelDiffPercent(...).catch(...)` chain, propagating up to the step-level `try { } catch { }` which would abort the entire visual step (no partial results for the remaining sample URLs in the loop).
+
+**Fix**: collapse to single defensive read inside per-URL try/catch:
+```ts
+// Before
+if (opts.baseline && fs.existsSync(opts.baseline)) {
+  const diff = await pixelDiffPercent(fs.readFileSync(opts.baseline), buf).catch(() => 0)
+  if (diff > maxDiff) maxDiff = diff
+}
+
+// After
+if (opts.baseline) {
+  try {
+    const baselineBuf = fs.readFileSync(opts.baseline)
+    const diff = await pixelDiffPercent(baselineBuf, buf).catch(() => 0)
+    if (diff > maxDiff) maxDiff = diff
+  } catch { /* baseline missing or unreadable; skip diff */ }
+}
+```
+
+Behavior delta: if baseline disappears mid-loop, the affected URL's diff is silently skipped instead of aborting the entire step. Comment documents intent.
+
+### Verification
+
+- `tsc --noEmit`: exit 0
+- `npx vitest run`: 849/849 pass
+- `npm run build`: tsup CJS+ESM+DTS clean
+- diff stat: 1 file, +6/−3 (e2e-full-audit.ts only)
+
+### Risk profile
+
+| Component | Status |
+|---|---|
+| Step 10 (a11y) violations array read | CHANGED — drop dead `?? []`, no behavior delta |
+| Step 12 (visual) baseline diff loop | CHANGED — TOCTOU collapse to single read; per-URL skip on baseline missing (was step-abort) |
+| Everything else | UNCHANGED |
+
+### L41 cascade
+
+Internal CLI logic only. No public API change. No NO-TOUCH consumer affected.
+
+### Summary — /review campaign close
+
+All 5 `/review` findings on this session's commits now disposed:
+- F1 HIGH ✅ FIXED `7ac46b8` (selfcheck exit code)
+- F2 LOW ✅ FIXED this commit (dead `?? []`)
+- F3 LOW ✅ FIXED this commit (TOCTOU collapse)
+- F4 INFO ✅ FIXED `0d587d6` (real CLS capture, upgraded from cleanup)
+- F5 INFO ✅ FIXED `0d587d6` (await/try-catch stylistic)
+
+Zero `/review` findings remaining open on this session's diff. AUDIT_GAPS.md G-TSC-DRIFT entry already covers the umbrella (no additional gap filed).
