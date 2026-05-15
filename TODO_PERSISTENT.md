@@ -255,6 +255,73 @@ From Phase 0.1 survey:
 
 ---
 
+## ✅ STATUS MATRIX (Tester Upgrade Roadmap audit — all 27 T-XXX items shipped)
+
+**Audit date**: 2026-05-15 (cross-reference completed in ST-2026-05-15-4 handoff; matrix inserted 2026-05-15 session B).
+**Method**: read-only audit cross-referencing `git log` topology + filesystem evidence + each T-XXX header marker. All commit hashes spot-verified via `git log -1 --format="%h %s"`.
+**Individual T-XXX sections below are preserved as historical specification** (problem statement + scope + design notes per item). Use this matrix as the entry point; consult per-item sections only when reviving a spec or doing forensic work.
+
+### PART 0 — Foundations (11 items)
+
+| Item | Status | Closure commit(s) | Notes |
+|---|---|---|---|
+| T-000 — Active Lessons Engine | ✅ DONE | `4bb6358` Day-4 FINAL | Multi-day landing; final = `tester lessons validate --run` |
+| T-001 — Harness Self-Test Battery | ✅ DONE | `b5c4985` + `e3d4e0c` | Day-2 closure |
+| T-002 — Feature Coverage Matrix YAML | ✅ DONE | `a94f276` | Per-feature YAML + `tester coverage` CLI |
+| T-003 — Stable Selector Enforcer + Source Linter | ✅ DONE | `4484a2d` | Half A linter + Half B enforcer |
+| T-004 — AI Failure Classifier | ✅ DONE | `30ac792` | PRODUCT_BUG / HARNESS_BUG / FLAKE / ENV_MISCONFIG |
+| T-005 — Test Generator from Prisma/API/OpenAPI | ✅ DONE | `301f2a9` + `c0a6a32` | 14 CRUD scenarios per model |
+| T-006 — Session-Awareness Query (`tester untested`) | ✅ DONE | `280bc4a` + `3988f58` | Header pre-marked DONE 2026-04-24 |
+| T-007 — Flake Detection + Auto-Retry | ✅ DONE | `b76b944` | `tester flake-report` §4 close |
+| T-008 — Visual Regression Baseline | ✅ DONE | `c29cb94` | |
+| T-009 — A11y Baseline + Budget | ✅ DONE | `e935b4f` | |
+| T-010 — Performance Budget | ✅ DONE | `202072c` | Lighthouse CI integration |
+
+### PART A — Independent Claude Code Session consumer mode (3 items)
+
+| Item | Status | Closure commit(s) | Notes |
+|---|---|---|---|
+| T-A1 — Aggregator reference + session boilerplate | ✅ DONE | `c7f0437` | |
+| T-A2 — Wave 2 ledger entry | ✅ DONE | `11bd39f` | Wave 2 ledger (T-A2 + T-A3 paired) |
+| T-A3 — Wave 2 ledger entry | ✅ DONE | `11bd39f` | (paired with T-A2) |
+
+### PART B — TWG Loop consumer mode (3 items)
+
+| Item | Status | Closure commit(s) | Notes |
+|---|---|---|---|
+| T-B1 — T-D1 gate alignment | ✅ DONE | `7bf4810` | T-D1 done-gate aligned with TWG threshold |
+| T-B2 — TWG-loop integration | ✅ DONE | `33927e6` | |
+| T-B3 — TWG-loop integration | ✅ DONE | `46e24aa` | |
+
+### PART C — Master Pipeline consumer mode (6 items)
+
+| Item | Status | Closure commit(s) | Notes |
+|---|---|---|---|
+| T-C1 — Wave 3 pipeline integration | ✅ DONE | `5dd593c` | |
+| T-C2 | ✅ DONE | `c5455d9` | "close all remaining — zero it.skip" — bundled close commit |
+| T-C3 | ✅ DONE | `c5455d9` | (bundled) |
+| T-C4 | ✅ DONE | `c5455d9` | (bundled) |
+| T-C5 | ✅ DONE | `c5455d9` | (bundled) |
+| T-C6 | ✅ DONE | `c5455d9` | (bundled) |
+
+### PART D — Cross-cutting (4 items)
+
+| Item | Status | Closure commit(s) | Notes |
+|---|---|---|---|
+| T-D1 — `tester done` gate | ✅ DONE | `ea8ebcf` | Spawn vitest/jest/playwright in done gate |
+| T-D2 — Tester-as-library vs Tester-as-service split | ✅ DONE | `f091f23` + `b3f24b5` | API contract freeze + sibling package `@aledan007/tester-service` |
+| T-D3 — Documentation site with test patterns | ✅ DONE | `8cbd53b` | |
+| T-D4 — Cross-project test inventory dashboard | ✅ DONE | `c5455d9` | (bundled with T-C close) |
+
+**Totals**: 11 (Part 0) + 3 (A) + 3 (B) + 6 (C) + 4 (D) = **27/27 ✅**.
+
+**Cross-references**:
+- Wave 1/2/3 ledger entries in `reports/DIRECT-CHANGES-2026-04.md` + `2026-05.md`.
+- L01 (best-of-best) drove the "zero it.skip" close standard (commit `c5455d9` message: "close all remaining — zero it.skip").
+- ST-2026-05-15-4 captured the audit cross-reference; this matrix is the surgical landing.
+
+---
+
 ## PART 0 — Foundations (cross-cutting; benefits all 3 consumer modes)
 
 ### T-000 [P0] ⭐ — Active Lessons Engine (replaces lessons-as-prose with lessons-as-code)
