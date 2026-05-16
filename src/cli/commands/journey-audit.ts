@@ -43,6 +43,12 @@ interface JourneyConfig extends JourneyClassifierConfig {
     passwordSelector: string
     submitSelector: string
     successUrlPattern: string
+    // API-direct login: POST credentials via fetch from page context (same-origin).
+    // Browser stores Set-Cookie automatically — bypasses React hydration race.
+    apiPath?: string          // e.g. "/api/auth/login"
+    apiEmailField?: string    // POST body field name for email (default: "email")
+    apiPasswordField?: string // POST body field name for password (default: "password")
+    apiUseCsrf?: boolean      // GET /api/auth/csrf first and include csrfToken (NextAuth)
   }
   credentials?: {
     emailEnv: string
@@ -137,6 +143,133 @@ async function countRegexMatchesInBody(page: Page, regexSource: string): Promise
   }, regexSource)
 }
 
+/**
+ * Perform login using either API-direct (preferred, bypasses React hydration race)
+ * or UI path with requestSubmit() + click() fallback.
+ *
+ * Exported for unit testing with stubbed page objects.
+ */
+export async function performLogin(
+  page: Page,
+  login: NonNullable<JourneyConfig['login']>,
+  baseUrl: string,
+  email: string,
+  password: string,
+): Promise<void> {
+  if (login.apiPath) {
+    // API-direct: call fetch() from the already-loaded page (same-origin).
+    // The browser stores the Set-Cookie response automatically — no manual
+    // cookie parsing needed. Works for any custom JWT auth endpoint.
+    const emailField = login.apiEmailField ?? 'email'
+    const passwordField = login.apiPasswordField ?? 'password'
+
+    let csrfToken: string | undefined
+    if (login.apiUseCsrf) {
+      csrfToken = await page.evaluate(async (csrfUrl: string) => {
+        const r = await fetch(csrfUrl)
+        const data = (await r.json()) as { csrfToken?: string }
+        return data.csrfToken
+      }, baseUrl + '/api/auth/csrf')
+    }
+
+    const ok = await page.evaluate(
+      async (
+        apiPath: string,
+        ef: string,
+        pf: string,
+        em: string,
+        pw: string,
+        csrf: string | undefined,
+      ) => {
+        const body: Record<string, string> = { [ef]: em, [pf]: pw }
+        if (csrf) body.csrfToken = csrf
+        const r = await fetch(apiPath, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+          credentials: 'include',
+        })
+        return r.ok
+      },
+      login.apiPath,
+      emailField,
+      passwordField,
+      email,
+      password,
+      csrfToken,
+    )
+
+    if (!ok) {
+      throw new Error(
+        `API-direct login failed (POST ${login.apiPath} returned non-2xx). ` +
+          `Verify apiPath, apiEmailField, apiPasswordField in config.`,
+      )
+    }
+
+    // Navigate to root to trigger client-side session pickup after API login.
+    await page.goto(baseUrl + '/', { waitUntil: 'domcontentloaded' })
+  } else {
+    // UI path: fill form fields, then use requestSubmit() which dispatches the
+    // submit event through React's synthetic event system.
+    // Unlike click(), requestSubmit() fires AFTER hydration completes and prevents
+    // the native GET fallback that exposes credentials in the URL.
+    await page.waitForSelector(login.emailSelector, { timeout: 10_000 })
+
+    const fillInput = async (selector: string, value: string) => {
+      await page.click(selector, { clickCount: 3 })
+      await page.keyboard.press('Backspace')
+      await page.type(selector, value, { delay: 10 })
+    }
+    await fillInput(login.emailSelector, email)
+    await fillInput(login.passwordSelector, password)
+
+    const loginStartUrl = page.url()
+
+    const formFound = await page.evaluate(() => {
+      const form = document.querySelector('form')
+      if (form) {
+        form.requestSubmit()
+        return true
+      }
+      return false
+    })
+
+    if (!formFound) {
+      // No <form> element — direct click as last resort
+      await Promise.all([
+        page.waitForNavigation({ timeout: 15_000 }).catch(() => {}),
+        page.click(login.submitSelector),
+      ])
+    } else {
+      await Promise.race([
+        page.waitForNavigation({ timeout: 12_000 }).catch(() => {}),
+        new Promise((r) => setTimeout(r, 3_000)),
+      ])
+    }
+
+    // Enter key fallback if still on login page after requestSubmit/click
+    if (page.url() === loginStartUrl) {
+      await page.focus(login.passwordSelector)
+      await page.keyboard.press('Enter')
+      await page.waitForNavigation({ timeout: 8_000 }).catch(() => {})
+    }
+  }
+
+  // Verify redirect matches the configured success pattern
+  await page
+    .waitForFunction(
+      (src: string) => new RegExp(src).test(window.location.href),
+      { timeout: 10_000 },
+      login.successUrlPattern,
+    )
+    .catch(() => {
+      throw new Error(
+        `Login did not redirect to a URL matching ${login.successUrlPattern}. ` +
+          `Current URL: ${page.url()}`,
+      )
+    })
+}
+
 export async function journeyAuditCommand(opts: JourneyAuditOptions): Promise<void> {
   const { cfg, source } = resolveConfig(opts)
   const bar = '═'.repeat(63)
@@ -177,53 +310,7 @@ export async function journeyAuditCommand(opts: JourneyAuditOptions): Promise<vo
   try {
     if (cfg.login) {
       await page.goto(cfg.baseUrl + cfg.login.path, { waitUntil: 'domcontentloaded' })
-      await page.waitForSelector(cfg.login.emailSelector, { timeout: 10_000 })
-
-      // React-friendly fill: focus first, clear existing value, then type.
-      // Puppeteer's page.type alone can miss React's synthetic events; clicking
-      // focuses the input and triggering native input events ensures React
-      // state syncs.
-      const fillInput = async (selector: string, value: string) => {
-        await page.click(selector, { clickCount: 3 }) // triple-click to select all
-        await page.keyboard.press('Backspace') // clear
-        await page.type(selector, value, { delay: 10 })
-      }
-      await fillInput(cfg.login.emailSelector, email)
-      await fillInput(cfg.login.passwordSelector, password)
-
-      // Some apps submit via Enter, others only via button click. Do the click
-      // then fall back to Enter if URL hasn't changed after 2s.
-      const loginStartUrl = page.url()
-      await Promise.all([
-        page.waitForNavigation({ timeout: 15_000 }).catch(() => {
-          // client-side redirect or SPA transition — fall through to URL check
-        }),
-        page.click(cfg.login.submitSelector),
-      ])
-
-      // If still on the login page after the click, try submitting with Enter
-      if (page.url() === loginStartUrl) {
-        await page.focus(cfg.login.passwordSelector)
-        await page.keyboard.press('Enter')
-        await page
-          .waitForNavigation({ timeout: 8_000 })
-          .catch(() => {
-            // fall through; the next assertion reports clear diagnostic
-          })
-      }
-
-      // Confirm login redirect matches the configured pattern
-      await page
-        .waitForFunction(
-          (src: string) => new RegExp(src).test(window.location.href),
-          { timeout: 10_000 },
-          cfg.login.successUrlPattern
-        )
-        .catch(() => {
-          throw new Error(
-            `Login did not redirect to a URL matching ${cfg.login!.successUrlPattern}. Current URL: ${page.url()} (started: ${loginStartUrl})`
-          )
-        })
+      await performLogin(page, cfg.login, cfg.baseUrl, email, password)
     }
 
     const findings: Array<{
