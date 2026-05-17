@@ -6,6 +6,7 @@
 **Policy**: audit-only forever via pipeline; fix doar Direct cu confirm explicit per change (CLAUDE.md regula 2d)
 
 **Last audits / artifacts**:
+- 2026-05-17 — `Reports/AUDIT_E2E_2026-05-17.md` — ML2 Wave 2 [9] audit CODE+Journey. Score: 93/100 CODE. Journey: 1 OK (Home), 1 EMPTY (/api/health — JSON endpoint, expected). No new P0/P1 gaps. Existing G-API-FALSE-POSITIVE confirmed still open (3 api-tester 404s on `:id` routes = same root cause). NO-TOUCH CRITIC: audit-only, zero fixes.
 - 2026-04-24 — `Reports/CODE_SURVEY_2026-04-24.md` (35KB) — codebase-wide static survey
 - 2026-04-24 — `Reports/LESSONS_INVENTORY_2026-04-24.md` (30KB) — lessons inventory cross-referenced cu Master/knowledge
 - 2026-04-24 — `Reports/PIPELINE_FAILURE_SIGNATURES_2026-04-24.md` (16KB) — categorizare failure modes pipeline
