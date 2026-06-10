@@ -490,6 +490,16 @@ async function fireCallback(callbackUrl: string, payload: Record<string, unknown
 
 // ─── Start ──────────────────────────────────────────────
 
+// Production hard gate (G-AUTH-OPTIN-001): refuse to start unauthenticated.
+// Without TESTER_API_SECRET, authMiddleware passes every request through
+// (dev mode) — acceptable locally, never on a public deployment. Mirrors
+// Tester-Gateway's GATEWAY_TOKEN production block.
+if (process.env.NODE_ENV === 'production' && !process.env.TESTER_API_SECRET) {
+  console.error('FATAL: TESTER_API_SECRET is not set and NODE_ENV=production.')
+  console.error('Refusing to start an unauthenticated Tester API. Generate one: openssl rand -hex 32')
+  process.exit(1)
+}
+
 app.listen(PORT, () => {
   console.info(`\n  AI Tester Server running on http://localhost:${PORT}`)
   console.info(`  Health: http://localhost:${PORT}/api/health`)

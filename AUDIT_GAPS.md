@@ -97,9 +97,11 @@ Modificări la Tester pot cascada în orice consumator în mod silent dacă nu s
 
 ---
 
-### G-AUTH-OPTIN-001 — [P2] [security] HTTP server starts WITHOUT auth when TESTER_API_SECRET is unset — PROPOSED FIX, AWAITING USER CONFIRM (surfaced 2026-06-10, package prepared 2026-06-11)
+### G-AUTH-OPTIN-001 — [P2] [security] HTTP server starts WITHOUT auth when TESTER_API_SECRET is unset — ✅ APPLIED 2026-06-11 (user confirm "da")
 
-- **Status**: OPEN — propose-confirm-apply pending (NO-TOUCH CRITIC; codul NU a fost atins).
+- **Status**: ✅ APPLIED — user a confirmat explicit 2026-06-11. **Constatare la apply: gap-ul era LIVE, nu latent** — `/var/www/tester/.env` NU exista pe VPS1 și PM2 nu avea `TESTER_API_SECRET`/`NODE_ENV` → API-ul public rula în dev-mode passthrough (probe: token greșit → 404, nu 401/403). Aplicat în 2 părți cu blast radius minim (VPS era cu 36 commits în urmă — git pull = delta prea mare pe NO-TOUCH):
+  1. **Enforcement activat runtime FĂRĂ deploy de cod**: secret canonic (Master `credentials/tester.env`) setat pe procesul PM2 + `NODE_ENV=production` + restart; WG `.env` aliniat la valoarea canonică (avea altă valoare — n-a contat cât serverul nu verifica); checker era deja aliniat.
+  2. **Gate fail-loud în sursă** (`src/server/index.ts` pre-listen): refuz pornire în production fără secret. tsc 0, vitest 858/858. Se livrează pe VPS la următorul deploy intenționat Tester (organic pickup — deploy-ul celor 36 commits = sesiune separată propose-confirm).
 - **Mechanism**: `src/server/index.ts:493-498` — `app.listen` pornește indiferent de env; fără `TESTER_API_SECRET`, toate endpoint-urile (incl. `POST /api/test/start`, care lansează browser real spre orice URL) sunt neautentificate ("No auth (dev mode)" doar în log). Pe VPS1 secretul E setat azi, dar un viitor redeploy/env-loss ar degrada silențios la no-auth pe `tester.techbiz.ae`.
 - **Proposed diff** (fail-loud, ~8 linii, înainte de `app.listen`):
   ```ts
