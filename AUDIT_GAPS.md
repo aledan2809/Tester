@@ -97,6 +97,26 @@ Modificări la Tester pot cascada în orice consumator în mod silent dacă nu s
 
 ---
 
+### G-AUTH-OPTIN-001 — [P2] [security] HTTP server starts WITHOUT auth when TESTER_API_SECRET is unset — PROPOSED FIX, AWAITING USER CONFIRM (surfaced 2026-06-10, package prepared 2026-06-11)
+
+- **Status**: OPEN — propose-confirm-apply pending (NO-TOUCH CRITIC; codul NU a fost atins).
+- **Mechanism**: `src/server/index.ts:493-498` — `app.listen` pornește indiferent de env; fără `TESTER_API_SECRET`, toate endpoint-urile (incl. `POST /api/test/start`, care lansează browser real spre orice URL) sunt neautentificate ("No auth (dev mode)" doar în log). Pe VPS1 secretul E setat azi, dar un viitor redeploy/env-loss ar degrada silențios la no-auth pe `tester.techbiz.ae`.
+- **Proposed diff** (fail-loud, ~8 linii, înainte de `app.listen`):
+  ```ts
+  // Production hard gate: refuse to start unauthenticated. Mirrors
+  // Tester-Gateway's GATEWAY_TOKEN placeholder block (TG server.js).
+  if (process.env.NODE_ENV === 'production' && !process.env.TESTER_API_SECRET) {
+    console.error('FATAL: TESTER_API_SECRET is not set and NODE_ENV=production.')
+    console.error('Refusing to start an unauthenticated Tester API. Generate: openssl rand -hex 32')
+    process.exit(1)
+  }
+  ```
+- **Risk**: LOW — pe VPS1 secretul e setat (`credentials/tester.env`), deci comportament neschimbat; singura schimbare reală = crash loud în loc de no-auth silențios la mis-config. **Verificare necesară pre-apply**: `ssh root@187.77.179.159 'pm2 env <tester-id> | grep -c TESTER_API_SECRET'` = 1 și că PM2 setează `NODE_ENV=production`.
+- **Rollback**: revert commit + `pm2 restart tester`.
+- **Apply doar cu confirm explicit user** (CLASSIFICATION §2d). La apply: vitest full suite (858) + deploy + L41 spot-check consumers (WG tester-client + checker + e2e-audit-runner).
+
+---
+
 ### G-API-FALSE-POSITIVE — [P3] [audit-tooling] api-tester plugin can't introspect Express dynamic routes ✅ ELIMINATED 2026-05-16 (Master tooling)
 
 - **Surfaced**: AUDIT_E2E_2026-04-22 + 2026-04-26 + 2026-04-28 + 2026-05-02 — "(api-tester) No API endpoints discovered" appears in every E2E audit on Tester landing.
