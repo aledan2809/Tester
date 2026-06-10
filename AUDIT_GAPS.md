@@ -97,10 +97,10 @@ Modificări la Tester pot cascada în orice consumator în mod silent dacă nu s
 
 ---
 
-### G-API-FALSE-POSITIVE — [P3] [audit-tooling] api-tester plugin can't introspect Express dynamic routes
+### G-API-FALSE-POSITIVE — [P3] [audit-tooling] api-tester plugin can't introspect Express dynamic routes ✅ ELIMINATED 2026-05-16 (Master tooling)
 
 - **Surfaced**: AUDIT_E2E_2026-04-22 + 2026-04-26 + 2026-04-28 + 2026-05-02 — "(api-tester) No API endpoints discovered" appears in every E2E audit on Tester landing.
-- **Status**: OPEN — false-positive on Tester landing (out-of-scope for Tester source); root cause in audit tooling.
+- **Status**: ✅ **ELIMINATED 2026-05-16** — fixed in Master `mesh/qa/plugins/api-tester.js` (NOT Tester source; ledger synced 2026-06-11). The plugin now: (1) reads `<project>/.audit-plugin-config.json` `apiTester.knownEndpoints[]`, (2) probes well-known endpoints (`/api/health`, `/api/openapi.json`, `/api/swagger.json`, `/api/v1/health`) when source-scan finds 0 endpoints, (3) downgrades true zero-API projects to `info` + score 100. See Master TODO_PERSISTENT "api-tester false-positive — DONE 2026-05-16". Next [7] audit on Tester should score api-tester ≥ the old 50.
 - **Mechanism**: api-tester plugin in `e2e-audit-runner.mjs` discovers REST endpoints by scraping the rendered HTML for `<a href="/api/...">` links or by reading OpenAPI specs. Tester's landing page (`tester.techbiz.ae/`) is a static `public/index.html` with no API references; the actual REST surface is at `/api/*` registered programmatically in `src/server/index.ts` (Express router, no static manifest). Plugin doesn't probe `/api/openapi.json` or follow well-known patterns.
 - **Impact**: every Tester E2E audit shows api-tester at 50/100 (or similar), penalty applied to overall score even though there's no real bug.
 - **Recommended fix** (Master tooling concern, NOT Tester source): make api-tester plugin probe a list of well-known endpoints (`/api/health`, `/api/openapi.json`, `/api/swagger.json`) before reporting "No API endpoints discovered"; or accept a config hint listing endpoints. Owner: Master `mesh/audit-plugins/api-tester` (not Tester repo).
@@ -108,10 +108,10 @@ Modificări la Tester pot cascada în orice consumator în mod silent dacă nu s
 
 ---
 
-### G-INNERHTML-FP — [P3] [audit-tooling] security-scanner reports phantom innerHTML in nonexistent files
+### G-INNERHTML-FP — [P3] [audit-tooling] security-scanner reports phantom innerHTML in nonexistent files ✅ ELIMINATED 2026-05-16 (Master tooling)
 
 - **Surfaced**: AUDIT_E2E_2026-04-22 reports `(security-scanner) innerHTML assignment found in LoginForm.ts` + `MfaInput.ts` + `SessionStatus.ts`.
-- **Status**: OPEN — false-positive (no such files exist in Tester source). Audit tooling confused.
+- **Status**: ✅ **ELIMINATED 2026-05-16** — fixed in Master `mesh/qa/plugins/security-scanner.js` (NOT Tester source; ledger synced 2026-06-11). Issue descriptions now carry the POSIX relative path (no bare basenames for downstream AI summarizers to invent paths from), skip-set extended (.vercel/.turbo/out/coverage/...), `fs.existsSync` guard between readdir and read. Hardened further 2026-06-10 (Master commit `8d7a73d`): eval word-boundary + innerHTML JSON.stringify allowlist + file:line in findings.
 - **Verification**: `find /Users/danciulescu/Projects/Tester -name 'LoginForm*' -o -name 'MfaInput*' -o -name 'SessionStatus*'` returns empty. The only `innerHTML` reference in Tester source is `src/core/safety.ts:104` which is a regex pattern used to detect `innerHTML` in user-supplied test scripts — not an assignment.
 - **Hypothesis**: security-scanner may be scanning `node_modules/` deep paths (some auth/MFA UI lib has these files) or generating phantom paths from AI-summarized findings.
 - **Recommended fix** (Master tooling): security-scanner plugin should report file paths relative to project root + verify they exist before emitting findings. Owner: Master `mesh/audit-plugins/security-scanner`.
