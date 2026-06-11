@@ -67,6 +67,31 @@ export function classifyFlaky(first: ScenarioOutcome, retry: ScenarioOutcome): b
   return first.status === 'FAIL' && retry.status === 'PASS'
 }
 
+/**
+ * Bounded-concurrency map preserving input order (S8). Runs at most `limit`
+ * tasks at once; results land at their original index regardless of completion
+ * order. Safe for scenarios because each ScenarioSession is an independent
+ * HTTP jar (no shared browser/page state).
+ */
+export async function mapWithConcurrency<T, R>(
+  items: T[],
+  limit: number,
+  task: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  const results: R[] = new Array(items.length)
+  let next = 0
+  const cap = Math.max(1, Math.min(limit, items.length || 1))
+  async function worker() {
+    while (true) {
+      const i = next++
+      if (i >= items.length) return
+      results[i] = await task(items[i], i)
+    }
+  }
+  await Promise.all(Array.from({ length: cap }, () => worker()))
+  return results
+}
+
 /** Injectable loader — default uses dynamic import, tests inject a mock. */
 export type ScenarioLoader = (filePath: string) => Promise<{ runScenario?: ScenarioFn; default?: ScenarioFn }>
 
@@ -80,6 +105,10 @@ export interface RunnerOptions {
   /** Re-run a FAILed scenario once; passing on re-run flags it flaky.
    *  Default false (also enabled by TESTER_RETRY_FLAKY=1). */
   retryFlaky?: boolean
+  /** Run up to N scenarios concurrently (each has an independent HTTP session).
+   *  Default 1 = sequential (unchanged). Also set by TESTER_CONCURRENCY.
+   *  When > 1, pacingMs is ignored (concurrent runs don't pace). */
+  concurrency?: number
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -160,17 +189,17 @@ export async function runScenarios(opts: RunnerOptions): Promise<RunReport> {
   // zero behavior change). A FAIL is re-run once; passing on re-run flags it
   // flaky (outcome stays FAIL — conservative).
   const retryFlaky = opts.retryFlaky ?? process.env.TESTER_RETRY_FLAKY === '1'
+  const concurrency = Math.max(1, opts.concurrency ?? (Number(process.env.TESTER_CONCURRENCY) || 1))
 
   const t0 = Date.now()
   const files = discoverScenarios(suiteDir, filters)
-  const results: ScenarioRunResult[] = []
 
-  for (let i = 0; i < files.length; i++) {
-    const filePath = files[i]
+  // Run one file → ScenarioRunResult (with optional flaky re-run). Shared by
+  // both the sequential and the concurrent path so behavior is identical.
+  const runOne = async (filePath: string): Promise<ScenarioRunResult> => {
     const name = path.basename(filePath, path.extname(filePath))
     const { outcome, logs } = await executeScenario(filePath, baseUrl, loader)
     const result: ScenarioRunResult = { name, filePath, outcome, logs }
-
     if (retryFlaky && outcome.status === 'FAIL') {
       const retry = await executeScenario(filePath, baseUrl, loader)
       if (classifyFlaky(outcome, retry.outcome)) {
@@ -178,11 +207,18 @@ export async function runScenarios(opts: RunnerOptions): Promise<RunReport> {
         result.logs.push(`[${name}] ⚠ flaky: failed once, PASSED on re-run`)
       }
     }
+    return result
+  }
 
-    results.push(result)
-
-    if (pacingMs > 0 && i < files.length - 1) {
-      await sleep(pacingMs)
+  let results: ScenarioRunResult[]
+  if (concurrency > 1) {
+    // Independent HTTP sessions → safe to run in parallel; order preserved.
+    results = await mapWithConcurrency(files, concurrency, (f) => runOne(f))
+  } else {
+    results = []
+    for (let i = 0; i < files.length; i++) {
+      results.push(await runOne(files[i]))
+      if (pacingMs > 0 && i < files.length - 1) await sleep(pacingMs)
     }
   }
 
