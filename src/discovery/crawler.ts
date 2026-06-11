@@ -8,6 +8,7 @@ import type { BrowserCore } from '../core/browser'
 import type { DiscoveredPage, ConsoleError, NetworkError, TesterConfig } from '../core/types'
 import { isDomainAllowed, shouldSkipUrl } from '../core/safety'
 import { analyzePage } from './analyzer'
+import { loadCrawlCache, saveCrawlCache } from './crawl-cache'
 
 export interface CrawlOptions {
   maxPages: number
@@ -31,6 +32,14 @@ export async function crawlSite(
   seedUrl: string,
   options: CrawlOptions,
 ): Promise<CrawlResult> {
+  // Sitemap cache (opt-in via TESTER_CRAWL_CACHE=1, TTL default 1h) — single
+  // chokepoint so every caller (discover, e2e-full-audit, CLI) benefits.
+  const cached = loadCrawlCache(seedUrl, options)
+  if (cached) {
+    console.log(`[crawler] sitemap served from cache (${cached.pages.length} pages; TESTER_CRAWL_CACHE=1)`)
+    return cached
+  }
+
   const startTime = Date.now()
   const visited = new Set<string>()
   const pages: DiscoveredPage[] = []
@@ -102,10 +111,12 @@ export async function crawlSite(
     }
   }
 
-  return {
+  const result: CrawlResult = {
     pages,
     durationMs: Date.now() - startTime,
   }
+  saveCrawlCache(seedUrl, options, result)
+  return result
 }
 
 /**
