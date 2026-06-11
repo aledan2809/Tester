@@ -45,6 +45,10 @@ export interface ScenarioRunResult {
   filePath: string
   outcome: ScenarioOutcome
   logs: string[]
+  /** Set when retryFlaky is on and a FAIL passed on re-run — failed once,
+   *  passed on retry. Outcome stays FAIL (conservative); the flag lets the
+   *  consumer distinguish flakiness from a hard, reproducible failure. */
+  flaky?: boolean
 }
 
 export interface RunReport {
@@ -54,6 +58,13 @@ export interface RunReport {
   skip: number
   total: number
   durationMs: number
+  /** Count of FAILs that passed on the flaky re-run (0 unless retryFlaky on). */
+  flaky?: number
+}
+
+/** Pure: a scenario is flaky when its first run FAILed but the re-run PASSed. */
+export function classifyFlaky(first: ScenarioOutcome, retry: ScenarioOutcome): boolean {
+  return first.status === 'FAIL' && retry.status === 'PASS'
 }
 
 /** Injectable loader — default uses dynamic import, tests inject a mock. */
@@ -66,6 +77,9 @@ export interface RunnerOptions {
   baseUrl?: string
   /** Override the dynamic import loader for testing. */
   loader?: ScenarioLoader
+  /** Re-run a FAILed scenario once; passing on re-run flags it flaky.
+   *  Default false (also enabled by TESTER_RETRY_FLAKY=1). */
+  retryFlaky?: boolean
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -111,8 +125,41 @@ function sleep(ms: number): Promise<void> {
 
 // ── Runner ────────────────────────────────────────────────────────────────────
 
+/** Execute one scenario file once. Extracted so the flaky re-run reuses it. */
+async function executeScenario(
+  filePath: string,
+  baseUrl: string,
+  loader: ScenarioLoader,
+): Promise<{ outcome: ScenarioOutcome; logs: string[] }> {
+  const name = path.basename(filePath, path.extname(filePath))
+  const session = new ScenarioSession()
+  const assert = new ScenarioAssertions()
+  const logs: string[] = []
+  const ctx: ScenarioContext = {
+    baseUrl: baseUrl ?? '',
+    session,
+    assert,
+    log: (msg: string) => logs.push(`[${name}] ${msg}`),
+  }
+  const startMs = Date.now()
+  try {
+    const mod = await loader(filePath)
+    const fn = mod.runScenario ?? mod.default
+    if (typeof fn !== 'function') {
+      return { outcome: { status: 'FAIL', error: `${name}: no runScenario export found`, durationMs: Date.now() - startMs }, logs }
+    }
+    return { outcome: await fn(ctx), logs }
+  } catch (err) {
+    return { outcome: { status: 'FAIL', error: String(err), durationMs: Date.now() - startMs }, logs }
+  }
+}
+
 export async function runScenarios(opts: RunnerOptions): Promise<RunReport> {
-  const { suiteDir, filters = [], pacingMs = 0, baseUrl, loader = defaultLoader } = opts
+  const { suiteDir, filters = [], pacingMs = 0, baseUrl = '', loader = defaultLoader } = opts
+  // Flaky re-run: opt-in via option or TESTER_RETRY_FLAKY=1 (default OFF →
+  // zero behavior change). A FAIL is re-run once; passing on re-run flags it
+  // flaky (outcome stays FAIL — conservative).
+  const retryFlaky = opts.retryFlaky ?? process.env.TESTER_RETRY_FLAKY === '1'
 
   const t0 = Date.now()
   const files = discoverScenarios(suiteDir, filters)
@@ -121,33 +168,18 @@ export async function runScenarios(opts: RunnerOptions): Promise<RunReport> {
   for (let i = 0; i < files.length; i++) {
     const filePath = files[i]
     const name = path.basename(filePath, path.extname(filePath))
-    const session = new ScenarioSession()
-    const assert = new ScenarioAssertions()
-    const logs: string[] = []
+    const { outcome, logs } = await executeScenario(filePath, baseUrl, loader)
+    const result: ScenarioRunResult = { name, filePath, outcome, logs }
 
-    const ctx: ScenarioContext = {
-      baseUrl: baseUrl ?? '',
-      session,
-      assert,
-      log: (msg: string) => logs.push(`[${name}] ${msg}`),
-    }
-
-    const startMs = Date.now()
-    let outcome: ScenarioOutcome
-
-    try {
-      const mod = await loader(filePath)
-      const fn = mod.runScenario ?? mod.default
-      if (typeof fn !== 'function') {
-        outcome = { status: 'FAIL', error: `${name}: no runScenario export found`, durationMs: Date.now() - startMs }
-      } else {
-        outcome = await fn(ctx)
+    if (retryFlaky && outcome.status === 'FAIL') {
+      const retry = await executeScenario(filePath, baseUrl, loader)
+      if (classifyFlaky(outcome, retry.outcome)) {
+        result.flaky = true
+        result.logs.push(`[${name}] ⚠ flaky: failed once, PASSED on re-run`)
       }
-    } catch (err) {
-      outcome = { status: 'FAIL', error: String(err), durationMs: Date.now() - startMs }
     }
 
-    results.push({ name, filePath, outcome, logs })
+    results.push(result)
 
     if (pacingMs > 0 && i < files.length - 1) {
       await sleep(pacingMs)
@@ -157,6 +189,7 @@ export async function runScenarios(opts: RunnerOptions): Promise<RunReport> {
   const pass = results.filter((r) => r.outcome.status === 'PASS').length
   const fail = results.filter((r) => r.outcome.status === 'FAIL').length
   const skip = results.filter((r) => r.outcome.status === 'SKIP').length
+  const flaky = results.filter((r) => r.flaky).length
 
-  return { results, pass, fail, skip, total: results.length, durationMs: Date.now() - t0 }
+  return { results, pass, fail, skip, total: results.length, durationMs: Date.now() - t0, flaky }
 }
