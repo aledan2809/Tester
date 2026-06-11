@@ -91,6 +91,19 @@ export interface LoginCredentials {
   loginUrl?: string
   /** TOTP secret for auto-generating MFA codes */
   mfaSecret?: string
+  /**
+   * API-direct login: when set, login POSTs credentials to this path (relative
+   * to the site origin, or an absolute URL) via the browser context request —
+   * cookies land in the shared jar and carry into the crawl. Bypasses the React
+   * App-Router form-hydration race that breaks form login (the journey-audit
+   * `login.apiPath` equivalent; see Master TODO "TWG-GW NU poate verifica
+   * elemente vizibile-doar-logat").
+   */
+  apiPath?: string
+  /** JSON field for the identifier (default "email"; some apps use "identifier"/"username"). */
+  apiEmailField?: string
+  /** JSON field for the password (default "password"). */
+  apiPasswordField?: string
 }
 
 /** Called when MFA screen is detected; returns the MFA code */

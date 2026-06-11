@@ -98,6 +98,68 @@ export class AITester {
   }
 
   /**
+   * API-direct login: POST credentials to creds.apiPath via the browser
+   * context request so the session cookie lands in the shared jar and carries
+   * into the subsequent crawl. Used for React App-Router apps where the login
+   * FORM hydration race makes form submit unreliable. Mirrors journey-audit's
+   * `login.apiPath` path.
+   */
+  async apiLogin(credentials?: LoginCredentials): Promise<{ success: boolean; error?: string }> {
+    const creds = credentials || this.config.credentials
+    if (!creds || !creds.apiPath) return { success: false, error: 'No apiPath credentials provided' }
+
+    const page = this.browser.getPage()
+    if (!page) return { success: false, error: 'Browser not launched' }
+
+    const base = creds.loginUrl ? new URL(creds.loginUrl).origin : undefined
+    const url = creds.apiPath.startsWith('http')
+      ? creds.apiPath
+      : `${base ?? ''}${creds.apiPath}`
+    if (!url.startsWith('http')) {
+      return { success: false, error: 'apiPath is relative but no loginUrl/origin available to resolve it' }
+    }
+
+    try {
+      // Be on the target origin first so the Set-Cookie response binds to the
+      // browsing context the crawler will reuse. Then POST from inside the page
+      // (Puppeteer has no page.request) with credentials:'include' so cookies
+      // are stored, mirroring journey-audit's API-direct login.
+      const origin = new URL(url).origin
+      await page.goto(`${origin}/`, { waitUntil: 'domcontentloaded', timeout: 30_000 }).catch(() => {})
+
+      const result = await page.evaluate(
+        async (args: { url: string; body: Record<string, string> }) => {
+          try {
+            const r = await fetch(args.url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(args.body),
+              credentials: 'include',
+            })
+            return { ok: r.ok, status: r.status }
+          } catch (e) {
+            return { ok: false, status: 0, error: (e as Error).message }
+          }
+        },
+        {
+          url,
+          body: {
+            [creds.apiEmailField ?? 'email']: creds.username,
+            [creds.apiPasswordField ?? 'password']: creds.password,
+          },
+        },
+      )
+
+      if (!result.ok) {
+        return { success: false, error: `API login failed (HTTP ${result.status}) at ${url}${result.error ? `: ${result.error}` : ''}` }
+      }
+      return { success: true }
+    } catch (err) {
+      return { success: false, error: `API login error: ${(err as Error).message}` }
+    }
+  }
+
+  /**
    * Generate test scenarios from a site map.
    * Uses AI when API key is available, with template fallback.
    */

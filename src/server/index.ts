@@ -372,12 +372,30 @@ async function runTest(job: Job): Promise<void> {
     visualRegression: job.config.visualRegression ?? true,
     accessibility: job.config.accessibility ?? true,
     performance: job.config.performance ?? true,
+    // Thread auth so the crawl runs AUTHENTICATED — previously dropped, which
+    // is why crawl-based audits on logged-in-only apps returned "auth 0/N"
+    // (Master TODO "TWG-GW NU poate verifica elemente vizibile-doar-logat").
+    credentials: job.config.credentials,
   }
 
   const tester = new AITester(testerConfig)
 
   try {
     await tester.launch()
+
+    // Authenticate before discovery so protected routes are reachable.
+    // API-direct login (credentials.apiPath) bypasses the React form-hydration
+    // race; otherwise fall back to form login. Failure is logged but does not
+    // abort — an unauthenticated crawl still audits the public surface.
+    if (testerConfig.credentials) {
+      const useApi = !!testerConfig.credentials.apiPath
+      const authRes = useApi ? await tester.apiLogin() : await tester.login()
+      if (!authRes.success) {
+        console.warn(`[${job.id}] Auth (${useApi ? 'apiPath' : 'form'}) failed: ${authRes.error} — continuing unauthenticated`)
+      } else {
+        console.info(`[${job.id}] Authenticated via ${useApi ? 'apiPath' : 'form'} login`)
+      }
+    }
     storage.save({
       id: job.id,
       url: job.url,
